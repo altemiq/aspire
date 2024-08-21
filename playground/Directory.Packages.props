@@ -4,6 +4,8 @@
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="8.1.0" />
     <PackageVersion Include="Aspire.Npgsql" Version="8.1.0" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.301" />
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.402.1" />
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
