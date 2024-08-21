@@ -1,0 +1,27 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Aspire">
+    <PackageVersion Include="Aspire.Hosting" Version="8.1.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="8.1.0" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="8.1.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="AspNetCore.HealthChecks">
+    <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.1" />
+    <PackageVersion Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.1" />
+    <PackageVersion Include="AspNetCore.HealthChecks.Uris" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="gRPC">
+    <PackageVersion Include="Grpc.HealthCheck" Version="2.64.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers">
+    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.26" />
+  </ItemGroup>
+
+</Project>

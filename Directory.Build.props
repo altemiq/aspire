@@ -1,0 +1,14 @@
+<Project>
+
+  <PropertyGroup>
+    <NetCurrent>net8.0</NetCurrent>
+    <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+    <LangVersion>preview</LangVersion>
+    <SharedDir>$(MSBuildThisFileDirectory)/src/Shared/</SharedDir>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

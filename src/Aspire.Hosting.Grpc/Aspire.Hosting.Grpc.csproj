@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+    <PackageReference Include="Grpc.HealthCheck" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <Compile Include="$(SharedDir)ConfigurationExtensions.cs" Link="Utils\ConfigurationExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.Dependencies\Aspire.Hosting.Dependencies.csproj" />
+  </ItemGroup>
+
+</Project>
