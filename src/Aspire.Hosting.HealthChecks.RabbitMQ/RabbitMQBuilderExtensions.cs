@@ -11,7 +11,7 @@ using Aspire.Hosting.ApplicationModel;
 /// <summary>
 /// <see cref="global::RabbitMQ"/> extensions.
 /// </summary>
-internal static class RabbitMQBuilderExtensions
+public static class RabbitMQBuilderExtensions
 {
     /// <summary>
     /// Adds a health check to the <see cref="global::RabbitMQ"/> server resource.

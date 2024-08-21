@@ -38,6 +38,27 @@ public static partial class ResourceBuilderExtensions
     }
 
     /// <summary>
+    /// Injects service discovery information as environment variables from the project resource into the destination resource, using the source resource's name as the service name.
+    /// Each endpoint defined on the project resource will be injected using the format "services__{sourceResourceName}__{endpointName}__{endpointIndex}={uriString}".
+    /// </summary>
+    /// <typeparam name="TDestination">The destination resource.</typeparam>
+    /// <param name="builder">The resource where the service discovery information will be injected.</param>
+    /// <param name="source">The resource from which to extract service discovery information.</param>
+    /// <param name="wait">Set to <see langword="true"/> to wait for <paramref name="source"/> to be ready.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<IResourceWithConnectionString> source, bool wait)
+        where TDestination : IResourceWithEnvironment
+    {
+        builder.WithReference(source);
+        if (wait)
+        {
+            builder.WaitFor(source);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
     /// Wait for a resource to be running before starting another resource.
     /// </summary>
     /// <typeparam name="T">The resource type.</typeparam>

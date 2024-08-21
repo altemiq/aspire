@@ -11,7 +11,7 @@ using Aspire.Hosting.ApplicationModel;
 /// <summary>
 /// <c>MapServer</c> extensions.
 /// </summary>
-internal static class MapServerExtensions
+public static class MapServerExtensions
 {
     /// <summary>
     /// Adds a <see cref="MapServerResource"/> to the application.

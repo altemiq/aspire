@@ -11,7 +11,7 @@ using Aspire.Hosting.ApplicationModel;
 /// <summary>
 /// <see cref="Postgres"/> extensions.
 /// </summary>
-internal static class PostgresBuilderExtensions
+public static class PostgresBuilderExtensions
 {
     /// <summary>
     /// Adds a health check to the PostgreSQL server resource.

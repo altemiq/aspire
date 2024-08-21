@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.Dependencies\Aspire.Hosting.Dependencies.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.HealthChecks.PostgreSQL\Aspire.Hosting.HealthChecks.PostgreSQL.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostGIS\Aspire.Hosting.PostGIS.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\PostGis.ApiService\PostGis.ApiService.csproj" />
   </ItemGroup>

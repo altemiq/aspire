@@ -10,4 +10,4 @@ namespace Aspire.Hosting.ApplicationModel;
 /// The <c>MapServer</c> <see cref="ContainerResource"/>.
 /// </summary>
 /// <param name="name">The name of the resource.</param>
-internal sealed class MapServerResource(string name) : ContainerResource(name), IResourceWithServiceDiscovery;
+public sealed class MapServerResource(string name) : ContainerResource(name), IResourceWithServiceDiscovery;
