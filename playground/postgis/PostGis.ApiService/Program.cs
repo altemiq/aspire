@@ -9,13 +9,17 @@ using Npgsql;
 const string ActivitySourceName = "PostGis.ApiService";
 
 var activitySource = new System.Diagnostics.ActivitySource(ActivitySourceName);
+var meter = new System.Diagnostics.Metrics.Meter(ActivitySourceName);
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
 
-builder.Services.AddOpenTelemetry().WithTracing(t => t.AddSource(ActivitySourceName));
+builder.Services
+    .AddOpenTelemetry()
+    .WithMetrics(m => m.AddMeter(ActivitySourceName))
+    .WithTracing(t => t.AddSource(ActivitySourceName));
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
@@ -29,22 +33,25 @@ app.UseExceptionHandler();
 
 app.MapDefaultEndpoints();
 
+var counter = meter.CreateCounter<int>("mapget.count");
+
 app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, CancellationToken cancellationToken) =>
 {
+    counter.Add(1);
     using var source = activitySource.StartActivity("GET postgis version", System.Diagnostics.ActivityKind.Server);
     Program.LogMapGet(logger, dataSource);
 
-    source?.AddEvent(new("opening connection"));
+    source?.AddEvent(new("connection.opening"));
     var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
     await using (connection.ConfigureAwait(false))
     {
-        source?.AddEvent(new("creating command"));
+        source?.AddEvent(new("command.creating"));
         var command = connection.CreateCommand();
         await using (command.ConfigureAwait(false))
         {
             command.CommandText = "SELECT PostGIS_full_version();";
 
-            source?.AddEvent(new("executing connection"));
+            source?.AddEvent(new("command.executing"));
             var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             await using (reader.ConfigureAwait(false))
             {
