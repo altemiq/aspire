@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
-    <IsPackable>true</IsPackable>
     <PackageTags>aspire hosting healthchecks postgresql postgres npgsql sql</PackageTags>
     <Description>PostgreSQL® health check support for .NET Aspire.</Description>
   </PropertyGroup>

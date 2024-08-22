@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
-    <IsPackable>true</IsPackable>
     <PackageTags>aspire hosting postgis</PackageTags>
     <Description>PostGIS support for .NET Aspire.</Description>
   </PropertyGroup>

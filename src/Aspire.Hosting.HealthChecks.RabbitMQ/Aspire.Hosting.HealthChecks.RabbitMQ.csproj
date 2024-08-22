@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
-    <IsPackable>true</IsPackable>
     <PackageTags>aspire hosting healthchecks rabbitmq</PackageTags>
     <Description>RabbitMQ health check support for .NET Aspire.</Description>
   </PropertyGroup>

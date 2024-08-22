@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
+    <PackageTags>aspire hosting dependencies</PackageTags>
+    <Description>Dependency support for .NET Aspire.</Description>
   </PropertyGroup>
 
   <ItemGroup>

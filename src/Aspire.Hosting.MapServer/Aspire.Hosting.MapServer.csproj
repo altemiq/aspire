@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
-    <IsPackable>true</IsPackable>
     <PackageTags>aspire hosting mapserver</PackageTags>
     <Description>MapServer support for .NET Aspire.</Description>
   </PropertyGroup>

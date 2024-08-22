@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
+    <PackageTags>aspire hosting grpc</PackageTags>
+    <Description>gRPC support for .NET Aspire.</Description>
   </PropertyGroup>
 
   <ItemGroup>

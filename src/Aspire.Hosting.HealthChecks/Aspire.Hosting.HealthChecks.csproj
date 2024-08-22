@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
+    <PackageTags>aspire hosting healthchecks</PackageTags>
+    <Description>Health check support for .NET Aspire.</Description>
   </PropertyGroup>
 
   <ItemGroup>
