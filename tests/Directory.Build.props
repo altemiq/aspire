@@ -1,5 +1,5 @@
 <Project>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,11 +10,6 @@
   
   <ItemGroup>
     <PackageReference Include="xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <GlobalPackageReference Include="coverlet.collector" Version="6.0.2" />
-    <GlobalPackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
 
   <ItemGroup>
