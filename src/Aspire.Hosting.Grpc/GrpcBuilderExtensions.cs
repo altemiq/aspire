@@ -28,14 +28,13 @@ public static class GrpcBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
+    /// <param name="configureContainer">Callback to configure GrpcUI container resource.</param>
+    /// <param name="containerName">The name of the container (Optional).</param>
     /// <param name="wait">Set to <see langword="true"/> to wait for <paramref name="builder"/>; otherwise <see langword="false"/>.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, bool wait = true)
+    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<GrpcUIContainerResource>>? configureContainer = null, string? containerName = default, bool wait = true)
         where T : IResourceWithEndpoints
     {
-        const int Port = 8080;
-        const int Timeout = 3600;
-
         // get the end point type
         var endpointType = "tcp";
         if (builder.Resource.TryGetEndpoints(out var endpoints))
@@ -50,70 +49,59 @@ public static class GrpcBuilderExtensions
             }
         }
 
-        if (builder.ApplicationBuilder.Configuration.IsPodman())
-        {
-            var port = FindPort();
-            var grpcUI = new ExecutableResource($"{builder.Resource.Name}-grpcui", Path.Combine(FindToolsDirectory("grpcui"), "grpcui"), string.Empty);
-            _ = builder.ApplicationBuilder
-                .AddResource(grpcUI)
-                .WithArgs(GetDefaultArgs(port))
-                .WithArgs(context =>
-                {
-                    foreach (var args in GetArgs(builder, grpcUI, endpointType))
-                    {
-                        context.Args.Add(args);
-                    }
-                })
-                .WithHttpEndpoint(targetPort: port)
-                .Wait(builder, wait)
-                .ExcludeFromManifest();
+        const int Port = 8080;
 
-            static int FindPort()
+        containerName ??= $"{builder.Resource.Name}-grpcui";
+
+        var resource = builder.ApplicationBuilder
+            .AddResource(new GrpcUIContainerResource(containerName))
+            .WithImage(Grpc.GrpcUIContainerImageTags.Image, Grpc.GrpcUIContainerImageTags.Tag)
+            .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry)
+            .Wait(builder, wait)
+            .ExcludeFromManifest();
+
+        resource.WithArgs(context =>
+        {
+            foreach (var arg in GetArgs(builder, resource, endpointType))
             {
-                using var client = new System.Net.Sockets.UdpClient(0, System.Net.Sockets.AddressFamily.InterNetwork);
-                if (client.Client.LocalEndPoint is System.Net.IPEndPoint endPoint)
-                {
-                    return endPoint.Port;
-                }
-
-                throw new InvalidOperationException();
+                context.Args.Add(arg);
             }
-        }
-        else
+        });
+
+        if (string.Equals(endpointType, Uri.UriSchemeHttps, StringComparison.Ordinal))
         {
-            var grpcUI = new ContainerResource($"{builder.Resource.Name}-grpcui");
-            _ = builder.ApplicationBuilder
-                .AddResource(grpcUI)
-                .WithImage(Grpc.GrpcUIContainerImageTags.Image, Grpc.GrpcUIContainerImageTags.Tag)
-                .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry)
-                .WithArgs(GetDefaultArgs(Port))
-                .WithArgs(context =>
-                {
-                    foreach (var arg in GetArgs(builder, grpcUI, endpointType))
-                    {
-                        context.Args.Add(arg);
-                    }
-                })
-                .WithHttpEndpoint(targetPort: Port)
-                .Wait(builder, wait)
-                .ExcludeFromManifest();
+            resource.WithHttpsEndpoint(targetPort: Port);
+        }
+        else if (string.Equals(endpointType, Uri.UriSchemeHttp, StringComparison.Ordinal))
+        {
+            resource.WithHttpEndpoint(targetPort: Port);
         }
 
-        static string[] GetDefaultArgs(int port)
-        {
-            return [string.Create(System.Globalization.CultureInfo.InvariantCulture, $"-port={port}"), $"-connect-fail-fast={bool.FalseString}", $"-connect-timeout={Timeout}", "-vv"];
-        }
+        configureContainer?.Invoke(resource);
 
-        static IEnumerable<string> GetArgs<TResource>(IResourceBuilder<T> builder, TResource resource, string endpointType)
-            where TResource : IResource
+        return builder;
+
+        static IEnumerable<string> GetArgs<TResource>(IResourceBuilder<T> builder, IResourceBuilder<TResource> resource, string endpointType)
+            where TResource : IResourceWithEndpoints
         {
-            var endpoint = builder.GetEndpoint(endpointType);
+            const int Timeout = 3600;
+
+            // get the port
+            var endpoint = resource.GetEndpoint(endpointType);
+            var port = endpoint.TargetPort ?? endpoint.Port;
+
+            yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"-port={port}");
+            yield return $"-connect-fail-fast={bool.FalseString}";
+            yield return $"-connect-timeout={Timeout}";
+            yield return "-vv";
+
+            endpoint = builder.GetEndpoint(endpointType);
             if (string.Equals(endpoint.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
             {
                 yield return $"-plaintext={bool.TrueString}";
             }
 
-            var host = resource is ContainerResource containerResource
+            var host = resource.Resource is ContainerResource containerResource
                 ? GetHost(endpoint, containerResource)
                 : endpoint.Host;
 
@@ -129,29 +117,6 @@ public static class GrpcBuilderExtensions
                     .Replace("[::1]", hostName, StringComparison.Ordinal);
             }
         }
-
-        static string FindToolsDirectory(string tool)
-        {
-            var currentPath = Path.GetDirectoryName(typeof(GrpcBuilderExtensions).Assembly.Location) ?? Environment.CurrentDirectory;
-            while (Directory.Exists(currentPath))
-            {
-                var toolsPath = Path.Combine(currentPath, "tools");
-                if (Directory.Exists(toolsPath))
-                {
-                    var toolPath = Path.Combine(toolsPath, tool);
-                    if (Directory.Exists(toolPath))
-                    {
-                        return toolPath;
-                    }
-                }
-
-                currentPath = Path.GetDirectoryName(currentPath);
-            }
-
-            throw new DirectoryNotFoundException();
-        }
-
-        return builder;
     }
 
     private static IResourceBuilder<T1> Wait<T1, T2>(this IResourceBuilder<T1> builder, IResourceBuilder<T2> source, bool wait)
