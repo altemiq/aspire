@@ -167,16 +167,5 @@ public static class LocalStackBuilderExtensions
     }
 
     private static IResourceBuilder<T> AddDockerSock<T>(this IResourceBuilder<T> builder)
-        where T : ContainerResource => builder.AddDockerSock(builder.ApplicationBuilder.Configuration);
-
-    private static IResourceBuilder<T> AddDockerSock<T>(this IResourceBuilder<T> builder, Microsoft.Extensions.Configuration.ConfigurationManager configuration)
-        where T : ContainerResource
-    {
-        if (configuration.IsPodman())
-        {
-            builder.WithAnnotation(new ContainerMountAnnotation("/var/run/docker.sock", "/var/run/docker.sock", ContainerMountType.BindMount, isReadOnly: false));
-        }
-
-        return builder;
-    }
+        where T : ContainerResource => builder.WithAnnotation(new ContainerMountAnnotation("/var/run/docker.sock", "/var/run/docker.sock", ContainerMountType.BindMount, isReadOnly: true));
 }
