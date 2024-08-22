@@ -5,4 +5,9 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- do not error when we can't find a release version -->
+    <MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);SV0001</MSBuildWarningsNotAsErrors>
+  </PropertyGroup>
+
 </Project>

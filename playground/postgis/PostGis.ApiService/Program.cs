@@ -79,5 +79,5 @@ internal sealed partial class Program
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Entering MapGet for data source {DataSource}")]
-    public static partial void LogMapGet(ILogger logger, NpgsqlDataSource dataSource);
+    public static partial void LogMapGet(ILogger logger, [LogProperties] NpgsqlDataSource dataSource);
 }

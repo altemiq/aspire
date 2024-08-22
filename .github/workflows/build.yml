@@ -1,0 +1,159 @@
+name: .NET build
+
+on:
+  push:
+    branches: 
+      - main
+    paths-ignore:
+      - docs/**
+      - .github/workflows/docs.yml
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    strategy:
+      matrix: 
+        os: [ windows-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_MULTILEVEL_LOOKUP: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Install .NET
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Restore workloads
+      run: dotnet workload install aspire
+
+    - name: Restore with dotnet
+      run: dotnet restore
+
+    # Test
+    - name: Test with dotnet
+      run: >
+        dotnet test
+        --no-restore
+        --results-directory ${{ github.workspace }}/coverage/results
+        --settings ${{ github.workspace }}/tests/coverage.runsettings
+        --logger GitHubActions
+
+    - name: Report Generator
+      uses: danielpalme/ReportGenerator-GitHub-Action@v5
+      with:
+        reports: '${{ github.workspace }}/coverage/results/*/*.cobertura.xml'
+        targetdir: '${{ github.workspace }}/coverage/reports'
+        reporttypes: 'HtmlInline;Cobertura;MarkdownSummaryGithub'
+        verbosity: 'Verbose'
+
+    - name: Test Results
+      shell: pwsh
+      run: Get-Content '${{ github.workspace }}/coverage/reports/SummaryGithub.md' >> $env:GITHUB_STEP_SUMMARY
+
+    - name: Upload Coverage Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage_${{ matrix.os }}
+        path: ${{ github.workspace }}/coverage/reports
+
+  create-nuget:
+    runs-on: ubuntu-latest
+    
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_MULTILEVEL_LOOKUP: false
+      Configuration: Release
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # get all history here, for semantic versioning
+
+    # Install the .NET workload
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Restore workloads
+      run: dotnet workload restore
+
+    - name: Restore with dotnet
+      run: dotnet restore
+
+    - name: Build with dotnet
+      run: dotnet build --no-restore
+
+    - name: Get Suffix
+      id: suffix
+      run: |
+        suffix=alpha
+        if [ ${{ github.event_name }} == push ];
+        then
+          suffix=beta;
+        fi
+
+        echo "value=$suffix" >> $GITHUB_OUTPUT
+
+    # Pack
+    - name: Pack with dotnet
+      run: dotnet pack --output ${{ github.workspace }}/nupkg -property:ComputeSemanticVersion=true -property:SemanticVersionOutputPath=${{ github.workspace }}/versions -property:SemanticVersionIncrement=ReleaseLabel --version-suffix ${{ steps.suffix.outputs.value }}
+
+    - name: Upload NuPkg
+      uses: actions/upload-artifact@v4
+      with:
+        name: NuPkg
+        if-no-files-found: error
+        retention-days: 7
+        path: ${{ github.workspace }}/nupkg
+
+    - name: Upload Versions
+      uses: actions/upload-artifact@v4
+      with:
+        name: Versions
+        if-no-files-found: error
+        retention-days: 7
+        path: ${{ github.workspace }}/versions
+
+  push:
+    runs-on: ubuntu-latest
+    needs: [ create-nuget, run-tests ]
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_MULTILEVEL_LOOKUP: false
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: NuPkg
+        path: ${{ github.workspace }}/nupkg
+
+    - name: Push with dotnet
+      id: push
+      working-directory: ${{ github.workspace }}/nupkg
+      run: dotnet nuget push *.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+      
+    # delete-artifact
+    - uses: GeekyEggo/delete-artifact@v4
+      if: ${{ steps.push.conclusion == 'success' }}
+      with:
+        name: NuPkg
