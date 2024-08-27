@@ -167,5 +167,5 @@ public static class LocalStackBuilderExtensions
     }
 
     private static IResourceBuilder<T> AddDockerSock<T>(this IResourceBuilder<T> builder)
-        where T : ContainerResource => builder.WithAnnotation(new ContainerMountAnnotation("/var/run/docker.sock", "/var/run/docker.sock", ContainerMountType.BindMount, isReadOnly: true));
+        where T : ContainerResource => builder.WithContainerRuntimeArgs("-v", "/var/run/docker.sock:/var/run/docker.sock:ro");
 }
