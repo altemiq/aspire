@@ -46,6 +46,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", "{E4B5FD81-9B2D-4942-806B-2F60B8997266}"
 	ProjectSection(SolutionItems) = preProject
 		playground\.editorconfig = playground\.editorconfig
+		playground\Directory.Build.props = playground\Directory.Build.props
 		playground\Directory.Packages.props = playground\Directory.Packages.props
 	EndProjectSection
 EndProject
