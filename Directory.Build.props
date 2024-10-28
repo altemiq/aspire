@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <NetCurrent>net8.0</NetCurrent>
+    <NetCurrent>net9.0</NetCurrent>
     <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <AssemblyName>$(MSBuildProjectName)</AssemblyName>
     <LangVersion>preview</LangVersion>

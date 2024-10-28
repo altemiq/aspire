@@ -25,9 +25,8 @@ public static class MinIOBuilderExtensions
     /// <typeparam name="TDestination">The destination resource.</typeparam>
     /// <param name="builder">The resource where the service discovery information will be injected.</param>
     /// <param name="source">The resource from which to extract service discovery information.</param>
-    /// <param name="wait">Set to <see langword="true" /> to wait for <paramref name="source"/>.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<MinIOServerResource> source, bool wait)
+    public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<MinIOServerResource> source)
         where TDestination : ApplicationModel.IResourceWithEnvironment
     {
         if (source is ApplicationModel.IResourceBuilder<IResourceWithServiceDiscovery> serviceDiscovery)
@@ -49,11 +48,6 @@ public static class MinIOBuilderExtensions
             context.EnvironmentVariables["AWS__UseAccelerateEndpoint"] = bool.FalseString;
         });
 
-        if (wait)
-        {
-            _ = builder.WaitFor(source);
-        }
-
         return builder;
     }
 
@@ -67,6 +61,7 @@ public static class MinIOBuilderExtensions
     public static IResourceBuilder<MinIOServerResource> WithDataVolume(this IResourceBuilder<MinIOServerResource> builder, string? name = null, bool isReadOnly = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
+
         return builder.WithVolume(name ?? Utils.VolumeNameGenerator.CreateVolumeName(builder, "data"), DataLocation, isReadOnly);
     }
 
@@ -81,6 +76,7 @@ public static class MinIOBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(source);
+
         return builder.WithBindMount(source, DataLocation, isReadOnly);
     }
 
@@ -122,30 +118,7 @@ public static class MinIOBuilderExtensions
             .WithEnvironment("MINIO_CONSOLE_ADDRESS", () => $":{ConsolePort}")
             .WithEnvironment("MINIO_REGION", region)
             .WithArgs("server", DataLocation)
+            .WithHttpHealthCheck(path: "minio/health/live", endpointName: ApiEndpointName)
             .PublishAsContainer();
-    }
-
-    /// <summary>
-    /// Adds a health check to the <see cref="MinIO" /> server resource.
-    /// </summary>
-    /// <param name="builder">The resource builder.</param>
-    /// <returns>A resource builder with the health check annotation added.</returns>
-    public static IResourceBuilder<MinIOServerResource> WithHealthChecks(this IResourceBuilder<MinIOServerResource> builder)
-    {
-        var annotation = HealthCheckAnnotation.Create(
-            builder.Resource,
-            uri => new HealthChecks.Uris.UriHealthCheck(
-                new HealthChecks.Uris.UriHealthCheckOptions().UseGet().AddUri(UpdateUri(uri)).ExpectHttpCode(200),
-                () => new HttpClient()),
-            ApiEndpointName);
-
-        return builder.WithAnnotation(annotation);
-
-        static Uri UpdateUri(Uri input)
-        {
-            var builder = new UriBuilder(input) { Path = "minio/health/live" };
-
-            return builder.Uri;
-        }
     }
 }

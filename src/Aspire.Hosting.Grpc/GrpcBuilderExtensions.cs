@@ -7,6 +7,7 @@
 namespace Aspire.Hosting;
 
 using Aspire.Hosting.ApplicationModel;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// <see cref="Grpc"/> health checks.
@@ -18,10 +19,45 @@ public static class GrpcBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of endpoint resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
-    /// <param name="endpoint">The end point name.</param>
+    /// <param name="desiredScheme">The desired scheme.</param>
+    /// <param name="endpointName">The end point name.</param>
     /// <returns>A resource builder with the health check annotation added.</returns>
-    public static IResourceBuilder<T> WithGrpcHealthCheck<T>(this IResourceBuilder<T> builder, string endpoint)
-        where T : IResourceWithEndpoints => builder.WithAnnotation(HealthCheckAnnotation.Create(builder.Resource, (Uri uri) => new GrpcHealthCheck(global::Grpc.Net.Client.GrpcChannel.ForAddress(uri)), endpoint));
+    public static IResourceBuilder<T> WithGrpcHealthCheck<T>(this IResourceBuilder<T> builder, string desiredScheme, string endpointName)
+        where T : IResourceWithEndpoints
+    {
+        var endpoint = builder.Resource.GetEndpoint(endpointName);
+
+        var healthCheckKey = $"{builder.Resource.Name}_check";
+        builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
+        {
+            { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
+            { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
+            _ => throw new DistributedApplicationException($"The endpoint '{endpointName}' on resource '{builder.Resource.Name}' was not using the '{desiredScheme}' scheme."),
+        });
+
+        Uri? uri = null;
+        builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
+        {
+            uri = new Uri(endpoint.Url, UriKind.Absolute);
+            return Task.CompletedTask;
+        });
+
+        builder.ApplicationBuilder.Services
+            .AddHealthChecks()
+            .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
+                healthCheckKey,
+                _ => uri switch
+                {
+                    null => throw new DistributedApplicationException($"The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
+                    _ => new GrpcHealthCheck(global::Grpc.Net.Client.GrpcChannel.ForAddress(uri)),
+                },
+                failureStatus: null,
+                tags: null));
+
+        builder.WithHealthCheck(healthCheckKey);
+
+        return builder;
+    }
 
     /// <summary>
     /// Adds a grpcui platform to the application model.
@@ -56,8 +92,14 @@ public static class GrpcBuilderExtensions
         var resource = builder.ApplicationBuilder
             .AddResource(new GrpcUIContainerResource(containerName))
             .WithImage(Grpc.GrpcUIContainerImageTags.Image, Grpc.GrpcUIContainerImageTags.Tag)
-            .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry)
-            .Wait(builder, wait)
+            .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry);
+
+        if (wait && builder is IResourceBuilder<IResource> resourceBuilder)
+        {
+            resource.WaitFor(resourceBuilder);
+        }
+
+        resource
             .ExcludeFromManifest();
 
         resource.WithArgs(context =>
@@ -117,18 +159,6 @@ public static class GrpcBuilderExtensions
                     .Replace("[::1]", hostName, StringComparison.Ordinal);
             }
         }
-    }
-
-    private static IResourceBuilder<T1> Wait<T1, T2>(this IResourceBuilder<T1> builder, IResourceBuilder<T2> source, bool wait)
-        where T1 : IResource
-        where T2 : IResourceWithEndpoints
-    {
-        if (wait)
-        {
-            builder.WaitFor(source);
-        }
-
-        return builder;
     }
 
     private sealed class GrpcHealthCheck(global::Grpc.Net.Client.GrpcChannel channel) : Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck, IDisposable

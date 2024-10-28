@@ -7,6 +7,7 @@
 namespace Aspire.Hosting;
 
 using Aspire.Hosting.ApplicationModel;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Provides extensions for <c>localstack</c>.
@@ -59,28 +60,13 @@ public static class LocalStackBuilderExtensions
     /// <param name="endpointName">The endpoint name.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<LocalStackServerResource> source, string? endpointName = default)
-        where TDestination : IResourceWithEnvironment => WithReference(builder, source, wait: false, endpointName);
-
-    /// <summary>
-    /// Injects service discovery information as environment variables from the project resource into the destination resource, using the source resource's name as the service name.
-    /// Each endpoint defined on the project resource will be injected using the format <c>services__{sourceResourceName}__{endpointIndex}={endpointNameQualifiedUriString}</c>.
-    /// </summary>
-    /// <typeparam name="TDestination">The destination resource.</typeparam>
-    /// <param name="builder">The resource where the service discovery information will be injected.</param>
-    /// <param name="source">The resource from which to extract service discovery information.</param>
-    /// <param name="wait">Set to <see langword="true" /> to wait for <paramref name="source"/>.</param>
-    /// <param name="endpointName">The endpoint name.</param>
-    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<LocalStackServerResource> source, bool wait, string? endpointName = default)
         where TDestination : IResourceWithEnvironment
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(source);
 
-        if (source is IResourceBuilder<IResourceWithServiceDiscovery> serviceDiscovery)
-        {
-            _ = builder.WithReference(serviceDiscovery, wait: true);
-        }
+        _ = builder
+            .WithReference(source);
 
         _ = builder.WithEnvironment((context) =>
         {
@@ -102,11 +88,6 @@ public static class LocalStackBuilderExtensions
             // session
             context.EnvironmentVariables[$"{LocalStackConfigSection}__Session__RegionName"] = source.Resource.Region;
         });
-
-        if (wait)
-        {
-            _ = builder.WaitFor(source);
-        }
 
         return builder;
 
@@ -131,7 +112,8 @@ public static class LocalStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(name);
 
         var localStack = new LocalStackServerResource(name, region ?? "us-east-1") { Services = services };
-        return builder.AddResource(localStack)
+
+        var resourceBuilder = builder.AddResource(localStack)
             .WithImage(LocalStack.LocalStackContainerImageTags.Image, LocalStack.LocalStackContainerImageTags.Tag)
             .WithImageRegistry(LocalStack.LocalStackContainerImageTags.Registry)
             .WithHttpEndpoint(port, targetPort: 4566)
@@ -151,25 +133,45 @@ public static class LocalStackBuilderExtensions
             })
             .AddDockerSock()
             .PublishAsContainer();
-    }
 
-    /// <summary>
-    /// Adds a health check to the <see cref="LocalStack" /> server resource.
-    /// </summary>
-    /// <param name="builder">The resource builder.</param>
-    /// <returns>A resource builder with the health check annotation added.</returns>
-    public static IResourceBuilder<LocalStackServerResource> WithHealthChecks(this IResourceBuilder<LocalStackServerResource> builder)
-    {
-        var annotation = HealthCheckAnnotation.Create(
-            builder.Resource,
-            uri => new LocalStack.LocalStackHealthCheck(() => new HttpClient())
+        AddHealthCheck(resourceBuilder, Uri.UriSchemeHttp, Uri.UriSchemeHttp, services);
+
+        return resourceBuilder;
+
+        static void AddHealthCheck(IResourceBuilder<LocalStackServerResource> builder, string desiredScheme, string endpointName, LocalStackServices.Community services)
+        {
+            var endpoint = builder.Resource.GetEndpoint(endpointName);
+
+            builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
             {
-                Uri = uri,
-                Services = builder.Resource.Services,
-            },
-            Uri.UriSchemeHttp);
+                { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
+                { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
+                _ => throw new DistributedApplicationException($"The endpoint '{endpointName}' on resource '{builder.Resource.Name}' was not using the '{desiredScheme}' scheme."),
+            });
 
-        return builder.WithAnnotation(annotation);
+            Uri? uri = null;
+            builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
+            {
+                uri = new Uri(endpoint.Url, UriKind.Absolute);
+                return Task.CompletedTask;
+            });
+
+            var healthCheckKey = $"{builder.Resource.Name}_{endpointName}_check";
+
+            builder.ApplicationBuilder.Services
+                .AddHealthChecks()
+                .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
+                    healthCheckKey,
+                    serviceProvider => uri switch
+                    {
+                        null => throw new DistributedApplicationException($"The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
+                        _ => new Aspire.Hosting.LocalStack.LocalStackHealthCheck(serviceProvider.GetRequiredService<HttpClient>) { Uri = uri, Services = services },
+                    },
+                    failureStatus: null,
+                    tags: null));
+
+            builder.WithHealthCheck(healthCheckKey);
+        }
     }
 
     private static IResourceBuilder<T> AddDockerSock<T>(this IResourceBuilder<T> builder)

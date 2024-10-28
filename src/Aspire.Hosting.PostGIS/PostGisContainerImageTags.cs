@@ -24,5 +24,5 @@ internal static class PostGisContainerImageTags
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "16-3.4";
+    public const string Tag = "17-3.5";
 }

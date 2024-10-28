@@ -4,11 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-var builder = DistributedApplication.CreateBuilder(args);
+using Microsoft.Extensions.DependencyInjection;
 
-var minio = builder.AddMinIO("minio").WithHealthChecks();
+var builder = DistributedApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
+
+var minio = builder
+    .AddMinIO("minio")
+    .WithDataVolume();
 
 builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
-    .WithReference(minio, wait: true);
+    .WithReference(minio)
+    .WaitFor(minio);
 
 await builder.Build().RunAsync().ConfigureAwait(false);

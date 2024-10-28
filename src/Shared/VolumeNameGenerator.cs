@@ -29,41 +29,61 @@ internal static class VolumeNameGenerator
             throw new ArgumentException($"The suffix '{suffix}' contains invalid characters. Only [a-zA-Z0-9_.-] are allowed.", nameof(suffix));
         }
 
-        // Create volume name like "myapplication-postgres-data"
-        var applicationName = builder.ApplicationBuilder.Environment.ApplicationName;
+        // Creates a volume name with the form < c > $"{applicationName}-{sha256 of apphost path}-{resourceName}-{suffix}</c>, e.g. <c>"myapplication-a345f2451-postgres-data"</c>.
+        // Create volume name like "{Sanitize(appname).Lower()}-{sha256.Lower()}-postgres-data"
+
+        // Compute a short hash of the content root path to differentiate between multiple AppHost projects with similar volume names
+        var safeApplicationName = Sanitize(builder.ApplicationBuilder.Environment.ApplicationName).ToLowerInvariant();
+        var applicationHash = builder.ApplicationBuilder.Configuration["AppHost:Sha256"]![..10].ToLowerInvariant();
         var resourceName = builder.Resource.Name;
-        return $"{(HasOnlyValidChars(applicationName) ? applicationName : "volume")}-{resourceName}-{suffix}";
+        return $"{safeApplicationName}-{applicationHash}-{resourceName}-{suffix}";
     }
 
-    private static bool HasOnlyValidChars(string name)
-    {
-        // According to the error message from docker CLI, volume names must be of form "[a-zA-Z0-9][a-zA-Z0-9_.-]"
-        var nameSpan = name.AsSpan();
-
-        for (var i = 0; i < nameSpan.Length; i++)
+    /// <summary>
+    /// Sanitizes the name.
+    /// </summary>
+    /// <param name="name">The name to sanitize.</param>
+    /// <returns>The sanitized name.</returns>
+    public static string Sanitize(string name) =>
+        string.Create(name.Length, name, static (s, name) =>
         {
-            var c = nameSpan[i];
-
-            if (i is 0 && IsAsciiLetterOrNumber(c))
+            // According to the error message from docker CLI, volume names must be of form "[a-zA-Z0-9][a-zA-Z0-9_.-]"
+            var nameSpan = name.AsSpan();
+            for (var i = 0; i < nameSpan.Length; i++)
             {
-                // First char must be a letter or number
-                continue;
-            }
+                var c = nameSpan[i];
 
-            if (IsAsciiLetterOrNumber(c) || c is '_' or '.' or '-')
+                s[i] = IsValidChar(i, c) ? c : '_';
+            }
+        });
+
+    private static bool HasOnlyValidChars(string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (!IsValidChar(i, value[i]))
             {
-                // Subsequent chars must be a letter, number, underscore, period, or hyphen
-                continue;
+                return false;
             }
+        }
 
+        return true;
+    }
+
+    private static bool IsValidChar(int i, char c)
+    {
+        if (i == 0 && !(char.IsAsciiLetter(c) || char.IsNumber(c)))
+        {
+            // First char must be a letter or number
+            return false;
+        }
+
+        if (!(char.IsAsciiLetter(c) || char.IsNumber(c) || c == '_' || c == '.' || c == '-'))
+        {
+            // Subsequent chars must be a letter, number, underscore, period, or hyphen
             return false;
         }
 
         return true;
-
-        static bool IsAsciiLetterOrNumber(char c)
-        {
-            return char.IsAsciiLetter(c) || char.IsNumber(c);
-        }
     }
 }
