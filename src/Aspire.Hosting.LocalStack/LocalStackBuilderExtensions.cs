@@ -139,7 +139,7 @@ public static class LocalStackBuilderExtensions
             {
                 if (context.ExecutionContext.IsRunMode)
                 {
-                        context.EnvironmentVariables["LOCALSTACK_DEBUG"] = "1";
+                    context.EnvironmentVariables["LOCALSTACK_DEBUG"] = "1";
                 }
             })
             .WithEnvironment(context =>

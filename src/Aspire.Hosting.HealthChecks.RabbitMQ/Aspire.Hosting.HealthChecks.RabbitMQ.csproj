@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" />
   </ItemGroup>

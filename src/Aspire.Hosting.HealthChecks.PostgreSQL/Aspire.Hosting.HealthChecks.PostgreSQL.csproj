@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
   </ItemGroup>
