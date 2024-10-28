@@ -2,26 +2,26 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="8.2.1" />
-    <PackageVersion Include="Aspire.Npgsql" Version="8.2.1" />
-    <PackageVersion Include="Aspire.RabbitMq.Client" Version="8.2.1" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="8.2.2" />
+    <PackageVersion Include="Aspire.Npgsql" Version="8.2.2" />
+    <PackageVersion Include="Aspire.RabbitMq.Client" Version="8.2.2" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.301" />
-    <PackageVersion Include="AWSSDK.S3" Version="3.7.402.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.405.4" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.65.0" />
-    <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.65.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.65.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.65.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.66.0" />
+    <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.66.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.66.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.67.0" />
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="8.2.1" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="8.2.2" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />

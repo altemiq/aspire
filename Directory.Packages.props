@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting" Version="8.2.1" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="8.2.1" />
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="8.2.1" />
+    <PackageVersion Include="Aspire.Hosting" Version="8.2.2" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="8.2.2" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="8.2.2" />
   </ItemGroup>
 
   <ItemGroup Label="AspNetCore.HealthChecks">
@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Grpc.HealthCheck" Version="2.65.0" />
+    <PackageVersion Include="Grpc.HealthCheck" Version="2.66.0" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">

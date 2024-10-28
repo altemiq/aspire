@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="8.2.1" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="8.2.2" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
