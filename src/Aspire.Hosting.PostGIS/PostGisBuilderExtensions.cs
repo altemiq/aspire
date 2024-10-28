@@ -22,18 +22,36 @@ public static class PostGisBuilderExtensions
     /// <param name="password">The administrator password used for the container during local development. If null a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<PostgresServerResource> AddPostGis(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null)
+    public static IResourceBuilder<PostGisServerResource> AddPostGis(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(name);
 
-        var postgres = builder.AddPostgres(name, userName: userName, password: password, port: port);
+        if (builder.AddPostgres(name, userName: userName, password: password, port: port) is { Resource: { } postgresResource })
+        {
+            builder.Resources.Remove(postgresResource);
 
-        // update the container from POSTGRES to POSTGIS
-        _ = postgres
-            .WithImage(PostGis.PostGisContainerImageTags.Image, PostGis.PostGisContainerImageTags.Tag)
-            .WithImageRegistry(PostGis.PostGisContainerImageTags.Registry);
+            // remove all the values
+            var postgis = new ApplicationModel.PostGisServerResource(postgresResource.Name, postgresResource.UserNameParameter, postgresResource.PasswordParameter);
 
-        return postgres;
+            var resourceBuilder = builder.AddResource(postgis);
+
+            foreach (var annotation in postgresResource.Annotations)
+            {
+                if (annotation is ContainerImageAnnotation containerImageAnnotation)
+                {
+                    // update the container from POSTGRES to POSTGIS
+                    containerImageAnnotation.Registry = PostGis.PostGisContainerImageTags.Registry;
+                    containerImageAnnotation.Image = PostGis.PostGisContainerImageTags.Image;
+                    containerImageAnnotation.Tag = PostGis.PostGisContainerImageTags.Tag;
+                }
+
+                resourceBuilder.WithAnnotation(annotation);
+            }
+
+            return resourceBuilder;
+        }
+
+        throw new InvalidOperationException();
     }
 }
