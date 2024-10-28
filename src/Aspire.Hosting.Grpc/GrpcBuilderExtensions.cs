@@ -48,7 +48,7 @@ public static class GrpcBuilderExtensions
                 healthCheckKey,
                 _ => uri switch
                 {
-                    null => throw new DistributedApplicationException($"The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
+                    null => throw new DistributedApplicationException("The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
                     _ => new GrpcHealthCheck(global::Grpc.Net.Client.GrpcChannel.ForAddress(uri)),
                 },
                 failureStatus: null,
@@ -66,9 +66,19 @@ public static class GrpcBuilderExtensions
     /// <param name="builder">The resource builder.</param>
     /// <param name="configureContainer">Callback to configure GrpcUI container resource.</param>
     /// <param name="containerName">The name of the container (Optional).</param>
-    /// <param name="wait">Set to <see langword="true"/> to wait for <paramref name="builder"/>; otherwise <see langword="false"/>.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<GrpcUIContainerResource>>? configureContainer = null, string? containerName = default, bool wait = true)
+    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<GrpcUIContainerResource>>? configureContainer = null, string? containerName = default)
+        where T : IResourceWithEndpoints => builder.WithGrpcUI((_, c) => configureContainer?.Invoke(c), containerName);
+
+    /// <summary>
+    /// Adds a grpcui platform to the application model.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="configureContainer">Callback to configure GrpcUI container resource.</param>
+    /// <param name="containerName">The name of the container (Optional).</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<T>, IResourceBuilder<GrpcUIContainerResource>>? configureContainer = null, string? containerName = default)
         where T : IResourceWithEndpoints
     {
         // get the end point type
@@ -92,14 +102,7 @@ public static class GrpcBuilderExtensions
         var resource = builder.ApplicationBuilder
             .AddResource(new GrpcUIContainerResource(containerName))
             .WithImage(Grpc.GrpcUIContainerImageTags.Image, Grpc.GrpcUIContainerImageTags.Tag)
-            .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry);
-
-        if (wait && builder is IResourceBuilder<IResource> resourceBuilder)
-        {
-            resource.WaitFor(resourceBuilder);
-        }
-
-        resource
+            .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry)
             .ExcludeFromManifest();
 
         resource.WithArgs(context =>
@@ -119,7 +122,7 @@ public static class GrpcBuilderExtensions
             resource.WithHttpEndpoint(targetPort: Port);
         }
 
-        configureContainer?.Invoke(resource);
+        configureContainer?.Invoke(builder, resource);
 
         return builder;
 

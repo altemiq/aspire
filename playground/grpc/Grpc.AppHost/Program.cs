@@ -6,8 +6,8 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.Grpc_ApiService>("grpc-apiservice", Uri.UriSchemeHttp)
+_ = builder.AddProject<Projects.Grpc_ApiService>("grpc-apiservice", Uri.UriSchemeHttp)
     .WithGrpcHealthCheck(Uri.UriSchemeHttp, Uri.UriSchemeHttp)
-    .WithGrpcUI();
+    .WithGrpcUI((api, grpc) => grpc.WaitFor(api));
 
 await builder.Build().RunAsync().ConfigureAwait(false);
