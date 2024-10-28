@@ -2,9 +2,9 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="8.1.0" />
-    <PackageVersion Include="Aspire.Npgsql" Version="8.1.0" />
-    <PackageVersion Include="Aspire.RabbitMq.Client" Version="8.1.0" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="8.2.1" />
+    <PackageVersion Include="Aspire.Npgsql" Version="8.2.1" />
+    <PackageVersion Include="Aspire.RabbitMq.Client" Version="8.2.1" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="8.7.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="8.1.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="8.2.1" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
