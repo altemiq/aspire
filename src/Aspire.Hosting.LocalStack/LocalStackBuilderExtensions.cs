@@ -135,7 +135,13 @@ public static class LocalStackBuilderExtensions
             .WithImage(LocalStack.LocalStackContainerImageTags.Image, LocalStack.LocalStackContainerImageTags.Tag)
             .WithImageRegistry(LocalStack.LocalStackContainerImageTags.Registry)
             .WithHttpEndpoint(port, targetPort: 4566)
-            .WithEnvironment("LOCALSTACK_DEBUG", "1")
+            .WithEnvironment(context =>
+            {
+                if (context.ExecutionContext.IsRunMode)
+                {
+                        context.EnvironmentVariables["LOCALSTACK_DEBUG"] = "1";
+                }
+            })
             .WithEnvironment(context =>
             {
                 if (localStack.Services != default)
