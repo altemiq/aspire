@@ -7,6 +7,7 @@
 namespace Aspire.Hosting;
 
 using Aspire.Hosting.ApplicationModel;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extensions for <c>PostGIS</c>.
@@ -27,16 +28,17 @@ public static class PostGisBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(name);
 
-        if (builder.AddPostgres(name, userName: userName, password: password, port: port) is { Resource: { } postgresResource })
+        if (builder.AddPostgres(name, userName: userName, password: password, port: port) is { Resource: { } postgresServer })
         {
-            builder.Resources.Remove(postgresResource);
+            builder.Resources.Remove(postgresServer);
 
             // remove all the values
-            var postgis = new ApplicationModel.PostGisServerResource(postgresResource.Name, postgresResource.UserNameParameter, postgresResource.PasswordParameter);
+            var postgisServer = new ApplicationModel.PostGisServerResource(postgresServer.Name, postgresServer.UserNameParameter, postgresServer.PasswordParameter);
 
-            var resourceBuilder = builder.AddResource(postgis);
+            var resourceBuilder = builder.AddResource(postgisServer);
 
-            foreach (var annotation in postgresResource.Annotations)
+            string? healthCheckKey = default;
+            foreach (var annotation in postgresServer.Annotations)
             {
                 if (annotation is ContainerImageAnnotation containerImageAnnotation)
                 {
@@ -46,7 +48,45 @@ public static class PostGisBuilderExtensions
                     containerImageAnnotation.Tag = PostGis.PostGisContainerImageTags.Tag;
                 }
 
+                if (annotation is HealthCheckAnnotation healthCheckAnnotation)
+                {
+                    healthCheckKey = healthCheckAnnotation.Key;
+                }
+
                 resourceBuilder.WithAnnotation(annotation);
+            }
+
+            if (healthCheckKey is not null)
+            {
+                string? connectionString = null;
+
+                builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, cancellationToken) =>
+                {
+                    connectionString = await postgisServer.GetConnectionStringAsync(cancellationToken).ConfigureAwait(false);
+
+                    if (connectionString is null)
+                    {
+                        throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
+                    }
+                });
+
+                // remove any before we add the new one
+                builder.Services.Configure<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckServiceOptions>(options =>
+                {
+                    // remove the current health check
+                    if (options.Registrations.FirstOrDefault(registration => string.Equals(registration.Name, healthCheckKey, StringComparison.OrdinalIgnoreCase)) is { } registration)
+                    {
+                        options.Registrations.Remove(registration);
+                    }
+                });
+
+                // add the new health check
+                builder.Services
+                    .AddHealthChecks()
+                    .AddNpgSql(
+                        _ => connectionString ?? throw new InvalidOperationException("Connection string is unavailable"),
+                        configure: (connection) => connection.ConnectionString += ";Database=postgres;",
+                        name: healthCheckKey);
             }
 
             return resourceBuilder;
