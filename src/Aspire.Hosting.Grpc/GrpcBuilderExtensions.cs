@@ -105,12 +105,16 @@ public static class GrpcBuilderExtensions
             .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry)
             .ExcludeFromManifest();
 
-        resource.WithArgs(context =>
+        resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) =>
         {
-            foreach (var arg in GetArgs(builder, resource, endpointType))
+            resource.WithArgs(context =>
             {
-                context.Args.Add(arg);
-            }
+                foreach (var arg in GetArgs(builder, resource, endpointType))
+                {
+                    context.Args.Add(arg);
+                }
+            });
+            return Task.CompletedTask;
         });
 
         if (string.Equals(endpointType, Uri.UriSchemeHttps, StringComparison.Ordinal))
