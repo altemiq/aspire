@@ -4,7 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+
 var builder = DistributedApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
 
 var localstack = builder
     .AddLocalStack("localstack", services: LocalStackServices.Community.SimpleStorageService)

@@ -65,8 +65,7 @@ public static class LocalStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(source);
 
-        _ = builder
-            .WithReference(source);
+        Aspire.Hosting.ResourceBuilderExtensions.WithReference(builder, source);
 
         _ = builder.WithEnvironment((context) =>
         {
@@ -164,7 +163,7 @@ public static class LocalStackBuilderExtensions
                     healthCheckKey,
                     serviceProvider => uri switch
                     {
-                        null => throw new DistributedApplicationException($"The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
+                        null => throw new DistributedApplicationException("The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
                         _ => new Aspire.Hosting.LocalStack.LocalStackHealthCheck(serviceProvider.GetRequiredService<HttpClient>) { Uri = uri, Services = services },
                     },
                     failureStatus: null,
