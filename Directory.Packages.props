@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting" Version="9.0.0-rc.1.24511.1" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.0.0-rc.1.24511.1" />
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="9.0.0-rc.1.24511.1" />
+    <PackageVersion Include="Aspire.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.0.0" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="AspNetCore.HealthChecks">

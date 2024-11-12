@@ -2,14 +2,14 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.0.0-rc.1.24511.1" />
-    <PackageVersion Include="Aspire.Npgsql" Version="9.0.0-rc.1.24511.1" />
-    <PackageVersion Include="Aspire.RabbitMq.Client" Version="9.0.0-rc.1.24511.1" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.0.0" />
+    <PackageVersion Include="Aspire.Npgsql" Version="9.0.0" />
+    <PackageVersion Include="Aspire.RabbitMq.Client" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.301" />
-    <PackageVersion Include="AWSSDK.S3" Version="3.7.405.4" />
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.405.13" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
@@ -20,10 +20,10 @@
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.0.0-rc.1.24511.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.0.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.10.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.9.0" />
