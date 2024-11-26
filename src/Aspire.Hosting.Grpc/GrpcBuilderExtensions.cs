@@ -146,8 +146,6 @@ public static class GrpcBuilderExtensions
             }
         }
 
-        const int Port = 8080;
-
         resourceName ??= $"{builder.Resource.Name}-grpcui";
 
         var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
@@ -165,18 +163,42 @@ public static class GrpcBuilderExtensions
             return Task.CompletedTask;
         });
 
-        if (string.Equals(endpointType, Uri.UriSchemeHttps, StringComparison.Ordinal))
-        {
-            resource.WithHttpsEndpoint(targetPort: Port);
-        }
-        else if (string.Equals(endpointType, Uri.UriSchemeHttp, StringComparison.Ordinal))
-        {
-            resource.WithHttpEndpoint(targetPort: Port);
-        }
+        resource.WithEndpoint(targetPort: GetTargetPort(resource.Resource), scheme: endpointType);
 
         configureResource?.Invoke(builder, resource);
 
         return builder;
+
+        static int? GetTargetPort(IResource resource)
+        {
+            const int DefaultPort = 8080;
+
+            return resource is ContainerResource
+                ? DefaultPort
+                : FindFreePort();
+
+            static int? FindFreePort()
+            {
+                using var socket = new System.Net.Sockets.Socket(
+                    System.Net.Sockets.AddressFamily.InterNetwork,
+                    System.Net.Sockets.SocketType.Stream,
+                    System.Net.Sockets.ProtocolType.Tcp);
+                try
+                {
+                    socket.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0));
+                    if (socket.LocalEndPoint is System.Net.IPEndPoint localEndPoint)
+                    {
+                        return localEndPoint.Port;
+                    }
+                }
+                finally
+                {
+                    socket.Close();
+                }
+
+                return null;
+            }
+        }
 
         static IEnumerable<string> GetArgs(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
         {
