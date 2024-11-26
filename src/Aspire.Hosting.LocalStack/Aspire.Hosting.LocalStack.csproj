@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <Compile Include="$(SharedDir)VolumeNameGenerator.cs" Link="Utils\VolumeNameGenerator.cs" />
-    <Compile Include="$(SharedDir)ConfigurationExtensions.cs" Link="Utils\ConfigurationExtensions.cs" />
   </ItemGroup>
 
 </Project>

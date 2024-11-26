@@ -64,6 +64,16 @@ public static class GrpcBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
+    /// <param name="containerName">The name of the container (Optional).</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, string? containerName = default)
+        where T : IResourceWithEndpoints => builder.WithGrpcUI(default(Action<IResourceBuilder<T>, IResourceBuilder<GrpcUIContainerResource>>), containerName);
+
+    /// <summary>
+    /// Adds a grpcui platform to the application model.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
     /// <param name="configureContainer">Callback to configure GrpcUI container resource.</param>
     /// <param name="containerName">The name of the container (Optional).</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
@@ -75,11 +85,52 @@ public static class GrpcBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
+    /// <param name="configureExecutable">Callback to configure GrpcUI executable resource.</param>
+    /// <param name="executableName">The name of the executable (Optional).</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<GrpcUIExecutableResource>>? configureExecutable = null, string? executableName = default)
+        where T : IResourceWithEndpoints => builder.WithGrpcUI((_, c) => configureExecutable?.Invoke(c), executableName);
+
+    /// <summary>
+    /// Adds a grpcui platform to the application model.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
     /// <param name="configureContainer">Callback to configure GrpcUI container resource.</param>
     /// <param name="containerName">The name of the container (Optional).</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<T>, IResourceBuilder<GrpcUIContainerResource>>? configureContainer = null, string? containerName = default)
-        where T : IResourceWithEndpoints
+        where T : IResourceWithEndpoints => WithGrpcUI(
+            builder,
+            (applicationBuilder, name) => applicationBuilder
+                .AddResource(new GrpcUIContainerResource(name))
+                .WithImage(Grpc.GrpcUIContainerImageTags.Image, Grpc.GrpcUIContainerImageTags.Tag)
+                .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry),
+            configureContainer,
+            containerName);
+
+    /// <summary>
+    /// Adds a grpcui platform to the application model.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="configureExecutable">Callback to configure GrpcUI executable resource.</param>
+    /// <param name="executableName">The name of the executable (Optional).</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<T>, IResourceBuilder<GrpcUIExecutableResource>>? configureExecutable = null, string? executableName = default)
+        where T : IResourceWithEndpoints => WithGrpcUI(
+            builder,
+            (applicationBuilder, name) => applicationBuilder.AddResource(new GrpcUIExecutableResource(name)),
+            configureExecutable,
+            executableName);
+
+    private static IResourceBuilder<TResource> WithGrpcUI<TResource, TGrpcResource>(
+        IResourceBuilder<TResource> builder,
+        Func<IDistributedApplicationBuilder, string, IResourceBuilder<TGrpcResource>> factory,
+        Action<IResourceBuilder<TResource>, IResourceBuilder<TGrpcResource>>? configureResource,
+        string? resourceName)
+        where TResource : IResourceWithEndpoints
+        where TGrpcResource : IResourceWithEndpoints, IResourceWithArgs
     {
         // get the end point type
         var endpointType = "tcp";
@@ -97,13 +148,9 @@ public static class GrpcBuilderExtensions
 
         const int Port = 8080;
 
-        containerName ??= $"{builder.Resource.Name}-grpcui";
+        resourceName ??= $"{builder.Resource.Name}-grpcui";
 
-        var resource = builder.ApplicationBuilder
-            .AddResource(new GrpcUIContainerResource(containerName))
-            .WithImage(Grpc.GrpcUIContainerImageTags.Image, Grpc.GrpcUIContainerImageTags.Tag)
-            .WithImageRegistry(Grpc.GrpcUIContainerImageTags.Registry)
-            .ExcludeFromManifest();
+        var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
 
         resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) =>
         {
@@ -114,6 +161,7 @@ public static class GrpcBuilderExtensions
                     context.Args.Add(arg);
                 }
             });
+
             return Task.CompletedTask;
         });
 
@@ -126,12 +174,11 @@ public static class GrpcBuilderExtensions
             resource.WithHttpEndpoint(targetPort: Port);
         }
 
-        configureContainer?.Invoke(builder, resource);
+        configureResource?.Invoke(builder, resource);
 
         return builder;
 
-        static IEnumerable<string> GetArgs<TResource>(IResourceBuilder<T> builder, IResourceBuilder<TResource> resource, string endpointType)
-            where TResource : IResourceWithEndpoints
+        static IEnumerable<string> GetArgs(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
         {
             const int Timeout = 3600;
 
