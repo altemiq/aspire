@@ -8,13 +8,13 @@ namespace Aspire.Hosting.LocalStack.Tests;
 
 public class AddLocalStackTests
 {
-    [Fact]
-    public void AddLocalStackGetsCorrectServiceNames()
+    [Test]
+    public async Task AddLocalStackGetsCorrectServiceNames()
     {
         var appBuilder = DistributedApplication.CreateBuilder();
 
         var localStack = appBuilder.AddLocalStack("localStack", services: LocalStackServices.Community.CloudWatch | LocalStackServices.Community.SimpleStorageService);
 
-        Assert.Equal(["S3", "CloudWatch"], localStack.Resource.GetServiceNames());
+        await Assert.That(localStack.Resource.GetServiceNames()).IsEquivalentTo(["S3", "CloudWatch"]);
     }
 }

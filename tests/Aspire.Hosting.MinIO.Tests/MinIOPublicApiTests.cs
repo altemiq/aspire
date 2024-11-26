@@ -8,8 +8,8 @@ namespace Aspire.Hosting.MinIO.Tests;
 
 public class MinIOPublicApiTests
 {
-    [Fact]
-    public void AddMinIOContainerShouldThrowWhenBuilderIsNull()
+    [Test]
+    public async Task AddMinIOContainerShouldThrowWhenBuilderIsNull()
     {
         IDistributedApplicationBuilder builder = null!;
         const string name = "minIO";
@@ -19,12 +19,11 @@ public class MinIOPublicApiTests
             return builder.AddMinIO(name);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(builder), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
-    [Fact]
-    public void AddMinIOContainerShouldThrowWhenNameIsNull()
+    [Test]
+    public async Task AddMinIOContainerShouldThrowWhenNameIsNull()
     {
         var builder = DistributedApplication.CreateBuilder([]);
         const string name = null!;
@@ -34,12 +33,11 @@ public class MinIOPublicApiTests
             return builder.AddMinIO(name);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(name), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
     }
 
-    [Fact]
-    public void WithDataVolumeShouldThrowWhenBuilderIsNull()
+    [Test]
+    public async Task WithDataVolumeShouldThrowWhenBuilderIsNull()
     {
         IResourceBuilder<MinIOServerResource> builder = null!;
 
@@ -48,12 +46,11 @@ public class MinIOPublicApiTests
             return builder.WithDataVolume();
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(builder), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
-    [Fact]
-    public void WithDataBindMountShouldThrowWhenBuilderIsNull()
+    [Test]
+    public async Task WithDataBindMountShouldThrowWhenBuilderIsNull()
     {
         IResourceBuilder<MinIOServerResource> builder = null!;
         const string source = "/minIO/data";
@@ -63,12 +60,11 @@ public class MinIOPublicApiTests
             return builder.WithDataBindMount(source);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(builder), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
-    [Fact]
-    public void WithDataBindMountShouldThrowWhenSourceIsNull()
+    [Test]
+    public async Task WithDataBindMountShouldThrowWhenSourceIsNull()
     {
         var builderResource = DistributedApplication.CreateBuilder();
         var minIO = builderResource.AddMinIO("minIO");
@@ -79,12 +75,11 @@ public class MinIOPublicApiTests
             return minIO.WithDataBindMount(source);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(source), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(source));
     }
 
-    [Fact]
-    public void CtorMinIOServerResourceShouldThrowWhenNameIsNull()
+    [Test]
+    public async Task CtorMinIOServerResourceShouldThrowWhenNameIsNull()
     {
         var distributedApplicationBuilder = DistributedApplication.CreateBuilder([]);
         const string name = null!;
@@ -95,12 +90,11 @@ public class MinIOPublicApiTests
             return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(name), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
     }
 
-    [Fact]
-    public void CtorMinIOServerResourceShouldThrowWhenPasswordIsNull()
+    [Test]
+    public async Task CtorMinIOServerResourceShouldThrowWhenPasswordIsNull()
     {
         const string name = "minIO";
         ParameterResource password = null!;
@@ -110,7 +104,6 @@ public class MinIOPublicApiTests
             return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(password), exception.ParamName);
+        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(password));
     }
 }

@@ -8,23 +8,23 @@ namespace Aspire.Hosting.MinIO.Tests;
 
 public class AddMinIOTests
 {
-    [Fact]
-    public void AddMinIOAddsGeneratedPasswordParameterWithUserSecretsParameterDefaultInRunMode()
+    [Test]
+    public async Task AddMinIOAddsGeneratedPasswordParameterWithUserSecretsParameterDefaultInRunMode()
     {
         var appBuilder = DistributedApplication.CreateBuilder();
 
         var minio = appBuilder.AddMinIO("minio");
 
-        Assert.Equal("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault", minio.Resource.PasswordParameter.Default?.GetType().FullName);
+        await Assert.That(minio.Resource.PasswordParameter.Default?.GetType().FullName).IsEqualTo("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault");
     }
 
-    [Fact]
-    public void AddMinIODoesNotAddGeneratedPasswordParameterWithUserSecretsParameterDefaultInPublishMode()
+    [Test]
+    public async Task AddMinIODoesNotAddGeneratedPasswordParameterWithUserSecretsParameterDefaultInPublishMode()
     {
         var appBuilder = DistributedApplication.CreateBuilder(["Publishing:Publisher=manifest"]);
 
         var minio = appBuilder.AddMinIO("minio");
 
-        Assert.NotEqual("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault", minio.Resource.PasswordParameter.Default?.GetType().FullName);
+        await Assert.That(minio.Resource.PasswordParameter.Default?.GetType().FullName).IsNotEqualTo("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault");
     }
 }

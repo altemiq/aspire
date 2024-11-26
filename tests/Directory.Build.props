@@ -9,11 +9,12 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="xunit" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="TUnit" />
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Xunit" />
+    <Using Include="TUnit" />
   </ItemGroup>
 
   <PropertyGroup>

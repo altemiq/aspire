@@ -43,15 +43,15 @@ jobs:
     - name: Test with dotnet
       run: >
         dotnet test
-        --no-restore
+        --
         --results-directory ${{ github.workspace }}/coverage/results
-        --settings ${{ github.workspace }}/tests/coverage.runsettings
-        --logger GitHubActions
+        --coverage
+        --coverage-output-format cobertura
 
     - name: Report Generator
       uses: danielpalme/ReportGenerator-GitHub-Action@v5
       with:
-        reports: '${{ github.workspace }}/coverage/results/*/*.cobertura.xml'
+        reports: "${{ github.workspace }}/coverage/results/*.cobertura.xml"
         targetdir: '${{ github.workspace }}/coverage/reports'
         reporttypes: 'HtmlInline;Cobertura;MarkdownSummaryGithub'
         verbosity: 'Verbose'

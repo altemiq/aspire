@@ -10,14 +10,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageVersion Include="xunit" Version="2.9.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <GlobalPackageReference Include="coverlet.collector" Version="6.0.2" />
-    <GlobalPackageReference Include="GitHubActionsTestLogger" Version="2.4.1" />
-    <GlobalPackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.12.6" />
+    <PackageVersion Include="TUnit" Version="0.4.1" />
   </ItemGroup>
 
 </Project>

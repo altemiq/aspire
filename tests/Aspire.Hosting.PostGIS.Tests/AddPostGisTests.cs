@@ -8,33 +8,33 @@ namespace Aspire.Hosting.PostGIS.Tests;
 
 public class AddPostGisTests
 {
-    [Fact]
-    public void AddPostGisAddsGeneratedPasswordParameterWithUserSecretsParameterDefaultInRunMode()
+    [Test]
+    public async Task AddPostGisAddsGeneratedPasswordParameterWithUserSecretsParameterDefaultInRunMode()
     {
         var appBuilder = DistributedApplication.CreateBuilder();
 
         var postGis = appBuilder.AddPostGis("postgis");
 
-        Assert.Equal("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault", postGis.Resource.PasswordParameter.Default?.GetType().FullName);
+        await Assert.That(postGis.Resource.PasswordParameter.Default?.GetType().FullName).IsEqualTo("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault");
     }
 
-    [Fact]
-    public void AddPostGisDoesNotAddGeneratedPasswordParameterWithUserSecretsParameterDefaultInPublishMode()
+    [Test]
+    public async Task AddPostGisDoesNotAddGeneratedPasswordParameterWithUserSecretsParameterDefaultInPublishMode()
     {
-        var appBuilder = DistributedApplication.CreateBuilder(["Publishing:Publisher=manifest"]);
+        var appBuilder = DistributedApplication.CreateBuilder(["--publisher", "manifest"]);
 
         var postGis = appBuilder.AddPostGis("postgis");
 
-        Assert.NotEqual("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault", postGis.Resource.PasswordParameter.Default?.GetType().FullName);
+        await Assert.That(postGis.Resource.PasswordParameter.Default?.GetType().FullName).IsNotEqualTo("Aspire.Hosting.ApplicationModel.UserSecretsParameterDefault");
     }
 
-    [Fact]
-    public void AddPostGisChangesTheImage()
+    [Test]
+    public async Task AddPostGisChangesTheImage()
     {
         var appBuilder = DistributedApplication.CreateBuilder();
 
         var postGis = appBuilder.AddPostGis("postgis");
 
-        Assert.Equal("postgis/postgis", postGis.Resource.Annotations.OfType<ContainerImageAnnotation>().Single().Image);
+        await Assert.That(postGis.Resource.Annotations.OfType<ContainerImageAnnotation>().Single().Image).IsEqualTo("postgis/postgis");
     }
 }

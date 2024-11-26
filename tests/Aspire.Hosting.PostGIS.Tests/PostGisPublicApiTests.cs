@@ -8,8 +8,8 @@ namespace Aspire.Hosting.PostGIS.Tests;
 
 public class PostGISPublicApiTests
 {
-    [Fact]
-    public void AddPostGISContainerShouldThrowWhenBuilderIsNull()
+    [Test]
+   public async Task AddPostGISContainerShouldThrowWhenBuilderIsNull()
     {
         IDistributedApplicationBuilder builder = null!;
         const string name = "postGIS";
@@ -19,12 +19,13 @@ public class PostGISPublicApiTests
             return builder.AddPostGis(name);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(builder), exception.ParamName);
+        await Assert.That(Action)
+            .ThrowsExactly<ArgumentNullException>()
+            .And.HasMember(m => m.ParamName).EqualTo(nameof(builder));
     }
 
-    [Fact]
-    public void AddPostGISContainerShouldThrowWhenNameIsNull()
+    [Test]
+    public async Task AddPostGISContainerShouldThrowWhenNameIsNull()
     {
         var builder = DistributedApplication.CreateBuilder([]);
         const string name = null!;
@@ -34,7 +35,8 @@ public class PostGISPublicApiTests
             return builder.AddPostGis(name);
         }
 
-        var exception = Assert.Throws<ArgumentNullException>(Action);
-        Assert.Equal(nameof(name), exception.ParamName);
+        await Assert.That(Action)
+            .ThrowsExactly<ArgumentNullException>()
+            .And.HasMember(m => m.ParamName).EqualTo(nameof(name));
     }
 }
