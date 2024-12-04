@@ -69,7 +69,6 @@ public static class LocalStackBuilderExtensions
 
         _ = builder.WithEnvironment((context) =>
         {
-            context.EnvironmentVariables["AWS__Region"] = source.Resource.Region;
 
             context.EnvironmentVariables[$"{LocalStackConfigSection}__UseLocalStack"] = bool.TrueString;
 
@@ -95,6 +94,18 @@ public static class LocalStackBuilderExtensions
             return endpointName is null ? resource.GetEndpoints().FirstOrDefault() : resource.GetEndpoint(endpointName);
         }
     }
+
+    /// <summary>
+    /// Adds a Local-Stack container to the application.
+    /// </summary>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
+    /// <param name="name">The name of the resource.</param>
+    /// <param name="port">The port.</param>
+    /// <param name="regionEndPoint">The region end point.</param>
+    /// <param name="services">The requested services.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+    public static IResourceBuilder<LocalStackServerResource> AddLocalStack(this IDistributedApplicationBuilder builder, string name, int? port = null, Amazon.RegionEndpoint? regionEndPoint = null, LocalStackServices.Community services = default) => AddLocalStack(builder, name, port, regionEndPoint?.SystemName, services);
 
     /// <summary>
     /// Adds a Local-Stack container to the application.

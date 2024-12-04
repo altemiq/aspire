@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\..\..\src\Aspire.Hosting.LocalStack\Aspire.Hosting.LocalStack.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\LocalStack.ApiService\LocalStack.ApiService.csproj" />
   </ItemGroup>
