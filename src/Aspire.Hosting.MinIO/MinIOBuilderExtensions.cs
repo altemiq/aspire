@@ -38,8 +38,14 @@ public static class MinIOBuilderExtensions
         {
             // environment config
             context.EnvironmentVariables["AWS_ENDPOINT_URL_S3"] = source.Resource.GetEndpoint(ApiEndpointName);
-            context.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = source.Resource.UserNameReference;
-            context.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = source.Resource.PasswordParameter;
+
+            // only set the access keys if we do not have profiles set
+            if (!source.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out _))
+            {
+                context.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = source.Resource.UserNameReference;
+                context.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = source.Resource.PasswordParameter;
+            }
+
             context.EnvironmentVariables["AWS_EC2_METADATA_DISABLED"] = bool.TrueString;
 
             // .NET AWS SDK config
@@ -50,6 +56,15 @@ public static class MinIOBuilderExtensions
 
         return builder;
     }
+
+    /// <summary>
+    /// Adds the configuration resource to the MinIO container resource.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="configuration">The configuration builder.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MinIOServerResource> WithReference(this IResourceBuilder<MinIOServerResource> builder, IResourceBuilder<AWS.IAWSProfileConfig> configuration) =>
+        builder.WithConfiguration(configuration.Resource);
 
     /// <summary>
     /// Adds a named volume for the data folder to a MinIO container resource.
@@ -81,6 +96,46 @@ public static class MinIOBuilderExtensions
     }
 
     /// <summary>
+    /// Adds the configuration to the MinIO container resource.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MinIOServerResource> WithConfiguration(this IResourceBuilder<MinIOServerResource> builder, AWS.IAWSProfileConfig configuration)
+    {
+        foreach (var profile in configuration.Profiles)
+        {
+            _ = builder.WithProfile(profile);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds the profile to the MinIO container resource.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="profile">The profile.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MinIOServerResource> WithProfile(this IResourceBuilder<MinIOServerResource> builder, AWS.AWSProfile profile) =>
+        builder.WithAnnotation(new AWSProfileAnnotation { Profile = profile });
+
+    /// <summary>
+    /// Adds a MinIO container to the application.
+    /// </summary>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
+    /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
+    /// <param name="userName">The parameter used to provide the user name for the MinIO resource. If <see langword="null"/> a default value will be used.</param>
+    /// <param name="password">The parameter used to provide the administrator password for the MinIO resource. If <see langword="null"/> a random password will be generated.</param>
+    /// <param name="apiPort">The API port.</param>
+    /// <param name="consolePort">The console port.</param>
+    /// <param name="regionEndPoint">The region end point.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+    public static IResourceBuilder<MinIOServerResource> AddMinIO(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? apiPort = null, int? consolePort = null, Amazon.RegionEndpoint? regionEndPoint = null) =>
+        builder.AddMinIO(name, userName, password, apiPort, consolePort, regionEndPoint?.SystemName);
+
+    /// <summary>
     /// Adds a MinIO container to the application.
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
@@ -98,11 +153,15 @@ public static class MinIOBuilderExtensions
 
         const int ApiPort = 9000;
         const int ConsolePort = 9001;
+        const string Alias = "aspire";
 
         var passwordParameter = password?.Resource ?? ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder, $"{name}-password");
         region ??= "us-east-1";
 
         var minIOServer = new MinIOServerResource(name, userName?.Resource, passwordParameter, region);
+
+        builder.Eventing.Subscribe<Aspire.Hosting.ApplicationModel.ResourceReadyEvent>(minIOServer, AddUsers);
+
         return builder.AddResource(minIOServer)
             .WithImage(MinIO.MinIOContainerImageTags.Image, MinIO.MinIOContainerImageTags.Tag)
             .WithImageRegistry(MinIO.MinIOContainerImageTags.Registry)
@@ -117,8 +176,67 @@ public static class MinIOBuilderExtensions
             .WithEnvironment("MINIO_ADDRESS", () => $":{ApiPort}")
             .WithEnvironment("MINIO_CONSOLE_ADDRESS", () => $":{ConsolePort}")
             .WithEnvironment("MINIO_REGION", region)
+            .WithEnvironment(context => context.EnvironmentVariables[$"MC_HOST_{Alias}"] = $"{Uri.UriSchemeHttp}://{minIOServer.UserNameReference.ValueExpression}:{minIOServer.PasswordParameter.Value}@localhost:{ApiPort}")
             .WithArgs("server", DataLocation)
             .WithHttpHealthCheck(path: "minio/health/live", endpointName: ApiEndpointName)
             .PublishAsContainer();
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
+        static async Task AddUsers(ApplicationModel.ResourceReadyEvent e, CancellationToken ct)
+        {
+            var type = typeof(Aspire.Hosting.ApplicationModel.ResourceExtensions);
+            if (type.GetMethod("GetResolvedResourceNames", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic) is { } method
+                && method.Invoke(null, [e.Resource]) is IEnumerable<string> names
+                && names.FirstOrDefault() is { } name
+                && e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
+            {
+                // get name
+                var fileName = Environment.GetEnvironmentVariable("DOTNET_ASPIRE_CONTAINER_RUNTIME") ?? "docker";
+
+                foreach (var profile in profiles.Select(x => x.Profile))
+                {
+                    await AddUser(fileName, name, profile, ct).ConfigureAwait(false);
+                    await AttachPolicy(fileName, name, profile, ct).ConfigureAwait(false);
+                }
+            }
+
+            static Task<int> AddUser(string containerRuntime, string containerName, AWS.AWSProfile profile, CancellationToken cancellationToken)
+            {
+                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "user", "add", Alias, profile.AccessKeyId.Value, profile.SecretAccessKey.Value], cancellationToken);
+            }
+
+            static Task<int> AttachPolicy(string containerRuntime, string containerName, AWS.AWSProfile profile, CancellationToken cancellationToken)
+            {
+                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], cancellationToken);
+            }
+
+            static async Task<int> RunProcess(string fileName, IEnumerable<string> arguments, CancellationToken cancellationToken)
+            {
+                var processStartInfo = new System.Diagnostics.ProcessStartInfo(fileName)
+                {
+                    CreateNoWindow = true,
+                    WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+                };
+
+                foreach (var argument in arguments)
+                {
+                    processStartInfo.ArgumentList.Add(argument);
+                }
+
+                if (System.Diagnostics.Process.Start(processStartInfo) is { } process)
+                {
+                    await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                    return process.ExitCode;
+                }
+
+                return -1;
+            }
+        }
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "Checked")]
+    private sealed class AWSProfileAnnotation : ApplicationModel.IResourceAnnotation
+    {
+        public required AWS.AWSProfile Profile { get; init; }
     }
 }
