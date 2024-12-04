@@ -7,7 +7,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var db1 = builder.AddPostGis("db1");
-db1.WithPgAdmin(c => c.WaitFor(db1));
+db1.WithPgAdmin(c => c.WaitFor(db1).WithImageTag("8"));
 
 var database = db1.AddDatabase("db1-database");
 
