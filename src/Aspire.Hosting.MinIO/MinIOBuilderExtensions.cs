@@ -50,7 +50,7 @@ public static class MinIOBuilderExtensions
 
             // .NET AWS SDK config
             context.EnvironmentVariables["AWS__ForcePathStyle"] = bool.TrueString;
-            context.EnvironmentVariables["AWS__Region"] = source.Resource.Region;
+            context.EnvironmentVariables["AWS__AuthenticationRegion"] = source.Resource.Region;
             context.EnvironmentVariables["AWS__UseAccelerateEndpoint"] = bool.FalseString;
         });
 
