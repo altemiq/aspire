@@ -5,6 +5,7 @@
     <PackageVersion Include="Altemiq.Runtime" Version="1.2.0" />
     <PackageVersion Include="Tool.Grpc.UI" Version="1.4.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="8.0.2" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>$(RootNamespace.Replace('.AWS.Configuration', ''))</RootNamespace>
+    <NoWarn>$(NoWarn);S101</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AWS" />
+  </ItemGroup>
+
+</Project>

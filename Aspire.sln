@@ -84,6 +84,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\build.yml = .github\workflows\build.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.AWS.Configuration", "src\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj", "{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -158,6 +160,10 @@ Global
 		{6AD8F829-407A-425D-80FF-3F37B6EEA9D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AD8F829-407A-425D-80FF-3F37B6EEA9D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AD8F829-407A-425D-80FF-3F37B6EEA9D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -186,6 +192,7 @@ Global
 		{C998B4C6-2781-4ED9-8C95-471F65556912} = {E760AE97-EDCB-463C-8751-ADDAB983FFAB}
 		{6AD8F829-407A-425D-80FF-3F37B6EEA9D2} = {E760AE97-EDCB-463C-8751-ADDAB983FFAB}
 		{B952C763-AAE1-469E-80B8-8FF1C4DC513A} = {D38D9D8B-D697-41F0-B726-7004D7EFE0CB}
+		{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2} = {2408E169-CEBE-4358-AA81-AC214F8DB7EA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C899F23-0968-4F50-A1A7-F6F0EC84BF13}
