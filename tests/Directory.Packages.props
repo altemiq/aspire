@@ -10,8 +10,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.12.6" />
-    <PackageVersion Include="TUnit" Version="0.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.13.1" />
+    <PackageVersion Include="TUnit" Version="0.4.74" />
   </ItemGroup>
 
 </Project>
