@@ -69,6 +69,8 @@ public static class LocalStackBuilderExtensions
 
         _ = builder.WithEnvironment((context) =>
         {
+            // disable the AWS EC2 credentials lookup, as we are local
+            context.EnvironmentVariables["AWS_EC2_METADATA_DISABLED"] = bool.TrueString;
 
             context.EnvironmentVariables[$"{LocalStackConfigSection}__UseLocalStack"] = bool.TrueString;
 
