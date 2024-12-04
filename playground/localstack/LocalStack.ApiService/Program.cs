@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using LocalStack.Client.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
@@ -12,7 +14,8 @@ _ = builder.AddServiceDefaults();
 // Add services to the container.
 _ = builder.Services
     .AddProblemDetails()
-    .AddAWSService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions<global::Amazon.S3.AmazonS3Config>());
+    .AddLocalStack(builder.Configuration)
+    .AddAwsService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions<global::Amazon.S3.AmazonS3Config>());
 
 var app = builder.Build();
 
