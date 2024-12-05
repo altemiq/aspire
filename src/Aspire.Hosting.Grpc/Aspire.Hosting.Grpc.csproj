@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyModel" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="$(SharedDir)OverloadResolutionPriorityAttribute.cs" Link="Utils\OverloadResolutionPriorityAttribute.cs" />
+  </ItemGroup>
+
 </Project>

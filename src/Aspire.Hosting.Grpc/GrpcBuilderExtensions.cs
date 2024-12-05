@@ -117,6 +117,7 @@ public static class GrpcBuilderExtensions
     /// <param name="configureExecutable">Callback to configure GrpcUI executable resource.</param>
     /// <param name="executableName">The name of the executable (Optional).</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    [System.Runtime.CompilerServices.OverloadResolutionPriority(1)]
     public static IResourceBuilder<T> WithGrpcUI<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<T>, IResourceBuilder<GrpcUIExecutableResource>>? configureExecutable = null, string? executableName = default)
         where T : IResourceWithEndpoints => WithGrpcUI(
             builder,
