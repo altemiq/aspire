@@ -30,7 +30,7 @@ public static class PostGisBuilderExtensions
 
         if (builder.AddPostgres(name, userName: userName, password: password, port: port) is { Resource: { } postgresServer })
         {
-            builder.Resources.Remove(postgresServer);
+            _ = builder.Resources.Remove(postgresServer);
 
             // remove all the values
             var postgisServer = new ApplicationModel.PostGisServerResource(postgresServer.Name, postgresServer.UserNameParameter, postgresServer.PasswordParameter);
@@ -53,14 +53,14 @@ public static class PostGisBuilderExtensions
                     healthCheckKey = healthCheckAnnotation.Key;
                 }
 
-                resourceBuilder.WithAnnotation(annotation);
+                _ = resourceBuilder.WithAnnotation(annotation);
             }
 
             if (healthCheckKey is not null)
             {
                 string? connectionString = null;
 
-                builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, cancellationToken) =>
+                _ = builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, cancellationToken) =>
                 {
                     connectionString = await postgisServer.GetConnectionStringAsync(cancellationToken).ConfigureAwait(false);
 
@@ -71,17 +71,17 @@ public static class PostGisBuilderExtensions
                 });
 
                 // remove any before we add the new one
-                builder.Services.Configure<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckServiceOptions>(options =>
+                _ = builder.Services.Configure<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckServiceOptions>(options =>
                 {
                     // remove the current health check
                     if (options.Registrations.FirstOrDefault(registration => string.Equals(registration.Name, healthCheckKey, StringComparison.OrdinalIgnoreCase)) is { } registration)
                     {
-                        options.Registrations.Remove(registration);
+                        _ = options.Registrations.Remove(registration);
                     }
                 });
 
                 // add the new health check
-                builder.Services
+                _ = builder.Services
                     .AddHealthChecks()
                     .AddNpgSql(
                         _ => connectionString ?? throw new InvalidOperationException("Connection string is unavailable"),

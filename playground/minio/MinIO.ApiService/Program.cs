@@ -32,7 +32,7 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
     {
         var putBucketRequest = new Amazon.S3.Model.PutBucketRequest { BucketName = BucketName };
 
-        await client.PutBucketAsync(putBucketRequest, cancellationToken).ConfigureAwait(false);
+        _ = await client.PutBucketAsync(putBucketRequest, cancellationToken).ConfigureAwait(false);
     }
 
     var random = new Random();

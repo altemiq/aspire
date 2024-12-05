@@ -11,10 +11,10 @@ public class AddLocalStackTests
     [Test]
     public async Task AddLocalStackGetsCorrectServiceNames()
     {
-        var appBuilder = DistributedApplication.CreateBuilder();
+        IDistributedApplicationBuilder appBuilder = DistributedApplication.CreateBuilder();
 
-        var localStack = appBuilder.AddLocalStack("localStack", services: LocalStackServices.Community.CloudWatch | LocalStackServices.Community.SimpleStorageService);
+        IResourceBuilder<LocalStackServerResource> localStack = appBuilder.AddLocalStack("localStack", services: LocalStackServices.Community.CloudWatch | LocalStackServices.Community.SimpleStorageService);
 
-        await Assert.That(localStack.Resource.GetServiceNames()).IsEquivalentTo(["S3", "CloudWatch"]);
+        _ = await Assert.That(localStack.Resource.GetServiceNames()).IsEquivalentTo(["S3", "CloudWatch"]);
     }
 }

@@ -28,7 +28,7 @@ public static class GrpcBuilderExtensions
         var endpoint = builder.Resource.GetEndpoint(endpointName);
 
         var healthCheckKey = $"{builder.Resource.Name}_check";
-        builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
         {
             { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
             { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
@@ -36,13 +36,13 @@ public static class GrpcBuilderExtensions
         });
 
         Uri? uri = null;
-        builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
         {
             uri = new Uri(endpoint.Url, UriKind.Absolute);
             return Task.CompletedTask;
         });
 
-        builder.ApplicationBuilder.Services
+        _ = builder.ApplicationBuilder.Services
             .AddHealthChecks()
             .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
                 healthCheckKey,
@@ -54,7 +54,7 @@ public static class GrpcBuilderExtensions
                 failureStatus: null,
                 tags: null));
 
-        builder.WithHealthCheck(healthCheckKey);
+        _ = builder.WithHealthCheck(healthCheckKey);
 
         return builder;
     }
@@ -151,20 +151,13 @@ public static class GrpcBuilderExtensions
 
         var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
 
-        resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) =>
+        _ = resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) =>
         {
-            resource.WithArgs(context =>
-            {
-                foreach (var arg in GetArgs(builder, resource, endpointType))
-                {
-                    context.Args.Add(arg);
-                }
-            });
-
+            SetArguments(builder, resource, endpointType);
             return Task.CompletedTask;
         });
 
-        resource.WithEndpoint(targetPort: GetTargetPort(resource.Resource), scheme: endpointType);
+        _ = resource.WithEndpoint(targetPort: GetTargetPort(resource.Resource), scheme: endpointType);
 
         configureResource?.Invoke(builder, resource);
 
@@ -201,39 +194,50 @@ public static class GrpcBuilderExtensions
             }
         }
 
-        static IEnumerable<string> GetArgs(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
+        static void SetArguments(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
         {
-            const int Timeout = 3600;
-
-            // get the port
-            var endpoint = resource.GetEndpoint(endpointType);
-            var port = endpoint.TargetPort ?? endpoint.Port;
-
-            yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"-port={port}");
-            yield return $"-connect-fail-fast={bool.FalseString}";
-            yield return $"-connect-timeout={Timeout}";
-            yield return "-vv";
-
-            endpoint = builder.GetEndpoint(endpointType);
-            if (string.Equals(endpoint.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+            _ = resource.WithArgs(context =>
             {
-                yield return $"-plaintext={bool.TrueString}";
-            }
+                foreach (var arg in GetArgs(builder, resource, endpointType))
+                {
+                    context.Args.Add(arg);
+                }
+            });
 
-            var host = resource.Resource is ContainerResource containerResource
-                ? GetHost(endpoint, containerResource)
-                : endpoint.Host;
-
-            yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{host}:{endpoint.Port}");
-
-            static string GetHost(EndpointReference endpoint, ContainerResource containerResource)
+            static IEnumerable<string> GetArgs(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
             {
-                var hostName = containerResource.GetEndpoints().Select(ep => ep.ContainerHost).FirstOrDefault(x => x is not null) ?? "host.docker.internal";
+                const int Timeout = 3600;
 
-                return endpoint.Host
-                    .Replace("localhost", hostName, StringComparison.OrdinalIgnoreCase)
-                    .Replace("127.0.0.1", hostName, StringComparison.Ordinal)
-                    .Replace("[::1]", hostName, StringComparison.Ordinal);
+                // get the port
+                var endpoint = resource.GetEndpoint(endpointType);
+                var port = endpoint.TargetPort ?? endpoint.Port;
+
+                yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"-port={port}");
+                yield return $"-connect-fail-fast={bool.FalseString}";
+                yield return $"-connect-timeout={Timeout}";
+                yield return "-vv";
+
+                endpoint = builder.GetEndpoint(endpointType);
+                if (string.Equals(endpoint.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return $"-plaintext={bool.TrueString}";
+                }
+
+                var host = resource.Resource is ContainerResource containerResource
+                    ? GetHost(endpoint, containerResource)
+                    : endpoint.Host;
+
+                yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{host}:{endpoint.Port}");
+
+                static string GetHost(EndpointReference endpoint, ContainerResource containerResource)
+                {
+                    var hostName = containerResource.GetEndpoints().Select(ep => ep.ContainerHost).FirstOrDefault(x => x is not null) ?? "host.docker.internal";
+
+                    return endpoint.Host
+                        .Replace("localhost", hostName, StringComparison.OrdinalIgnoreCase)
+                        .Replace("127.0.0.1", hostName, StringComparison.Ordinal)
+                        .Replace("[::1]", hostName, StringComparison.Ordinal);
+                }
             }
         }
     }

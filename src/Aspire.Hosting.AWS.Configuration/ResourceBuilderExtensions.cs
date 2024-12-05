@@ -64,7 +64,7 @@ public static class ResourceBuilderExtensions
     {
         _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation { FileName = GetFileName() }, ResourceAnnotationMutationBehavior.Replace);
 
-        builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, ct) => ProcessProfiles(e, builder.Resource, ct));
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, ct) => ProcessProfiles(e, builder.Resource, ct));
 
         return builder;
 
@@ -133,7 +133,7 @@ public static class ResourceBuilderExtensions
         // add the configuration to the resource
         if (configuration.Annotations.OfType<AWSConfigurationFileAnnotation>().FirstOrDefault() is { } fileAnnotaion)
         {
-            builder.WithEnvironment(callback => callback.EnvironmentVariables["AWS_SHARED_CREDENTIALS_FILE"] = fileAnnotaion.FileName);
+            _ = builder.WithEnvironment(callback => callback.EnvironmentVariables["AWS_SHARED_CREDENTIALS_FILE"] = fileAnnotaion.FileName);
         }
 
         return builder;

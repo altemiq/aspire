@@ -19,13 +19,13 @@ public class LocalStackPublicApiTests
             return builder.AddLocalStack(name);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
     [Test]
     public async Task AddLocalStackContainerShouldThrowWhenNameIsNull()
     {
-        var builder = DistributedApplication.CreateBuilder([]);
+        IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder([]);
         const string name = null!;
 
         IResourceBuilder<LocalStackServerResource> Action()
@@ -33,7 +33,7 @@ public class LocalStackPublicApiTests
             return builder.AddLocalStack(name);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
     }
 
     [Test]
@@ -46,7 +46,7 @@ public class LocalStackPublicApiTests
             return builder.WithDataVolume();
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
     [Test]
@@ -60,14 +60,14 @@ public class LocalStackPublicApiTests
             return builder.WithDataBindMount(source);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
     [Test]
     public async Task WithDataBindMountShouldThrowWhenSourceIsNull()
     {
-        var builderResource = DistributedApplication.CreateBuilder();
-        var localStack = builderResource.AddLocalStack("localStack");
+        IDistributedApplicationBuilder builderResource = DistributedApplication.CreateBuilder();
+        IResourceBuilder<LocalStackServerResource> localStack = builderResource.AddLocalStack("localStack");
         const string source = null!;
 
         IResourceBuilder<LocalStackServerResource> Action()
@@ -75,7 +75,7 @@ public class LocalStackPublicApiTests
             return localStack.WithDataBindMount(source);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(source));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(source));
     }
 
     [Test]
@@ -88,6 +88,6 @@ public class LocalStackPublicApiTests
             return new LocalStackServerResource(name: name, region: string.Empty);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
     }
 }

@@ -19,13 +19,13 @@ public class MinIOPublicApiTests
             return builder.AddMinIO(name);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
     [Test]
     public async Task AddMinIOContainerShouldThrowWhenNameIsNull()
     {
-        var builder = DistributedApplication.CreateBuilder([]);
+        IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder([]);
         const string name = null!;
 
         IResourceBuilder<MinIOServerResource> Action()
@@ -33,7 +33,7 @@ public class MinIOPublicApiTests
             return builder.AddMinIO(name);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
     }
 
     [Test]
@@ -46,7 +46,7 @@ public class MinIOPublicApiTests
             return builder.WithDataVolume();
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
     [Test]
@@ -60,14 +60,14 @@ public class MinIOPublicApiTests
             return builder.WithDataBindMount(source);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
     }
 
     [Test]
     public async Task WithDataBindMountShouldThrowWhenSourceIsNull()
     {
-        var builderResource = DistributedApplication.CreateBuilder();
-        var minIO = builderResource.AddMinIO("minIO");
+        IDistributedApplicationBuilder builderResource = DistributedApplication.CreateBuilder();
+        IResourceBuilder<MinIOServerResource> minIO = builderResource.AddMinIO("minIO");
         const string source = null!;
 
         IResourceBuilder<MinIOServerResource> Action()
@@ -75,22 +75,22 @@ public class MinIOPublicApiTests
             return minIO.WithDataBindMount(source);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(source));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(source));
     }
 
     [Test]
     public async Task CtorMinIOServerResourceShouldThrowWhenNameIsNull()
     {
-        var distributedApplicationBuilder = DistributedApplication.CreateBuilder([]);
+        IDistributedApplicationBuilder distributedApplicationBuilder = DistributedApplication.CreateBuilder([]);
         const string name = null!;
-        var password = ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(distributedApplicationBuilder, "password", special: false);
+        ParameterResource password = ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(distributedApplicationBuilder, "password", special: false);
 
         MinIOServerResource Action()
         {
             return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
     }
 
     [Test]
@@ -104,6 +104,6 @@ public class MinIOPublicApiTests
             return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
         }
 
-        await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(password));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(password));
     }
 }

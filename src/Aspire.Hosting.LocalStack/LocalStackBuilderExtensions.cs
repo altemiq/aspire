@@ -65,7 +65,7 @@ public static class LocalStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(source);
 
-        Aspire.Hosting.ResourceBuilderExtensions.WithReference(builder, source);
+        _ = Aspire.Hosting.ResourceBuilderExtensions.WithReference(builder, source);
 
         _ = builder.WithEnvironment((context) =>
         {
@@ -154,7 +154,7 @@ public static class LocalStackBuilderExtensions
         {
             var endpoint = builder.Resource.GetEndpoint(endpointName);
 
-            builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
             {
                 { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
                 { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
@@ -162,7 +162,7 @@ public static class LocalStackBuilderExtensions
             });
 
             Uri? uri = null;
-            builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
             {
                 uri = new Uri(endpoint.Url, UriKind.Absolute);
                 return Task.CompletedTask;
@@ -170,7 +170,7 @@ public static class LocalStackBuilderExtensions
 
             var healthCheckKey = $"{builder.Resource.Name}_{endpointName}_check";
 
-            builder.ApplicationBuilder.Services
+            _ = builder.ApplicationBuilder.Services
                 .AddHealthChecks()
                 .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
                     healthCheckKey,
@@ -182,7 +182,7 @@ public static class LocalStackBuilderExtensions
                     failureStatus: null,
                     tags: null));
 
-            builder.WithHealthCheck(healthCheckKey);
+            _ = builder.WithHealthCheck(healthCheckKey);
         }
     }
 

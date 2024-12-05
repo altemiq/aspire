@@ -41,17 +41,17 @@ app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, Can
     using var source = activitySource.StartActivity("GET postgis version", System.Diagnostics.ActivityKind.Server);
     Program.LogMapGet(logger, dataSource);
 
-    source?.AddEvent(new("connection.opening"));
+    _ = source?.AddEvent(new("connection.opening"));
     var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
     await using (connection.ConfigureAwait(false))
     {
-        source?.AddEvent(new("command.creating"));
+        _ = source?.AddEvent(new("command.creating"));
         var command = connection.CreateCommand();
         await using (command.ConfigureAwait(false))
         {
             command.CommandText = "SELECT PostGIS_full_version();";
 
-            source?.AddEvent(new("command.executing"));
+            _ = source?.AddEvent(new("command.executing"));
             var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             await using (reader.ConfigureAwait(false))
             {

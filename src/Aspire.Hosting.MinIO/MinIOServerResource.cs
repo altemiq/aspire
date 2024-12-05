@@ -49,6 +49,7 @@ public class MinIOServerResource : ContainerResource, IResourceWithServiceDiscov
     /// Gets the user name reference.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1214:Unnecessary interpolated string", Justification = "This is required to turn it into an interpolated string handler")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This supression is required.")]
     internal ReferenceExpression UserNameReference =>
         this.UserNameParameter is { } userNameParameter ?
             ReferenceExpression.Create($"{userNameParameter}") :

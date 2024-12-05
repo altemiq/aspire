@@ -160,7 +160,7 @@ public static class MinIOBuilderExtensions
 
         var minIOServer = new MinIOServerResource(name, userName?.Resource, passwordParameter, region);
 
-        builder.Eventing.Subscribe<Aspire.Hosting.ApplicationModel.ResourceReadyEvent>(minIOServer, AddUsers);
+        _ = builder.Eventing.Subscribe<Aspire.Hosting.ApplicationModel.ResourceReadyEvent>(minIOServer, AddUsers);
 
         return builder.AddResource(minIOServer)
             .WithImage(MinIO.MinIOContainerImageTags.Image, MinIO.MinIOContainerImageTags.Tag)
@@ -195,8 +195,8 @@ public static class MinIOBuilderExtensions
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {
-                    await AddUser(fileName, name, profile, ct).ConfigureAwait(false);
-                    await AttachPolicy(fileName, name, profile, ct).ConfigureAwait(false);
+                    _ = await AddUser(fileName, name, profile, ct).ConfigureAwait(false);
+                    _ = await AttachPolicy(fileName, name, profile, ct).ConfigureAwait(false);
                 }
             }
 
@@ -235,6 +235,7 @@ public static class MinIOBuilderExtensions
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "Checked")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This supression is required.")]
     private sealed class AWSProfileAnnotation : ApplicationModel.IResourceAnnotation
     {
         public required AWS.AWSProfile Profile { get; init; }

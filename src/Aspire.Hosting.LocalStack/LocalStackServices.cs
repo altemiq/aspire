@@ -16,6 +16,7 @@ public static class LocalStackServices
     /// </summary>
     [Flags]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1135:Declare enum member with zero value (when enum has FlagsAttribute)", Justification = "The zero value is used as the default.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This supression is required.")]
     public enum Community : long
     {
         /// <summary>
