@@ -2,7 +2,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)../'))" />
 
   <ItemGroup>
-    <PackageVersion Include="Altemiq.Runtime" Version="1.2.0" />
+    <PackageVersion Include="Altemiq.Runtime" Version="1.2.1" />
     <PackageVersion Include="Tool.Grpc.UI" Version="1.4.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="8.0.2" />
     <PackageVersion Include="Aspire.Hosting.AWS" Version="9.0.0" />

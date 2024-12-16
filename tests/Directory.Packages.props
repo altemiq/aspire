@@ -9,9 +9,13 @@
     <PackageVersion Include="Aspire.Hosting.Testing" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Microsoft">
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.13.1" />
-    <PackageVersion Include="TUnit" Version="0.4.74" />
+    <PackageVersion Include="TUnit" Version="0.5.6" />
   </ItemGroup>
 
 </Project>
