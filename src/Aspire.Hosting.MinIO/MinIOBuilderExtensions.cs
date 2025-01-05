@@ -67,6 +67,27 @@ public static class MinIOBuilderExtensions
         builder.WithConfiguration(configuration.Resource);
 
     /// <summary>
+    /// Adds an <c>AMQP</c> resource to the MinIO container resource.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="amqp">The AMQP builder.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MinIOServerResource> WithAmqpReference(this IResourceBuilder<MinIOServerResource> builder, IResourceBuilder<IResourceWithConnectionString> amqp)
+    {
+        _ = builder
+            .WithReference(amqp)
+            .WaitFor(amqp);
+
+        builder.WithEnvironment(callback =>
+        {
+            callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_ENABLE_{amqp.Resource.Name}"] = "on";
+            callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_URL_{amqp.Resource.Name}"] = amqp.Resource.ConnectionStringExpression;
+        });
+
+        return builder;
+    }
+
+    /// <summary>
     /// Adds a named volume for the data folder to a MinIO container resource.
     /// </summary>
     /// <param name="builder">The resource builder.</param>

@@ -21,9 +21,15 @@ var config = builder.AddAWSSDKConfig()
     .WithRegion(region)
     .WithProfile(ProfileName);
 
+var rabbitmq = builder
+    .AddRabbitMQ("rabbitmq")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithDataVolume();
+
 var minio = builder
     .AddMinIO("minio", regionEndPoint: region)
     .WithReference(profiles)
+    .WithAmqpReference(rabbitmq)
     .WithDataVolume();
 
 builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
