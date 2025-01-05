@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
-    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.48" />
+    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.55" />
     <GlobalPackageReference Include="Altemiq.SemanticVersioning.MSBuild" Version="2.1.7" />
   </ItemGroup>
 
