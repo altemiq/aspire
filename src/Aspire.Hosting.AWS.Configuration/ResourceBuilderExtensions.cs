@@ -64,32 +64,33 @@ public static class ResourceBuilderExtensions
     {
         _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation { FileName = GetFileName() }, ResourceAnnotationMutationBehavior.Replace);
 
-        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, ct) => ProcessProfiles(e, builder.Resource, ct));
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, _) => ProcessProfiles(e.Services, builder.Resource));
 
         return builder;
 
-        async Task ProcessProfiles(BeforeStartEvent e, AWS.IAWSProfileConfig configuration, CancellationToken cancellationToken)
+        async Task ProcessProfiles(IServiceProvider services, AWS.IAWSProfileConfig configuration)
         {
             // get the annotation
             if (configuration.TryGetAnnotationsOfType<AWSConfigurationFileAnnotation>(out var fileAnnotaions)
                 && fileAnnotaions.FirstOrDefault() is { } fileAnnotation)
             {
-                var rns = e.Services.GetRequiredService<ResourceNotificationService>();
+                var rns = services.GetRequiredService<ResourceNotificationService>();
 
-                // write out the profiles
-                var writer = new System.IO.StreamWriter(File.OpenWrite(fileAnnotation.FileName));
-                await using (writer.ConfigureAwait(false))
+                var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileAnnotation.FileName);
+                foreach (var profile in configuration.Profiles)
                 {
-                    foreach (var profile in configuration.Profiles)
+                    var options = new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
                     {
-                        await writer.WriteLineAsync($"[{profile.Name}]".AsMemory(), cancellationToken).ConfigureAwait(false);
-                        await writer.WriteLineAsync($"aws_access_key_id={profile.AccessKeyId.Value}".AsMemory(), cancellationToken).ConfigureAwait(false);
-                        await writer.WriteLineAsync($"aws_secret_access_key={profile.SecretAccessKey.Value}".AsMemory(), cancellationToken).ConfigureAwait(false);
-                        if (profile.SessionToken is { Value: { } sessionToken })
-                        {
-                            await writer.WriteLineAsync($"aws_session_token={sessionToken}".AsMemory(), cancellationToken).ConfigureAwait(false);
-                        }
+                        AccessKey = profile.AccessKeyId.Value,
+                        SecretKey = profile.SecretAccessKey.Value,
+                    };
+
+                    if (profile.SessionToken is { Value: { } sessionToken })
+                    {
+                        options.Token = sessionToken;
                     }
+
+                    sharedCredentialsFile.RegisterProfile(new Amazon.Runtime.CredentialManagement.CredentialProfile(profile.Name, options));
                 }
 
                 await rns.PublishUpdateAsync(configuration, s => s with
@@ -98,7 +99,7 @@ public static class ResourceBuilderExtensions
                     Properties = [
                         .. s.Properties,
                         new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileAnnotation.FileName),
-                            ],
+                    ],
                 }).ConfigureAwait(false);
             }
         }
@@ -133,7 +134,7 @@ public static class ResourceBuilderExtensions
         // add the configuration to the resource
         if (configuration.Annotations.OfType<AWSConfigurationFileAnnotation>().FirstOrDefault() is { } fileAnnotaion)
         {
-            _ = builder.WithEnvironment(callback => callback.EnvironmentVariables["AWS_SHARED_CREDENTIALS_FILE"] = fileAnnotaion.FileName);
+            _ = builder.WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = fileAnnotaion.FileName);
         }
 
         return builder;

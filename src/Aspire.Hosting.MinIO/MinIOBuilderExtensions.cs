@@ -42,11 +42,11 @@ public static class MinIOBuilderExtensions
             // only set the access keys if we do not have profiles set
             if (!source.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out _))
             {
-                context.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = source.Resource.UserNameReference;
-                context.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = source.Resource.PasswordParameter;
+                context.EnvironmentVariables[Amazon.Runtime.EnvironmentVariablesAWSCredentials.ENVIRONMENT_VARIABLE_ACCESSKEY] = source.Resource.UserNameReference;
+                context.EnvironmentVariables[Amazon.Runtime.EnvironmentVariablesAWSCredentials.ENVIRONMENT_VARIABLE_SECRETKEY] = source.Resource.PasswordParameter;
             }
 
-            context.EnvironmentVariables["AWS_EC2_METADATA_DISABLED"] = bool.TrueString;
+            context.EnvironmentVariables[Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED] = bool.TrueString;
 
             // .NET AWS SDK config
             context.EnvironmentVariables["AWS__ForcePathStyle"] = bool.TrueString;
