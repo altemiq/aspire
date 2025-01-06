@@ -35,7 +35,7 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
     }
 
     var notifications = await client.GetBucketNotificationAsync(BucketName, cancellationToken).ConfigureAwait(false);
-    if (notifications.QueueConfigurations.All(q => q.Queue != Queue && !q.Events.Contains(Amazon.S3.EventType.ObjectCreatedAll)))
+    if (notifications.QueueConfigurations.All(static q => !q.Queue.Equals(Queue, StringComparison.Ordinal) && !q.Events.Contains(Amazon.S3.EventType.ObjectCreatedAll)))
     {
         var putBucketNotificationRequest = new Amazon.S3.Model.PutBucketNotificationRequest
         {
