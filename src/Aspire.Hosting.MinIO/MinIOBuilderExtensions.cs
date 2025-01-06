@@ -50,7 +50,11 @@ public static class MinIOBuilderExtensions
 
             // .NET AWS SDK config
             context.EnvironmentVariables["AWS__ForcePathStyle"] = bool.TrueString;
-            context.EnvironmentVariables["AWS__AuthenticationRegion"] = source.Resource.Region;
+            if (source.Resource.Region is { } region)
+            {
+                context.EnvironmentVariables["AWS__AuthenticationRegion"] = region;
+            }
+
             context.EnvironmentVariables["AWS__UseAccelerateEndpoint"] = bool.FalseString;
         });
 
@@ -185,7 +189,6 @@ public static class MinIOBuilderExtensions
         const string Alias = "aspire";
 
         var passwordParameter = password?.Resource ?? ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder, $"{name}-password");
-        region ??= "us-east-1";
 
         var minIOServer = new MinIOServerResource(name, userName?.Resource, passwordParameter, region);
 
@@ -204,7 +207,13 @@ public static class MinIOBuilderExtensions
             .WithEnvironment("MINIO_STORAGE_CLASS_STANDARD", "EC:0")
             .WithEnvironment("MINIO_ADDRESS", () => $":{ApiPort}")
             .WithEnvironment("MINIO_CONSOLE_ADDRESS", () => $":{ConsolePort}")
-            .WithEnvironment("MINIO_REGION", region)
+            .WithEnvironment(context =>
+            {
+                if (region is not null)
+                {
+                    context.EnvironmentVariables["MINIO_REGION"] = region;
+                }
+            })
             .WithEnvironment(context => context.EnvironmentVariables[$"MC_HOST_{Alias}"] = $"{Uri.UriSchemeHttp}://{minIOServer.UserNameReference.ValueExpression}:{minIOServer.PasswordParameter.Value}@localhost:{ApiPort}")
             .WithArgs("server", DataLocation)
             .WithHttpHealthCheck(path: "minio/health/live", endpointName: ApiEndpointName)

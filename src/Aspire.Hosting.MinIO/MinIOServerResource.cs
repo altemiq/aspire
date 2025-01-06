@@ -20,7 +20,7 @@ public class MinIOServerResource : ContainerResource, IResourceWithServiceDiscov
     /// <param name="userName">A parameter that contains the MinIO server user name, or <see langword="null"/> to use a default value.</param>
     /// <param name="password">A parameter that contains the MinIO server password.</param>
     /// <param name="region">The region.</param>
-    public MinIOServerResource(string name, ParameterResource? userName, ParameterResource password, string region)
+    public MinIOServerResource(string name, ParameterResource? userName, ParameterResource password, string? region)
         : base(name)
     {
         ArgumentNullException.ThrowIfNull(password);
@@ -33,7 +33,7 @@ public class MinIOServerResource : ContainerResource, IResourceWithServiceDiscov
     /// <summary>
     /// Gets the region.
     /// </summary>
-    public string Region { get; }
+    public string? Region { get; }
 
     /// <summary>
     /// Gets the parameter that contains the MinIO server user name.
