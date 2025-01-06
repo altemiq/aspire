@@ -12,7 +12,7 @@ _ = builder.AddServiceDefaults();
 // Add services to the container.
 _ = builder.Services
     .AddProblemDetails()
-    .AddAWSService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions<global::Amazon.S3.AmazonS3Config>());
+    .AddAWSService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
 
 var app = builder.Build();
 
