@@ -71,8 +71,10 @@ public static class MinIOBuilderExtensions
     /// </summary>
     /// <param name="builder">The builder.</param>
     /// <param name="amqp">The AMQP builder.</param>
+    /// <param name="exchange">The exchange.</param>
+    /// <param name="exchangeType">The exchange type.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<MinIOServerResource> WithAmqpReference(this IResourceBuilder<MinIOServerResource> builder, IResourceBuilder<IResourceWithConnectionString> amqp)
+    public static IResourceBuilder<MinIOServerResource> WithAmqpReference(this IResourceBuilder<MinIOServerResource> builder, IResourceBuilder<IResourceWithConnectionString> amqp, string? exchange = default, string? exchangeType = "direct")
     {
         _ = builder
             .WithReference(amqp)
@@ -82,6 +84,12 @@ public static class MinIOBuilderExtensions
         {
             callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_ENABLE_{amqp.Resource.Name}"] = "on";
             callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_URL_{amqp.Resource.Name}"] = amqp.Resource.ConnectionStringExpression;
+            callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_EXCHANGE_{amqp.Resource.Name}"] = exchange ?? builder.Resource.Name;
+
+            if (!string.IsNullOrEmpty(exchangeType))
+            {
+                callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_EXCHANGE_TYPE_{amqp.Resource.Name}"] = exchangeType;
+            }
         });
 
         return builder;

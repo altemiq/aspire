@@ -23,6 +23,7 @@ var config = builder.AddAWSSDKConfig()
 
 var rabbitmq = builder
     .AddRabbitMQ("rabbitmq")
+    .WithManagementPlugin()
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume();
 
