@@ -15,7 +15,7 @@
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.13.1" />
-    <PackageVersion Include="TUnit" Version="0.5.6" />
+    <PackageVersion Include="TUnit" Version="0.6.33" />
   </ItemGroup>
 
 </Project>

@@ -24,15 +24,35 @@ _ = app.MapDefaultEndpoints();
 _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken cancellationToken) =>
 {
     const string BucketName = "aspire";
-
-    var buckets = await client.ListBucketsAsync(cancellationToken).ConfigureAwait(false);
+    const string Queue = "arn:minio:sqs:ap-southeast-2:rabbitmq:amqp";
 
     // ensure the bucket exists
-    if (!buckets.Buckets.Select(b => b.BucketName).Contains(BucketName, StringComparer.Ordinal))
+    if (!await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, BucketName).ConfigureAwait(false))
     {
         var putBucketRequest = new Amazon.S3.Model.PutBucketRequest { BucketName = BucketName };
 
         _ = await client.PutBucketAsync(putBucketRequest, cancellationToken).ConfigureAwait(false);
+    }
+
+    var notifications = await client.GetBucketNotificationAsync(BucketName, cancellationToken).ConfigureAwait(false);
+    if (notifications.QueueConfigurations.All(q => q.Queue != Queue && !q.Events.Contains(Amazon.S3.EventType.ObjectCreatedAll)))
+    {
+        var putBucketNotificationRequest = new Amazon.S3.Model.PutBucketNotificationRequest
+        {
+            BucketName = BucketName,
+            QueueConfigurations =
+            [
+                new Amazon.S3.Model.QueueConfiguration
+                {
+                    Queue = Queue,
+                    Events = [
+                        Amazon.S3.EventType.ObjectCreatedAll,
+                    ],
+                }
+            ],
+        };
+
+        _ = await client.PutBucketNotificationAsync(putBucketNotificationRequest, cancellationToken).ConfigureAwait(false);
     }
 
     var random = new Random();
