@@ -86,13 +86,19 @@ public static class MinIOBuilderExtensions
 
         builder.WithEnvironment(callback =>
         {
+            exchange ??= builder.Resource.Name;
             callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_ENABLE_{amqp.Resource.Name}"] = "on";
             callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_URL_{amqp.Resource.Name}"] = amqp.Resource.ConnectionStringExpression;
-            callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_EXCHANGE_{amqp.Resource.Name}"] = exchange ?? builder.Resource.Name;
+            callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_EXCHANGE_{amqp.Resource.Name}"] = exchange;
 
             if (!string.IsNullOrEmpty(exchangeType))
             {
                 callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_EXCHANGE_TYPE_{amqp.Resource.Name}"] = exchangeType;
+
+                if (exchangeType is "direct")
+                {
+                    callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_ROUTING_KEY_{amqp.Resource.Name}"] = exchange;
+                }
             }
         });
 
