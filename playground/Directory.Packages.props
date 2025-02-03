@@ -7,6 +7,7 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.0.0" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.1" />
     <PackageVersion Include="Aspire.Npgsql" Version="9.0.0" />
     <PackageVersion Include="Aspire.RabbitMq.Client" Version="9.0.0" />
   </ItemGroup>
