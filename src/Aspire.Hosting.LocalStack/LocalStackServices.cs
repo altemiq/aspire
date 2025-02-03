@@ -70,7 +70,8 @@ public static class LocalStackServices
         /// <summary>
         /// Events.
         /// </summary>
-        Events = 1L << 9,
+        [System.ComponentModel.Description("Events")]
+        EventBridge = 1L << 9,
 
         /// <summary>
         /// Firehose.
