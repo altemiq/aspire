@@ -5,11 +5,17 @@
 // -----------------------------------------------------------------------
 
 using LocalStack.Client.Extensions;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 _ = builder.AddServiceDefaults();
+_ = builder.Services
+    .AddOpenTelemetry()
+    .WithMetrics(c => c.AddAWSInstrumentation())
+    .WithTracing(c => c.AddAWSInstrumentation());
 
 // Add services to the container.
 _ = builder.Services

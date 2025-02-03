@@ -4,10 +4,17 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 _ = builder.AddServiceDefaults();
+_ = builder.Services
+    .AddOpenTelemetry()
+    .WithMetrics(c => c.AddAWSInstrumentation())
+    .WithTracing(c => c.AddAWSInstrumentation());
 
 // Add services to the container.
 _ = builder.Services
@@ -48,7 +55,7 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
                     Events = [
                         Amazon.S3.EventType.ObjectCreatedAll,
                     ],
-                }
+                },
             ],
         };
 

@@ -4,13 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using OpenTelemetry.Trace;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 _ = builder.AddServiceDefaults();
+_ = builder.Services
+    .AddOpenTelemetry()
+    .WithTracing(c => c.AddGrpcClientInstrumentation());
 
 // Add services to the container.
-builder.Services
+_ = builder.Services
     .AddGrpc(options => options.EnableDetailedErrors = true);
 
 _ = builder.Services
