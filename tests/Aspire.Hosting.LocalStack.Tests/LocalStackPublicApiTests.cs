@@ -6,6 +6,8 @@
 
 namespace Aspire.Hosting.LocalStack.Tests;
 
+using TUnit.Assertions.AssertConditions.Throws;
+
 public class LocalStackPublicApiTests
 {
     [Test]
@@ -19,7 +21,7 @@ public class LocalStackPublicApiTests
             return builder.AddLocalStack(name);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -33,7 +35,7 @@ public class LocalStackPublicApiTests
             return builder.AddLocalStack(name);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(name));
     }
 
     [Test]
@@ -46,7 +48,7 @@ public class LocalStackPublicApiTests
             return builder.WithDataVolume();
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -60,7 +62,7 @@ public class LocalStackPublicApiTests
             return builder.WithDataBindMount(source);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(builder));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -75,7 +77,7 @@ public class LocalStackPublicApiTests
             return localStack.WithDataBindMount(source);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(source));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(source));
     }
 
     [Test]
@@ -88,6 +90,6 @@ public class LocalStackPublicApiTests
             return new LocalStackServerResource(name: name, region: string.Empty);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().And.HasMember(x => x.ParamName).EqualTo(nameof(name));
+        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(name));
     }
 }

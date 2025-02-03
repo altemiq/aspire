@@ -11,12 +11,12 @@
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.1" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.13.1" />
-    <PackageVersion Include="TUnit" Version="0.6.33" />
+    <PackageVersion Include="TUnit" Version="0.10.6" />
   </ItemGroup>
 
 </Project>

@@ -22,15 +22,15 @@
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.67.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
+    <PackageVersion Include="Grpc.Tools" Version="2.69.0" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.1" />
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.1.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.0.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.11.1" />

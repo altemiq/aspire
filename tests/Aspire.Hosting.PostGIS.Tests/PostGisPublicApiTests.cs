@@ -6,6 +6,8 @@
 
 namespace Aspire.Hosting.PostGIS.Tests;
 
+using TUnit.Assertions.AssertConditions.Throws;
+
 public class PostGISPublicApiTests
 {
     [Test]
@@ -21,7 +23,7 @@ public class PostGISPublicApiTests
 
         _ = await Assert.That(Action)
             .ThrowsExactly<ArgumentNullException>()
-            .And.HasMember(m => m.ParamName).EqualTo(nameof(builder));
+            .WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -37,6 +39,6 @@ public class PostGISPublicApiTests
 
         _ = await Assert.That(Action)
             .ThrowsExactly<ArgumentNullException>()
-            .And.HasMember(m => m.ParamName).EqualTo(nameof(name));
+            .WithParameterName(nameof(name));
     }
 }
