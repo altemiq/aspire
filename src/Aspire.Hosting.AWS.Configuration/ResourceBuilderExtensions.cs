@@ -8,11 +8,12 @@ namespace Aspire.Hosting;
 
 using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// The resource builder extensions.
 /// </summary>
-public static class ResourceBuilderExtensions
+public static partial class ResourceBuilderExtensions
 {
     /// <summary>
     /// Adds the AWS configuration to the application.
@@ -68,30 +69,33 @@ public static class ResourceBuilderExtensions
 
         return builder;
 
-        async Task ProcessProfiles(IServiceProvider services, AWS.IAWSProfileConfig configuration)
+        async Task ProcessProfiles(IServiceProvider services, T configuration)
         {
             // get the annotation
             if (configuration.TryGetAnnotationsOfType<AWSConfigurationFileAnnotation>(out var fileAnnotaions)
                 && fileAnnotaions.FirstOrDefault() is { } fileAnnotation)
             {
                 var rns = services.GetRequiredService<ResourceNotificationService>();
+                var rls = services.GetRequiredService<ResourceLoggerService>();
+                var logger = rls.GetLogger(configuration);
 
+                LogCreatingAwsConfiguration(logger, fileAnnotation.FileName);
                 var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileAnnotation.FileName);
                 foreach (var profile in configuration.Profiles)
                 {
-                    var options = new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
-                    {
-                        AccessKey = profile.AccessKeyId.Value,
-                        SecretKey = profile.SecretAccessKey.Value,
-                    };
-
-                    if (profile.SessionToken is { Value: { } sessionToken })
-                    {
-                        options.Token = sessionToken;
-                    }
-
-                    sharedCredentialsFile.RegisterProfile(new Amazon.Runtime.CredentialManagement.CredentialProfile(profile.Name, options));
+                    LogRegisteringProfile(logger, profile.Name);
+                    sharedCredentialsFile.RegisterProfile(
+                        new Amazon.Runtime.CredentialManagement.CredentialProfile(
+                            profile.Name,
+                            new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
+                            {
+                                AccessKey = profile.AccessKeyId.Value,
+                                SecretKey = profile.SecretAccessKey.Value,
+                                Token = profile.SessionToken?.Value,
+                            }));
                 }
+
+                LogCompleted(logger);
 
                 await rns.PublishUpdateAsync(configuration, s => s with
                 {
@@ -139,6 +143,15 @@ public static class ResourceBuilderExtensions
 
         return builder;
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at {FileName}")]
+    private static partial void LogCreatingAwsConfiguration(ILogger logger, string fileName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Registering Profile {Name}")]
+    private static partial void LogRegisteringProfile(ILogger logger, string name);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "AWS configuration completed")]
+    private static partial void LogCompleted(ILogger logger);
 
     private sealed class AWSConfigurationFileAnnotation : ApplicationModel.IResourceAnnotation
     {
