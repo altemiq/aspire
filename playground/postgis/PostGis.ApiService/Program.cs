@@ -58,7 +58,77 @@ app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, Can
                 var stringBuilder = new System.Text.StringBuilder();
                 while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    stringBuilder.AppendLine(reader.GetString(0));
+                    var value = reader.GetString(0).AsSpan();
+
+                    while (value.Length > 0)
+                    {
+                        var index = value.IndexOf('=');
+                        if (index is -1)
+                        {
+                            // go up until the next space
+                            index = value.IndexOf(' ');
+                            if (index is -1)
+                            {
+                                stringBuilder.Append(value);
+                                value = [];
+                            }
+                            else
+                            {
+                                stringBuilder.Append(value[..index]);
+                                value = value[(index + 1)..];
+                            }
+
+                            stringBuilder.AppendLine();
+                        }
+                        else
+                        {
+                            stringBuilder
+                                .Append(value[..index])
+                                .Append('=');
+                            value = value[(index + 1)..];
+                            if (value[0] is '"')
+                            {
+                                // go until the next quote
+                                stringBuilder.Append('"');
+                                value = value[1..];
+                                index = value.IndexOf('"') + 1;
+                                stringBuilder.Append(value[..index]);
+                                value = value[(index + 1)..];
+                            }
+                            else
+                            {
+                                index = value.IndexOf(' ');
+                                if (index is -1)
+                                {
+                                    stringBuilder.Append(value).AppendLine();
+                                    break;
+                                }
+
+                                stringBuilder.Append(value[..index]);
+                                value = value[(index + 1)..];
+                            }
+
+                            // see if the next character is something other than a letter
+                            _ = value[0] switch
+                            {
+                                '[' => AppendSuffix(stringBuilder, ref value, ']'),
+                                '(' => AppendSuffix(stringBuilder, ref value, ')'),
+                                _ => stringBuilder,
+                            };
+
+                            stringBuilder.AppendLine();
+
+                            static System.Text.StringBuilder AppendSuffix(System.Text.StringBuilder stringBuilder, ref ReadOnlySpan<char> value, char val)
+                            {
+                                var index = value.IndexOf(val) + 1;
+                                stringBuilder.Append(' ').Append(value[..index]);
+                                value = value[(index + 1)..];
+                                return stringBuilder;
+                            }
+                        }
+                    }
+
+                    stringBuilder.AppendLine();
                 }
 
                 return stringBuilder.ToString();
