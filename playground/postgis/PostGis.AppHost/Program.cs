@@ -12,7 +12,7 @@ db1.WithPgAdmin(c => c.WaitFor(db1).WithImageTag("8"));
 var database = db1.AddDatabase("db1-database");
 
 _ = builder.AddProject<Projects.PostGis_ApiService>("apiservice")
-    .WithReference(database)
-    .WaitFor(db1);
+    .WithReference(db1)
+    .WaitFor(database);
 
 await builder.Build().RunAsync().ConfigureAwait(false);
