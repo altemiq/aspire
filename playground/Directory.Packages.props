@@ -7,14 +7,14 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.0.0" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.1" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.2" />
     <PackageVersion Include="Aspire.Npgsql" Version="9.0.0" />
     <PackageVersion Include="Aspire.RabbitMq.Client" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0-preview.5" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.0-preview.5" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0-preview.6" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.0-preview.6" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="1.3.0" />
   </ItemGroup>
 
