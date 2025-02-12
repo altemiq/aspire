@@ -22,7 +22,12 @@ internal static class PostGisContainerImageTags
     public const string Image = "postgis/postgis";
 
     /// <summary>
+    /// The PostGIS tag.
+    /// </summary>
+    public const string PostGisTag = "3.5";
+
+    /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "17-3.5";
+    public const string Tag = $"17-{PostGisTag}";
 }

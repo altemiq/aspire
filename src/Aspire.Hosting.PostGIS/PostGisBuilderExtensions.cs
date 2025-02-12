@@ -18,7 +18,63 @@ public static class PostGisBuilderExtensions
     private const string PasswordEnvVarName = "POSTGRES_PASSWORD";
 
     /// <summary>
-    /// Adds a PostGIS resource to the application model. A container is used for local development. This version the package defaults to the 16-3.4 tag of the postgis container image.
+    /// Configures the Postgres container resource to enable the PostGIS extension.
+    /// </summary>
+    /// <typeparam name="T">The type of postgres container.</typeparam>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithPostGis<T>(this IResourceBuilder<T> builder)
+        where T : PostgresServerResource
+    {
+        var tag = PostGis.PostGisContainerImageTags.Tag;
+        if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImage)
+            && containerImage is { Tag: { } containerImageTag })
+        {
+            tag = GetTag(containerImageTag, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        builder.WithImage(PostGis.PostGisContainerImageTags.Image, tag)
+               .WithImageRegistry(PostGis.PostGisContainerImageTags.Registry);
+
+        return builder;
+
+        static string GetTag(string tag, IFormatProvider? formatProvider)
+        {
+            if (tag is "latest")
+            {
+                return tag;
+            }
+
+            var split = tag.Split('-');
+            string prefix;
+            string suffix;
+            if (double.TryParse(split[0], formatProvider, out var version))
+            {
+                prefix = $"{double.Truncate(version).ToString(formatProvider)}-{PostGis.PostGisContainerImageTags.PostGisTag}";
+                suffix = split switch
+                {
+                    { Length: 1 } or [_, "bullseye"] => string.Empty,
+                    [_, "alpine"] => "-alpine",
+                    _ => throw new InvalidOperationException("Invalid OS for PostGIS"),
+                };
+            }
+            else
+            {
+                prefix = PostGis.PostGisContainerImageTags.Tag;
+                suffix = split[0] switch
+                {
+                    "bullseye" => string.Empty,
+                    "alpine" => "-alpine",
+                    _ => throw new InvalidOperationException("Invalid OS for PostGIS"),
+                };
+            }
+
+            return prefix + suffix;
+        }
+    }
+
+    /// <summary>
+    /// Adds a PostGIS resource to the application model. A container is used for local development. This version the package defaults to the 17-3.5 tag of the postgis container image.
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
@@ -38,7 +94,7 @@ public static class PostGisBuilderExtensions
 
         string? connectionString = null;
 
-        builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, ct) =>
+        _ = builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, ct) =>
         {
             connectionString = await postgisServer.GetConnectionStringAsync(ct).ConfigureAwait(false);
 
@@ -49,7 +105,7 @@ public static class PostGisBuilderExtensions
         });
 
         var healthCheckKey = $"{name}_check";
-        builder.Services.AddHealthChecks().AddNpgSql(
+        _ = builder.Services.AddHealthChecks().AddNpgSql(
             _ => connectionString ?? throw new InvalidOperationException("Connection string is unavailable"),
             configure: (connection) => connection.ConnectionString += ";Database=postgres;",
             name: healthCheckKey);
