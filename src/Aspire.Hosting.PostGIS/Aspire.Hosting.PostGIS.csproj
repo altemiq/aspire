@@ -4,10 +4,15 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting postgis</PackageTags>
     <Description>PostGIS support for .NET Aspire.</Description>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

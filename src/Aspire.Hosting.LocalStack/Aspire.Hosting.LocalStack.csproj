@@ -4,6 +4,7 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting localstack</PackageTags>
     <Description>LocalStack support for .NET Aspire.</Description>
+    <PackageIcon>localstack-dotnet-square.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +14,10 @@
   <ItemGroup>
     <Compile Include="$(SharedDir)OverloadResolutionPriorityAttribute.cs" Link="Utils\OverloadResolutionPriorityAttribute.cs" />
     <Compile Include="$(SharedDir)VolumeNameGenerator.cs" Link="Utils\VolumeNameGenerator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="localstack-dotnet-square.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

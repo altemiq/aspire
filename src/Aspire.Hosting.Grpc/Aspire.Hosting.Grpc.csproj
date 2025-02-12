@@ -4,6 +4,7 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting grpc</PackageTags>
     <Description>gRPC support for .NET Aspire.</Description>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,10 @@
 
   <ItemGroup>
     <Compile Include="$(SharedDir)OverloadResolutionPriorityAttribute.cs" Link="Utils\OverloadResolutionPriorityAttribute.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

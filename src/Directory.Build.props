@@ -3,6 +3,7 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
+    <Authors>rsking,jposey</Authors>
   </PropertyGroup>
 
   <PropertyGroup>

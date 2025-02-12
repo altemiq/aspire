@@ -3,11 +3,17 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>$(RootNamespace.Replace('.AWS.Configuration', ''))</RootNamespace>
+    <Description>AWS Configuration support for .NET Aspire.</Description>
     <NoWarn>$(NoWarn);S101</NoWarn>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AWS" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

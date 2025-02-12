@@ -4,10 +4,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>$(Company).$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
+    <Description>Extensions for .NET Aspire.</Description>
+    <PackageIcon>Icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

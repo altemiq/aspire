@@ -4,10 +4,15 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting mapserver</PackageTags>
     <Description>MapServer support for .NET Aspire.</Description>
+    <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
