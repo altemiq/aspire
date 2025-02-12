@@ -14,6 +14,9 @@ using Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class PostGisBuilderExtensions
 {
+    private const string UserEnvVarName = "POSTGRES_USER";
+    private const string PasswordEnvVarName = "POSTGRES_PASSWORD";
+
     /// <summary>
     /// Adds a PostGIS resource to the application model. A container is used for local development. This version the package defaults to the 16-3.4 tag of the postgis container image.
     /// </summary>
@@ -25,73 +28,43 @@ public static class PostGisBuilderExtensions
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     public static IResourceBuilder<PostGisServerResource> AddPostGis(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null)
     {
+        const string AuthMethod = "scram-sha-256";
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(name);
 
-        if (builder.AddPostgres(name, userName: userName, password: password, port: port) is { Resource: { } postgresServer })
+        var passwordParameter = password?.Resource ?? ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder, $"{name}-password");
+
+        var postgisServer = new PostGisServerResource(name, userName?.Resource, passwordParameter);
+
+        string? connectionString = null;
+
+        builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, ct) =>
         {
-            _ = builder.Resources.Remove(postgresServer);
+            connectionString = await postgisServer.GetConnectionStringAsync(ct).ConfigureAwait(false);
 
-            // remove all the values
-            var postgisServer = new ApplicationModel.PostGisServerResource(postgresServer.Name, postgresServer.UserNameParameter, postgresServer.PasswordParameter);
-
-            var resourceBuilder = builder.AddResource(postgisServer);
-
-            string? healthCheckKey = default;
-            foreach (var annotation in postgresServer.Annotations)
+            if (connectionString is null)
             {
-                if (annotation is ContainerImageAnnotation containerImageAnnotation)
-                {
-                    // update the container from POSTGRES to POSTGIS
-                    containerImageAnnotation.Registry = PostGis.PostGisContainerImageTags.Registry;
-                    containerImageAnnotation.Image = PostGis.PostGisContainerImageTags.Image;
-                    containerImageAnnotation.Tag = PostGis.PostGisContainerImageTags.Tag;
-                }
-
-                if (annotation is HealthCheckAnnotation healthCheckAnnotation)
-                {
-                    healthCheckKey = healthCheckAnnotation.Key;
-                }
-
-                _ = resourceBuilder.WithAnnotation(annotation);
+                throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
             }
+        });
 
-            if (healthCheckKey is not null)
-            {
-                string? connectionString = null;
+        var healthCheckKey = $"{name}_check";
+        builder.Services.AddHealthChecks().AddNpgSql(
+            _ => connectionString ?? throw new InvalidOperationException("Connection string is unavailable"),
+            configure: (connection) => connection.ConnectionString += ";Database=postgres;",
+            name: healthCheckKey);
 
-                _ = builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, cancellationToken) =>
-                {
-                    connectionString = await postgisServer.GetConnectionStringAsync(cancellationToken).ConfigureAwait(false);
-
-                    if (connectionString is null)
-                    {
-                        throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
-                    }
-                });
-
-                // remove any before we add the new one
-                _ = builder.Services.Configure<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckServiceOptions>(options =>
-                {
-                    // remove the current health check
-                    if (options.Registrations.FirstOrDefault(registration => string.Equals(registration.Name, healthCheckKey, StringComparison.OrdinalIgnoreCase)) is { } registration)
-                    {
-                        _ = options.Registrations.Remove(registration);
-                    }
-                });
-
-                // add the new health check
-                _ = builder.Services
-                    .AddHealthChecks()
-                    .AddNpgSql(
-                        _ => connectionString ?? throw new InvalidOperationException("Connection string is unavailable"),
-                        configure: (connection) => connection.ConnectionString += ";Database=postgres;",
-                        name: healthCheckKey);
-            }
-
-            return resourceBuilder;
-        }
-
-        throw new InvalidOperationException();
+        return builder.AddResource(postgisServer)
+                      .WithEndpoint(port: port, targetPort: 5432, name: PostGisServerResource.PrimaryEndpointName) // Internal port is always 5432.
+                      .WithImage(PostGis.PostGisContainerImageTags.Image, PostGis.PostGisContainerImageTags.Tag)
+                      .WithImageRegistry(PostGis.PostGisContainerImageTags.Registry)
+                      .WithEnvironment("POSTGRES_HOST_AUTH_METHOD", AuthMethod)
+                      .WithEnvironment("POSTGRES_INITDB_ARGS", $"--auth-host={AuthMethod} --auth-local={AuthMethod}")
+                      .WithEnvironment(context =>
+                      {
+                          context.EnvironmentVariables[UserEnvVarName] = postgisServer.UserNameReference;
+                          context.EnvironmentVariables[PasswordEnvVarName] = postgisServer.PasswordParameter;
+                      })
+                      .WithHealthCheck(healthCheckKey);
     }
 }
