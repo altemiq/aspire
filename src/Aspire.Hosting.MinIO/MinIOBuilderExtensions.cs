@@ -84,7 +84,7 @@ public static class MinIOBuilderExtensions
             .WithReference(amqp)
             .WaitFor(amqp);
 
-        builder.WithEnvironment(callback =>
+        _ = builder.WithEnvironment(callback =>
         {
             exchange ??= builder.Resource.Name;
             callback.EnvironmentVariables[$"MINIO_NOTIFY_AMQP_ENABLE_{amqp.Resource.Name}"] = "on";

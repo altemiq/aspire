@@ -14,5 +14,5 @@ public interface IAWSProfileConfig : ApplicationModel.IResource
     /// <summary>
     /// Gets the profiles.
     /// </summary>
-    public IList<AWSProfile> Profiles { get; }
+    IList<AWSProfile> Profiles { get; }
 }
