@@ -4,10 +4,12 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+const string Name = "grpc-apiservice";
 var builder = DistributedApplication.CreateBuilder(args);
 
-_ = builder.AddProject<Projects.Grpc_ApiService>("grpc-apiservice", Uri.UriSchemeHttp)
+_ = builder.AddProject<Projects.Grpc_ApiService>(Name, Uri.UriSchemeHttp)
     .WithGrpcHealthCheck(Uri.UriSchemeHttp, Uri.UriSchemeHttp)
-    .WithGrpcUI((api, grpc) => grpc.WaitFor(api));
+    .WithGrpcUI((api, grpc) => grpc.WaitFor(api), executableName: $"{Name}-exe")
+    .WithGrpcUI((api, grpc) => grpc.WaitFor(api), containerName: $"{Name}-container");
 
 await builder.Build().RunAsync().ConfigureAwait(false);

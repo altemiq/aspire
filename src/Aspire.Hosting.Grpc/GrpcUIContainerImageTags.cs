@@ -24,5 +24,5 @@ internal static class GrpcUIContainerImageTags
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "v1.4.1";
+    public const string Tag = "v1.4.2";
 }
