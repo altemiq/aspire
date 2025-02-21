@@ -1,4 +1,5 @@
 ﻿<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Versions.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -6,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.2" />
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="9.0.0" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.3" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">

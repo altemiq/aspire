@@ -2,7 +2,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)../'))" />
 
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.0.0" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.0" />
   </ItemGroup>
 
 </Project>

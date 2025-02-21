@@ -1,19 +1,14 @@
 ﻿<Project>
+  <Import Project="$(MSBuildThisFileDirectory)Versions.props" />
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting" Version="9.0.0" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.0.0" />
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="9.0.0" />
-  </ItemGroup>
-
-  <ItemGroup Label="AspNetCore.HealthChecks">
-    <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.2" />
-    <PackageVersion Include="AspNetCore.HealthChecks.Rabbitmq" Version="8.0.2" />
-    <PackageVersion Include="AspNetCore.HealthChecks.Uris" Version="8.0.1" />
+    <PackageVersion Include="Aspire.Hosting" Version="$(Ver_AspireHosting)" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(Ver_AspireHosting)" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
