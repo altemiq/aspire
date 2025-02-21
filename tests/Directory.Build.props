@@ -13,10 +13,6 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="TUnit" />
-  </ItemGroup>
-
   <PropertyGroup>
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
   </PropertyGroup>

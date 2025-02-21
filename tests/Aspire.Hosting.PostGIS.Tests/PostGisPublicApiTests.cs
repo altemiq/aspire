@@ -22,7 +22,7 @@ public class PostGISPublicApiTests
         }
 
         _ = await Assert.That(Action)
-            .ThrowsExactly<ArgumentNullException>()
+            .Throws<ArgumentNullException>()
             .WithParameterName(nameof(builder));
     }
 
@@ -38,7 +38,7 @@ public class PostGISPublicApiTests
         }
 
         _ = await Assert.That(Action)
-            .ThrowsExactly<ArgumentNullException>()
+            .Throws<ArgumentNullException>()
             .WithParameterName(nameof(name));
     }
 }

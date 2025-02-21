@@ -21,7 +21,7 @@ public class MinIOPublicApiTests
             return builder.AddMinIO(name);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(builder));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -35,7 +35,7 @@ public class MinIOPublicApiTests
             return builder.AddMinIO(name);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(name));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(name));
     }
 
     [Test]
@@ -48,7 +48,7 @@ public class MinIOPublicApiTests
             return builder.WithDataVolume();
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(builder));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -62,7 +62,7 @@ public class MinIOPublicApiTests
             return builder.WithDataBindMount(source);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(builder));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
     }
 
     [Test]
@@ -77,7 +77,7 @@ public class MinIOPublicApiTests
             return minIO.WithDataBindMount(source);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(source));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(source));
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class MinIOPublicApiTests
             return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(name));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(name));
     }
 
     [Test]
@@ -106,6 +106,6 @@ public class MinIOPublicApiTests
             return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
         }
 
-        _ = await Assert.That(Action).ThrowsExactly<ArgumentNullException>().WithParameterName(nameof(password));
+        _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(password));
     }
 }

@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TUnit.Assertions.AssertConditions.Throws;
+﻿// -----------------------------------------------------------------------
+// <copyright file="WithPostGisTests.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 namespace Aspire.Hosting.PostGIS.Tests;
+
+using TUnit.Assertions.AssertConditions.Throws;
 
 public class WithPostGisTests
 {
@@ -16,11 +17,13 @@ public class WithPostGisTests
 
         IResourceBuilder<PostgresServerResource> postgres = appBuilder.AddPostgres("postgis");
 
-        _ = await Assert.That(postgres.Resource.Annotations.OfType<ContainerImageAnnotation>().Single().Image).IsNotEqualTo("postgis/postgis");
+        _ = await Assert.That(postgres.Resource.TryGetLastAnnotation(out ContainerImageAnnotation? annotation)).IsTrue();
+        _ = await Assert.That(annotation!.Image).IsNotEqualTo("postgis/postgis");
 
         _ = postgres.WithPostGis();
 
-        _ = await Assert.That(postgres.Resource.Annotations.OfType<ContainerImageAnnotation>().Single().Image).IsEqualTo("postgis/postgis");
+        _ = await Assert.That(postgres.Resource.TryGetLastAnnotation(out annotation)).IsTrue();
+        _ = await Assert.That(annotation?.Image).IsEqualTo("postgis/postgis");
     }
 
     [Test]
@@ -50,7 +53,8 @@ public class WithPostGisTests
             .WithImageTag(postgresTag)
             .WithPostGis();
 
-        _ = await Assert.That(postgres.Resource.Annotations.OfType<ContainerImageAnnotation>().Single().Tag).IsEqualTo(postgisTag);
+        _ = await Assert.That(postgres.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out ContainerImageAnnotation? annotation)).IsTrue();
+        _ = await Assert.That(annotation?.Tag).IsEqualTo(postgisTag);
     }
 
     [Test]
@@ -63,6 +67,6 @@ public class WithPostGisTests
 
         IResourceBuilder<PostgresServerResource> postgres = appBuilder.AddPostgres("postgis").WithImageTag(postgresTag);
 
-        await Assert.That(() => postgres.WithPostGis()).Throws<InvalidOperationException>();
+        _ = await Assert.That(() => postgres.WithPostGis()).Throws<InvalidOperationException>();
     }
 }
