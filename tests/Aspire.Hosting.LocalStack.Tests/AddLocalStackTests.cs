@@ -15,6 +15,6 @@ public class AddLocalStackTests
 
         IResourceBuilder<LocalStackServerResource> localStack = appBuilder.AddLocalStack("localStack", services: LocalStackServices.Community.CloudWatch | LocalStackServices.Community.SimpleStorageService);
 
-        _ = await Assert.That(localStack.Resource.GetServiceNames()).IsEquivalentTo(["S3", "CloudWatch"]);
+        _ = await Assert.That(localStack.Resource.GetServiceNames()).IsEquivalentTo(["s3", "cloudwatch"]);
     }
 }

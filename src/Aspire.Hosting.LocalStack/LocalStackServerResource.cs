@@ -48,8 +48,8 @@ public sealed class LocalStackServerResource(string name, string region) : Conta
                 if ((resultValue & longValue) == longValue)
                 {
                     yield return Attribute.GetCustomAttribute(field, typeof(System.ComponentModel.DescriptionAttribute)) is System.ComponentModel.DescriptionAttribute descriptionAttribute
-                        ? descriptionAttribute.Description
-                        : field.Name;
+                        ? descriptionAttribute.Description.ToLowerInvariant()
+                        : field.Name.ToLowerInvariant();
                 }
             }
         }

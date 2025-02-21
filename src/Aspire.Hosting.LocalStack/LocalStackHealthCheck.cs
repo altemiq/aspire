@@ -43,7 +43,7 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
 
         if (healthCheck is not null && this.Services != default)
         {
-            var serviceNames = ApplicationModel.LocalStackServerResource.GetServiceNames(this.Services).Select(x => x.ToLowerInvariant());
+            var serviceNames = ApplicationModel.LocalStackServerResource.GetServiceNames(this.Services);
 
             if (serviceNames.FirstOrDefault(serviceName => !healthCheck.Services.TryGetValue(serviceName, out var value) || value is not "available") is { } serviceName)
             {

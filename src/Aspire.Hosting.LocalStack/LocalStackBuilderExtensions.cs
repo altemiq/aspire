@@ -140,7 +140,7 @@ public static class LocalStackBuilderExtensions
             {
                 if (localStack.Services != default)
                 {
-                    context.EnvironmentVariables["LOCALSTACK_SERVICES"] = string.Join(',', localStack.GetServiceNames().Select(x => x.ToLowerInvariant()));
+                    context.EnvironmentVariables["LOCALSTACK_SERVICES"] = string.Join(',', localStack.GetServiceNames());
                 }
             })
             .AddDockerSock()
