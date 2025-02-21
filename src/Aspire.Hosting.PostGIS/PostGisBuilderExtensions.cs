@@ -33,8 +33,9 @@ public static class PostGisBuilderExtensions
             tag = GetTag(containerImageTag, System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        builder.WithImage(PostGis.PostGisContainerImageTags.Image, tag)
-               .WithImageRegistry(PostGis.PostGisContainerImageTags.Registry);
+        _ = builder
+            .WithImage(PostGis.PostGisContainerImageTags.Image, tag)
+            .WithImageRegistry(PostGis.PostGisContainerImageTags.Registry);
 
         return builder;
 
@@ -45,31 +46,35 @@ public static class PostGisBuilderExtensions
                 return tag;
             }
 
-            var split = tag.Split('-');
+            Span<Range> ranges = stackalloc Range[2];
+            var tagSpan = tag.AsSpan();
+            var values = tagSpan.Split(ranges, '-');
             string prefix;
             string suffix;
-            if (double.TryParse(split[0], formatProvider, out var version))
+            if (double.TryParse(tagSpan[ranges[0]], formatProvider, out var version))
             {
                 prefix = $"{double.Truncate(version).ToString(formatProvider)}-{PostGis.PostGisContainerImageTags.PostGisTag}";
-                suffix = split switch
-                {
-                    { Length: 1 } or [_, "bullseye"] => string.Empty,
-                    [_, "alpine"] => "-alpine",
-                    _ => throw new InvalidOperationException("Invalid OS for PostGIS"),
-                };
+                suffix = values is 1
+                    ? string.Empty
+                    : GetSuffix(tagSpan[ranges[1]]);
             }
             else
             {
                 prefix = PostGis.PostGisContainerImageTags.Tag;
-                suffix = split[0] switch
+                suffix = GetSuffix(tagSpan);
+            }
+
+            return prefix + suffix;
+
+            static string GetSuffix(ReadOnlySpan<char> suffix)
+            {
+                return suffix switch
                 {
                     "bullseye" => string.Empty,
                     "alpine" => "-alpine",
                     _ => throw new InvalidOperationException("Invalid OS for PostGIS"),
                 };
             }
-
-            return prefix + suffix;
         }
     }
 
