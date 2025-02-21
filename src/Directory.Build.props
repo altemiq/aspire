@@ -4,6 +4,7 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <Authors>rsking,jposey</Authors>
+    <Version Condition=" '$(Version)' == '' and '$(ComputeSemanticVersion)' != 'true' ">$(Ver_AspireHosting)</Version>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -1,4 +1,5 @@
 <Project>
+  <Import Project="$(MSBuildThisFileDirectory)Versions.props" />
 
   <PropertyGroup>
     <NetCurrent>net8.0</NetCurrent>
