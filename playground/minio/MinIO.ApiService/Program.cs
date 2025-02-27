@@ -4,8 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MinIO.ApiService;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,9 @@ _ = builder.Services
 _ = builder.Services
     .AddProblemDetails()
     .AddAWSService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
+
+builder.AddRabbitMQClient("rabbitmq");
+builder.Services.AddHostedService<Program.RabbitMqListener>();
 
 var app = builder.Build();
 
@@ -42,7 +48,7 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
     }
 
     var notifications = await client.GetBucketNotificationAsync(BucketName, cancellationToken).ConfigureAwait(false);
-    if (notifications.QueueConfigurations.All(static q => !q.Queue.Equals(Queue, StringComparison.Ordinal) && !q.Events.Contains(Amazon.S3.EventType.ObjectCreatedAll)))
+    if (notifications.QueueConfigurations?.TrueForAll(static q => !q.Queue.Equals(Queue, StringComparison.Ordinal) && !q.Events.Contains(Amazon.S3.EventType.ObjectCreatedAll)) != false)
     {
         var putBucketNotificationRequest = new Amazon.S3.Model.PutBucketNotificationRequest
         {
@@ -88,3 +94,46 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
 });
 
 await app.RunAsync().ConfigureAwait(false);
+
+/// <summary>
+/// The program class.
+/// </summary>
+internal partial class Program
+{
+    /// <summary>
+    /// The RabbitMQ listener.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    public partial class RabbitMqListener(IServiceProvider serviceProvider) : BackgroundService
+    {
+        /// <inheritdoc/>
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            const string name = "minio";
+            var connection = serviceProvider.GetRequiredService<RabbitMQ.Client.IConnection>();
+            var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RabbitMqListener>();
+            var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
+
+            await channel.ExchangeDeclareAsync(name, ExchangeType.Direct, cancellationToken: stoppingToken).ConfigureAwait(false);
+            await channel.QueueDeclareAsync(name, cancellationToken: stoppingToken).ConfigureAwait(false);
+            await channel.QueueBindAsync(name, name, name, cancellationToken: stoppingToken).ConfigureAwait(false);
+
+            var consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.ReceivedAsync += async (_, ea) =>
+            {
+                LogReceivedMessage(logger);
+                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken).ConfigureAwait(false);
+            };
+
+            // this consumer tag identifies the subscription when it has to be cancelled
+            var consumerTag = await channel.BasicConsumeAsync(name, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
+
+            await stoppingToken;
+
+            await channel.BasicCancelAsync(consumerTag, noWait: true, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received RabbitMQ message")]
+        private static partial void LogReceivedMessage(ILogger logger);
+    }
+}

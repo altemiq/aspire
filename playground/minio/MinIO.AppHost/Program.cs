@@ -35,6 +35,7 @@ var minio = builder
 
 builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
     .WithReference(minio).WaitFor(minio)
+    .WithReference(rabbitmq).WaitFor(rabbitmq)
     .WithReference(profiles)
     .WithReference(config);
 
