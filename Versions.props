@@ -1,7 +1,7 @@
 ﻿<Project>
 
   <PropertyGroup>
-    <Ver_AspireHosting>9.1.0-preview.1.25120.8</Ver_AspireHosting>
+    <Ver_AspireHosting>9.2.0-preview.1.25126.3</Ver_AspireHosting>
   </PropertyGroup>
 
 </Project>
