@@ -116,7 +116,7 @@ public static class MinIOBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.WithVolume(name ?? Utils.VolumeNameGenerator.CreateVolumeName(builder, "data"), DataLocation, isReadOnly);
+        return builder.WithVolume(name ?? VolumeNameGenerator.Generate(builder, "data"), DataLocation, isReadOnly);
     }
 
     /// <summary>

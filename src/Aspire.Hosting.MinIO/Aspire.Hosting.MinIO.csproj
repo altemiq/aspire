@@ -8,12 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="$(SharedDir)OverloadResolutionPriorityAttribute.cs" Link="Utils\OverloadResolutionPriorityAttribute.cs" />
-    <Compile Include="$(SharedDir)VolumeNameGenerator.cs" Link="Utils\VolumeNameGenerator.cs" />
   </ItemGroup>
 
   <ItemGroup>

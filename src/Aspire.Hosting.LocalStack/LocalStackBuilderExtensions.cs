@@ -29,7 +29,7 @@ public static class LocalStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
-            .WithVolume(name ?? Utils.VolumeNameGenerator.CreateVolumeName(builder, "state"), DataLocation, isReadOnly)
+            .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "state"), DataLocation, isReadOnly)
             .WithEnvironment("LOCALSTACK_PERSISTENCE", "1");
     }
 
