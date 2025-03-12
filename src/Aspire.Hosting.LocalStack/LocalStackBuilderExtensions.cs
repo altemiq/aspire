@@ -8,6 +8,7 @@ namespace Aspire.Hosting;
 
 using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Provides extensions for <c>localstack</c>.
@@ -170,6 +171,15 @@ public static class LocalStackBuilderExtensions
 
             var healthCheckKey = $"{builder.Resource.Name}_{endpointName}_check";
 
+            _ = builder.ApplicationBuilder.Services.AddLogging(configure =>
+            {
+                // The LocalStackHealthCheck makes use of http client factory.
+                _ = configure.AddFilter("System.Net.Http.HttpClient." + healthCheckKey + ".LogicalHandler", LogLevel.None);
+                _ = configure.AddFilter("System.Net.Http.HttpClient." + healthCheckKey + ".ClientHandler", LogLevel.None);
+            });
+
+            _ = builder.ApplicationBuilder.Services.AddHttpClient(healthCheckKey);
+
             _ = builder.ApplicationBuilder.Services
                 .AddHealthChecks()
                 .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
@@ -177,7 +187,7 @@ public static class LocalStackBuilderExtensions
                     serviceProvider => uri switch
                     {
                         null => throw new DistributedApplicationException("The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
-                        _ => new Aspire.Hosting.LocalStack.LocalStackHealthCheck(serviceProvider.GetRequiredService<HttpClient>) { Uri = uri, Services = services },
+                        _ => new Aspire.Hosting.LocalStack.LocalStackHealthCheck(() => serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(healthCheckKey)) { Uri = uri, Services = services },
                     },
                     failureStatus: null,
                     tags: null));
