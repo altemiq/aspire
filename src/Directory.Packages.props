@@ -3,6 +3,7 @@
 
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.0" />
+    <PackageVersion Include="PolySharp" Version="1.15.0" />
   </ItemGroup>
 
 </Project>

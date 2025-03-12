@@ -5,6 +5,7 @@
     <PackageTags>aspire hosting grpc</PackageTags>
     <Description>gRPC support for .NET Aspire.</Description>
     <PackageIcon>logo.png</PackageIcon>
+    <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,10 +14,11 @@
     <PackageReference Include="Grpc.HealthCheck" />
     <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="8.0.2" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="$(SharedDir)OverloadResolutionPriorityAttribute.cs" Link="Utils\OverloadResolutionPriorityAttribute.cs" />
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
