@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Altemiq.Runtime" VersionOverride="1.2.1" />
     <PackageReference Include="Aspire.Hosting" />
-    <PackageReference Include="Grpc.HealthCheck" />
+    <PackageReference Include="Grpc.HealthCheck" VersionOverride="2.67.0" />
     <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="8.0.2" />
 

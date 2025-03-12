@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Grpc.HealthCheck" Version="2.67.0" />
+    <PackageVersion Include="Grpc.HealthCheck" Version="2.70.0" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
