@@ -11,10 +11,17 @@
   <ItemGroup>
     <PackageReference Include="Altemiq.Runtime" VersionOverride="1.2.1" />
     <PackageReference Include="Aspire.Hosting" />
+    
+    <!-- The gRPC reference here should line up with the gRPC references in Aspire.Hosting -->
     <PackageReference Include="Grpc.HealthCheck" VersionOverride="2.67.0" />
-    <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.2" />
+    
+    <!-- Keep this up to date with https://github.com/fullstorydev/grpcui -->
+    <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.3" />
+    
+    <!-- This should match the latest major version of Microsoft.Extensions.* from Aspire.Hosting -->
     <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="8.0.2" />
 
+    <!-- polyfills for overload resolution -->
     <PackageReference Include="PolySharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
