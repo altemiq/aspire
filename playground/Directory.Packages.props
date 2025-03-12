@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.3" />
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
