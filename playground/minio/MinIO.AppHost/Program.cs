@@ -28,10 +28,18 @@ var rabbitmq = builder
     .WithDataVolume();
 
 var minio = builder
-    .AddMinIO("minio", regionEndPoint: region)
+    .AddMinIO("minio", config: config)
     .WithReference(profiles)
     .WithAmqpReference(rabbitmq)
     .WithDataVolume();
+
+builder.AddAmazonS3(minio, config);
+
+minio.EnsureBucket(
+    "aspire",
+    Amazon.S3.EventType.ObjectCreatedAll,
+    Amazon.S3.EventType.ObjectRemovedAll,
+    Amazon.S3.EventType.ObjectRestoreAll);
 
 builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
     .WithReference(minio).WaitFor(minio)

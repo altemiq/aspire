@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting" />
     <PackageReference Include="PolySharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -17,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj" />
+    <ProjectReference Include="..\Aspire.Hosting.AWS.S3\Aspire.Hosting.AWS.S3.csproj" />
   </ItemGroup>
 
   <ItemGroup>

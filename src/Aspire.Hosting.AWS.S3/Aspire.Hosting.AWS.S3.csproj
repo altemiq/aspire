@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>$(RootNamespace.Replace('.AWS.S3', ''))</RootNamespace>
+    <Description>AWS S3 support for .NET Aspire.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" VersionOverride="3.7.400" />
+    <PackageReference Include="AWSSDK.S3" VersionOverride="3.7.400.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj" />
+  </ItemGroup>
+
+</Project>
+  

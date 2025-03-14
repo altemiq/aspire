@@ -7,6 +7,7 @@
 namespace Aspire.Hosting;
 
 using Aspire.Hosting.ApplicationModel;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -21,14 +22,74 @@ public static partial class ResourceBuilderExtensions
     /// <param name="builder">The application builder.</param>
     /// <param name="name">The name of the resource.</param>
     /// <returns>The resource containing the configuration.</returns>
-    public static IResourceBuilder<AWS.IAWSProfileConfig> AddAWSProfileConfig(this IDistributedApplicationBuilder builder, string? name = default) => builder
-        .AddResource<AWS.IAWSProfileConfig>(new AWS.AWSProfileConfig { Name = name ?? "aws-config" })
-        .WithInitialState(new CustomResourceSnapshot
+    public static IResourceBuilder<AWS.IAWSProfileConfig> AddAWSProfileConfig(this IDistributedApplicationBuilder builder, string? name = default)
+    {
+        var profiles = builder
+            .AddResource<AWS.IAWSProfileConfig>(new AWS.AWSProfileConfig { Name = name ?? "aws-config" })
+            .WithInitialState(new CustomResourceSnapshot
+            {
+                ResourceType = "Configuration",
+                Properties = [],
+                State = new ResourceStateSnapshot("Configuring", KnownResourceStates.Starting),
+            });
+
+        // add the configuration to the resource
+        _ = builder.Eventing.Subscribe<BeforeStartEvent>((_, _) =>
         {
-            ResourceType = "Configuration",
-            Properties = [],
-            State = new ResourceStateSnapshot("Configuring", KnownResourceStates.Starting),
+            if (profiles.Resource.TryGetLastAnnotation<AWSConfigurationFileAnnotation>(out var annotation)
+                && annotation.FileName is { } fileName)
+            {
+                // set the AWS Profiles location
+                Amazon.AWSConfigs.AWSProfilesLocation = fileName;
+
+                // set the environment variable
+                Environment.SetEnvironmentVariable(Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar, fileName, EnvironmentVariableTarget.Process);
+                RefreshEnvironmentVariables(builder.Configuration);
+
+                // set the profiles location for the .NET setup
+                _ = builder.Configuration.AddInMemoryCollection([new KeyValuePair<string, string?>("AWS:ProfilesLocation", fileName)]);
+            }
+
+            return Task.CompletedTask;
         });
+
+        return profiles;
+    }
+
+    /// <summary>
+    /// Sets the AWS config for the builder application.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns>The application builder.</returns>
+    public static IDistributedApplicationBuilder SetAWSConfig(this IDistributedApplicationBuilder builder, Aspire.Hosting.AWS.IAWSSDKConfig configuration)
+    {
+        var dictionary = new Dictionary<string, string?>(StringComparer.Ordinal);
+
+        if (configuration.Profile is { } profile
+            && !string.Equals(builder.Configuration.GetValue<string>("AWS:Profile"), profile, StringComparison.Ordinal))
+        {
+            dictionary.Add("AWS:Profile", profile);
+            Amazon.AWSConfigs.AWSProfileName = profile;
+            Environment.SetEnvironmentVariable("AWS_PROFILE", profile, EnvironmentVariableTarget.Process);
+        }
+
+        if (configuration.Region is { SystemName: var region }
+            && !string.Equals(builder.Configuration.GetValue<string>("AWS:Region"), region, StringComparison.Ordinal))
+        {
+            dictionary.Add("AWS:Region", region);
+            Amazon.AWSConfigs.AWSRegion = region;
+            Environment.SetEnvironmentVariable("AWS_REGION", region, EnvironmentVariableTarget.Process);
+        }
+
+        if (dictionary.Count is > 0)
+        {
+            RefreshEnvironmentVariables(builder.Configuration);
+            _ = builder.Configuration.AddInMemoryCollection(dictionary);
+        }
+
+        return builder;
+    }
 
     /// <summary>
     /// Adds a profile to the <see cref="AWS.IAWSProfileConfig"/>.
@@ -149,6 +210,14 @@ public static partial class ResourceBuilderExtensions
 
     [LoggerMessage(Level = LogLevel.Information, Message = "AWS configuration completed")]
     private static partial void LogCompleted(ILogger logger);
+
+    private static void RefreshEnvironmentVariables(IConfigurationRoot configurationRoot)
+    {
+        foreach (var provider in configurationRoot.Providers.OfType<Microsoft.Extensions.Configuration.EnvironmentVariables.EnvironmentVariablesConfigurationProvider>())
+        {
+            provider.Load();
+        }
+    }
 
     private sealed class AWSConfigurationFileAnnotation(AWS.IAWSProfileConfig profileConfig) : ApplicationModel.IResourceAnnotation
     {
