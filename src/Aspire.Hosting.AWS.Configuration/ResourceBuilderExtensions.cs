@@ -63,7 +63,7 @@ public static partial class ResourceBuilderExtensions
     public static IResourceBuilder<T> AsConfigurationFile<T>(this IResourceBuilder<T> builder)
         where T : AWS.IAWSProfileConfig
     {
-        _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation { FileName = GetFileName() }, ResourceAnnotationMutationBehavior.Replace);
+        _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation(builder.Resource), ResourceAnnotationMutationBehavior.Replace);
 
         _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, _) => ProcessProfiles(e.Services, builder.Resource));
 
@@ -72,46 +72,43 @@ public static partial class ResourceBuilderExtensions
         async Task ProcessProfiles(IServiceProvider services, T configuration)
         {
             // get the annotation
-            if (configuration.TryGetAnnotationsOfType<AWSConfigurationFileAnnotation>(out var fileAnnotaions)
-                && fileAnnotaions.FirstOrDefault() is { } fileAnnotation)
+            if (configuration.TryGetLastAnnotation<AWSConfigurationFileAnnotation>(out var fileAnnotation))
             {
                 var rns = services.GetRequiredService<ResourceNotificationService>();
                 var rls = services.GetRequiredService<ResourceLoggerService>();
                 var logger = rls.GetLogger(configuration);
 
-                LogCreatingAwsConfiguration(logger, fileAnnotation.FileName);
-                var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileAnnotation.FileName);
-                foreach (var profile in configuration.Profiles)
+                var fileName = fileAnnotation.FileName;
+                if (!System.IO.Path.Exists(fileName))
                 {
-                    LogRegisteringProfile(logger, profile.Name);
-                    sharedCredentialsFile.RegisterProfile(
-                        new Amazon.Runtime.CredentialManagement.CredentialProfile(
-                            profile.Name,
-                            new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
-                            {
-                                AccessKey = profile.AccessKeyId.Value,
-                                SecretKey = profile.SecretAccessKey.Value,
-                                Token = profile.SessionToken?.Value,
-                            }));
-                }
+                    LogCreatingAwsConfiguration(logger, fileName);
+                    var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileName);
+                    foreach (var profile in configuration.Profiles)
+                    {
+                        LogRegisteringProfile(logger, profile.Name);
+                        sharedCredentialsFile.RegisterProfile(
+                            new Amazon.Runtime.CredentialManagement.CredentialProfile(
+                                profile.Name,
+                                new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
+                                {
+                                    AccessKey = profile.AccessKeyId.Value,
+                                    SecretKey = profile.SecretAccessKey.Value,
+                                    Token = profile.SessionToken?.Value,
+                                }));
+                    }
 
-                LogCompleted(logger);
+                    LogCompleted(logger);
+                }
 
                 await rns.PublishUpdateAsync(configuration, s => s with
                 {
                     State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success),
                     Properties = [
                         .. s.Properties,
-                        new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileAnnotation.FileName),
+                        new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileName),
                     ],
                 }).ConfigureAwait(false);
             }
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Vulnerability", "S5445:Insecure temporary file creation methods should not be used", Justification = "This is fine")]
-        static string GetFileName()
-        {
-            return Path.GetTempFileName();
         }
     }
 
@@ -144,17 +141,30 @@ public static partial class ResourceBuilderExtensions
         return builder;
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at {FileName}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at '{FileName}'")]
     private static partial void LogCreatingAwsConfiguration(ILogger logger, string fileName);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Registering Profile {Name}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Registering Profile '{Name}'")]
     private static partial void LogRegisteringProfile(ILogger logger, string name);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "AWS configuration completed")]
     private static partial void LogCompleted(ILogger logger);
 
-    private sealed class AWSConfigurationFileAnnotation : ApplicationModel.IResourceAnnotation
+    private sealed class AWSConfigurationFileAnnotation(AWS.IAWSProfileConfig profileConfig) : ApplicationModel.IResourceAnnotation
     {
-        public required string FileName { get; init; }
+        private string? fileName;
+
+        public string FileName => this.fileName ??= this.GetFileName();
+
+        private string GetFileName()
+        {
+            return Path.Combine(Path.GetTempPath(), $"{profileConfig.Name}-{ConvertHashToString(profileConfig.GetHashCode())}");
+
+            static string ConvertHashToString(int hash)
+            {
+                var bytes = BitConverter.GetBytes(hash);
+                return System.Convert.ToHexString(bytes).Replace("-", string.Empty, StringComparison.Ordinal);
+            }
+        }
     }
 }
