@@ -197,5 +197,78 @@ public static class LocalStackBuilderExtensions
     }
 
     private static IResourceBuilder<T> AddDockerSock<T>(this IResourceBuilder<T> builder)
-        where T : ContainerResource => builder.WithContainerRuntimeArgs("-v", "/var/run/docker.sock:/var/run/docker.sock:ro");
+        where T : ContainerResource
+    {
+        var local = Environment.GetEnvironmentVariable("DOCKER_HOST") ?? "/var/run/docker.sock";
+        if (!OperatingSystem.IsLinux() || CheckSock(local))
+        {
+            return AddDockerSockWithPath(builder, local);
+        }
+
+        local = GetPodmanMachineSock();
+        return CheckSock(local)
+            ? AddDockerSockWithPath(builder, local)
+            : builder;
+
+        static bool CheckSock([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
+        {
+            if (path is null)
+            {
+                return false;
+            }
+
+            var endpoint = new System.Net.Sockets.UnixDomainSocketEndPoint(path);
+            var socket = new System.Net.Sockets.Socket(
+                System.Net.Sockets.AddressFamily.Unix,
+                System.Net.Sockets.SocketType.Stream,
+                System.Net.Sockets.ProtocolType.Unspecified);
+
+            try
+            {
+                socket.Connect(endpoint);
+                return true;
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return false;
+            }
+        }
+
+        static string? GetPodmanMachineSock()
+        {
+            var process = new System.Diagnostics.Process
+            {
+                StartInfo =
+                {
+                    FileName = "podman",
+                    Arguments = "machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}'",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                },
+            };
+
+            using (process)
+            {
+                try
+                {
+                    process.Start();
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    return default;
+                }
+
+                var output = process.StandardOutput.ReadToEnd();
+
+                process.WaitForExit();
+
+                return output.Trim('\r', '\n', '\'');
+            }
+        }
+
+        static IResourceBuilder<T> AddDockerSockWithPath(IResourceBuilder<T> builder, string path)
+        {
+            return builder.WithContainerRuntimeArgs("-v", $"{path}:/var/run/docker.sock:ro");
+        }
+    }
 }
