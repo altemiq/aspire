@@ -16,7 +16,7 @@ public static class LocalStackServices
     /// </summary>
     [Flags]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1135:Declare enum member with zero value (when enum has FlagsAttribute)", Justification = "The zero value is used as the default.")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This supression is required.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This suppression is required.")]
     public enum Community : long
     {
         /// <summary>
@@ -62,7 +62,7 @@ public static class LocalStackServices
         ElasticComputeCloud = 1L << 7,
 
         /// <summary>
-        /// Elastic Search.
+        /// ElasticSearch.
         /// </summary>
         [System.ComponentModel.Description("ES")]
         ElasticSearch = 1L << 8,
@@ -122,9 +122,9 @@ public static class LocalStackServices
         ResourceGroups = 1L << 18,
 
         /// <summary>
-        /// Resource Group Stagging API.
+        /// Resource Group Staging API.
         /// </summary>
-        ResourceGroupStaggingApi = 1L << 19,
+        ResourceGroupStagingApi = 1L << 19,
 
         /// <summary>
         /// Route 53.

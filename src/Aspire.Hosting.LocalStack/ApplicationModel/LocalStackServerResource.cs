@@ -42,15 +42,17 @@ public sealed class LocalStackServerResource(string name, string region) : Conta
         for (var i = fields.Length - 1; i >= 0; i--)
         {
             var field = fields[i];
-            if (field.GetValue(null) is LocalStackServices.Community enumValue)
+            if (field.GetValue(null) is not LocalStackServices.Community enumValue)
             {
-                var longValue = (long)enumValue;
-                if ((resultValue & longValue) == longValue)
-                {
-                    yield return Attribute.GetCustomAttribute(field, typeof(System.ComponentModel.DescriptionAttribute)) is System.ComponentModel.DescriptionAttribute descriptionAttribute
-                        ? descriptionAttribute.Description.ToLowerInvariant()
-                        : field.Name.ToLowerInvariant();
-                }
+                continue;
+            }
+
+            var longValue = (long)enumValue;
+            if ((resultValue & longValue) == longValue)
+            {
+                yield return Attribute.GetCustomAttribute(field, typeof(System.ComponentModel.DescriptionAttribute)) is System.ComponentModel.DescriptionAttribute descriptionAttribute
+                    ? descriptionAttribute.Description.ToLowerInvariant()
+                    : field.Name.ToLowerInvariant();
             }
         }
     }

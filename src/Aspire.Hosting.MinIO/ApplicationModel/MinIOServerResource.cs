@@ -17,7 +17,7 @@ public class MinIOServerResource : ContainerResource, IResourceWithServiceDiscov
     /// Initialises a new instance of the <see cref="MinIOServerResource"/> class.
     /// </summary>
     /// <param name="name">The name of the resource.</param>
-    /// <param name="userName">A parameter that contains the MinIO server user name, or <see langword="null"/> to use a default value.</param>
+    /// <param name="userName">A parameter that contains the MinIO server username, or <see langword="null"/> to use a default value.</param>
     /// <param name="password">A parameter that contains the MinIO server password.</param>
     /// <param name="region">The region.</param>
     public MinIOServerResource(string name, ParameterResource? userName, ParameterResource password, string? region)
@@ -36,7 +36,7 @@ public class MinIOServerResource : ContainerResource, IResourceWithServiceDiscov
     public string? Region { get; }
 
     /// <summary>
-    /// Gets the parameter that contains the MinIO server user name.
+    /// Gets the parameter that contains the MinIO server username.
     /// </summary>
     public ParameterResource? UserNameParameter { get; }
 
@@ -46,10 +46,10 @@ public class MinIOServerResource : ContainerResource, IResourceWithServiceDiscov
     public ParameterResource PasswordParameter { get; }
 
     /// <summary>
-    /// Gets the user name reference.
+    /// Gets the username reference.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1214:Unnecessary interpolated string", Justification = "This is required to turn it into an interpolated string handler")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This supression is required.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This suppression is required.")]
     internal ReferenceExpression UserNameReference =>
         this.UserNameParameter is { } userNameParameter ?
             ReferenceExpression.Create($"{userNameParameter}") :

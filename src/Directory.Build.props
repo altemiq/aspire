@@ -12,4 +12,8 @@
     <MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);SV0001</MSBuildWarningsNotAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Using Include="Aspire.Hosting.ApplicationModel" />
+  </ItemGroup>
+
 </Project>

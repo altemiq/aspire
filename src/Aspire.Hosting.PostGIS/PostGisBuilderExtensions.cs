@@ -6,7 +6,6 @@
 
 namespace Aspire.Hosting;
 
-using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -83,7 +82,7 @@ public static class PostGisBuilderExtensions
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
-    /// <param name="userName">The parameter used to provide the user name for the PostGIS resource. If null a default value will be used.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostGIS resource. If null a default value will be used.</param>
     /// <param name="password">The administrator password used for the container during local development. If null a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>

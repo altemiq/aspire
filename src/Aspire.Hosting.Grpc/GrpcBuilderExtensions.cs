@@ -6,7 +6,6 @@
 
 namespace Aspire.Hosting;
 
-using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -28,7 +27,7 @@ public static class GrpcBuilderExtensions
         var endpoint = builder.Resource.GetEndpoint(endpointName);
 
         var healthCheckKey = $"{builder.Resource.Name}_check";
-        _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) => endpoint switch
         {
             { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
             { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
@@ -36,7 +35,7 @@ public static class GrpcBuilderExtensions
         });
 
         Uri? uri = null;
-        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, _) =>
         {
             uri = new Uri(endpoint.Url, UriKind.Absolute);
             return Task.CompletedTask;
@@ -60,7 +59,7 @@ public static class GrpcBuilderExtensions
     }
 
     /// <summary>
-    /// Adds a grpcui platform to the application model.
+    /// Adds a <c>grpcui</c> platform to the application model.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
@@ -70,7 +69,7 @@ public static class GrpcBuilderExtensions
         where T : IResourceWithEndpoints => builder.WithGrpcUI(default(Action<IResourceBuilder<T>, IResourceBuilder<GrpcUIContainerResource>>), containerName);
 
     /// <summary>
-    /// Adds a grpcui platform to the application model.
+    /// Adds a <c>grpcui</c> platform to the application model.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
@@ -81,7 +80,7 @@ public static class GrpcBuilderExtensions
         where T : IResourceWithEndpoints => builder.WithGrpcUI((_, c) => configureContainer?.Invoke(c), containerName);
 
     /// <summary>
-    /// Adds a grpcui platform to the application model.
+    /// Adds a <c>grpcui</c> platform to the application model.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
@@ -92,7 +91,7 @@ public static class GrpcBuilderExtensions
         where T : IResourceWithEndpoints => builder.WithGrpcUI((_, c) => configureExecutable?.Invoke(c), executableName);
 
     /// <summary>
-    /// Adds a grpcui platform to the application model.
+    /// Adds a <c>grpcui</c> platform to the application model.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
@@ -110,7 +109,7 @@ public static class GrpcBuilderExtensions
             containerName);
 
     /// <summary>
-    /// Adds a grpcui platform to the application model.
+    /// Adds a <c>grpcui</c> platform to the application model.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The resource builder.</param>
@@ -151,7 +150,7 @@ public static class GrpcBuilderExtensions
 
         var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
 
-        _ = resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) =>
+        _ = resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) =>
         {
             SetArguments(builder, resource, endpointType);
             return Task.CompletedTask;
@@ -231,7 +230,10 @@ public static class GrpcBuilderExtensions
 
                 static string GetHost(EndpointReference endpoint, ContainerResource containerResource)
                 {
-                    var hostName = containerResource.GetEndpoints().Select(ep => ep.ContainerHost).FirstOrDefault(x => x is not null) ?? "host.docker.internal";
+                    var hostName = containerResource
+                        .GetEndpoints()
+                        .Select(ep => ep.ContainerHost)
+                        .FirstOrDefault(x => x is not null) ?? "host.docker.internal";
 
                     return endpoint.Host
                         .Replace("localhost", hostName, StringComparison.OrdinalIgnoreCase)

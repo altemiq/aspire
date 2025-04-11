@@ -6,8 +6,6 @@
 
 namespace Aspire.Hosting;
 
-using Aspire.Hosting.ApplicationModel;
-
 /// <summary>
 /// <c>MapServer</c> extensions.
 /// </summary>

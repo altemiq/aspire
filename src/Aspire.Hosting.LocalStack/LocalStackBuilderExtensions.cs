@@ -6,7 +6,6 @@
 
 namespace Aspire.Hosting;
 
-using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -66,7 +65,7 @@ public static class LocalStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(source);
 
-        _ = Aspire.Hosting.ResourceBuilderExtensions.WithReference(builder, source);
+        _ = ResourceBuilderExtensions.WithReference(builder, source);
 
         _ = builder.WithEnvironment((context) =>
         {
@@ -155,7 +154,7 @@ public static class LocalStackBuilderExtensions
         {
             var endpoint = builder.Resource.GetEndpoint(endpointName);
 
-            _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, __) => endpoint switch
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) => endpoint switch
             {
                 { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
                 { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
@@ -163,7 +162,7 @@ public static class LocalStackBuilderExtensions
             });
 
             Uri? uri = null;
-            _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, __) =>
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, _) =>
             {
                 uri = new Uri(endpoint.Url, UriKind.Absolute);
                 return Task.CompletedTask;
@@ -187,7 +186,7 @@ public static class LocalStackBuilderExtensions
                     serviceProvider => uri switch
                     {
                         null => throw new DistributedApplicationException("The URI for the health check is not set. Ensure that the resource has been allocated before the health check is executed."),
-                        _ => new Aspire.Hosting.LocalStack.LocalStackHealthCheck(() => serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(healthCheckKey)) { Uri = uri, Services = services },
+                        _ => new LocalStack.LocalStackHealthCheck(() => serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(healthCheckKey)) { Uri = uri, Services = services },
                     },
                     failureStatus: null,
                     tags: null));

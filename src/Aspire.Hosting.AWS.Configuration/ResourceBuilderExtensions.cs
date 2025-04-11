@@ -6,7 +6,7 @@
 
 namespace Aspire.Hosting;
 
-using Aspire.Hosting.ApplicationModel;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -21,14 +21,76 @@ public static partial class ResourceBuilderExtensions
     /// <param name="builder">The application builder.</param>
     /// <param name="name">The name of the resource.</param>
     /// <returns>The resource containing the configuration.</returns>
-    public static IResourceBuilder<AWS.IAWSProfileConfig> AddAWSProfileConfig(this IDistributedApplicationBuilder builder, string? name = default) => builder
-        .AddResource<AWS.IAWSProfileConfig>(new AWS.AWSProfileConfig { Name = name ?? "aws-config" })
-        .WithInitialState(new CustomResourceSnapshot
+    public static IResourceBuilder<AWS.IAWSProfileConfig> AddAWSProfileConfig(this IDistributedApplicationBuilder builder, string? name = default)
+    {
+        var profiles = builder
+            .AddResource<AWS.IAWSProfileConfig>(new AWS.AWSProfileConfig { Name = name ?? "aws-config" })
+            .WithInitialState(new CustomResourceSnapshot
+            {
+                ResourceType = "Configuration",
+                Properties = [],
+                State = new ResourceStateSnapshot("Configuring", KnownResourceStates.Starting),
+            });
+
+        // add the configuration to the resource
+        _ = builder.Eventing.Subscribe<BeforeStartEvent>((_, _) =>
         {
-            ResourceType = "Configuration",
-            Properties = [],
-            State = new ResourceStateSnapshot("Configuring", KnownResourceStates.Starting),
+            if (!profiles.Resource.TryGetLastAnnotation<AWSConfigurationFileAnnotation>(out var annotation)
+                || annotation.FileName is not { } fileName)
+            {
+                return Task.CompletedTask;
+            }
+
+            // set the AWS Profiles location
+            Amazon.AWSConfigs.AWSProfilesLocation = fileName;
+
+            // set the environment variable
+            Environment.SetEnvironmentVariable(Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar, fileName, EnvironmentVariableTarget.Process);
+            RefreshEnvironmentVariables(builder.Configuration);
+
+            // set the profiles location for the .NET setup
+            _ = builder.Configuration.AddInMemoryCollection([new KeyValuePair<string, string?>("AWS:ProfilesLocation", fileName)]);
+
+            return Task.CompletedTask;
         });
+
+        return profiles;
+    }
+
+    /// <summary>
+    /// Sets the AWS config for the builder application.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns>The application builder.</returns>
+    public static IDistributedApplicationBuilder SetAWSConfig(this IDistributedApplicationBuilder builder, AWS.IAWSSDKConfig configuration)
+    {
+        var dictionary = new Dictionary<string, string?>(StringComparer.Ordinal);
+
+        if (configuration.Profile is { } profile
+            && !string.Equals(builder.Configuration.GetValue<string>("AWS:Profile"), profile, StringComparison.Ordinal))
+        {
+            dictionary.Add("AWS:Profile", profile);
+            Amazon.AWSConfigs.AWSProfileName = profile;
+            Environment.SetEnvironmentVariable("AWS_PROFILE", profile, EnvironmentVariableTarget.Process);
+        }
+
+        if (configuration.Region is { SystemName: var region }
+            && !string.Equals(builder.Configuration.GetValue<string>("AWS:Region"), region, StringComparison.Ordinal))
+        {
+            dictionary.Add("AWS:Region", region);
+            Amazon.AWSConfigs.AWSRegion = region;
+            Environment.SetEnvironmentVariable("AWS_REGION", region, EnvironmentVariableTarget.Process);
+        }
+
+        if (dictionary.Count is > 0)
+        {
+            RefreshEnvironmentVariables(builder.Configuration);
+            _ = builder.Configuration.AddInMemoryCollection(dictionary);
+        }
+
+        return builder;
+    }
 
     /// <summary>
     /// Adds a profile to the <see cref="AWS.IAWSProfileConfig"/>.
@@ -63,7 +125,7 @@ public static partial class ResourceBuilderExtensions
     public static IResourceBuilder<T> AsConfigurationFile<T>(this IResourceBuilder<T> builder)
         where T : AWS.IAWSProfileConfig
     {
-        _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation { FileName = GetFileName() }, ResourceAnnotationMutationBehavior.Replace);
+        _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation(builder.Resource), ResourceAnnotationMutationBehavior.Replace);
 
         _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, _) => ProcessProfiles(e.Services, builder.Resource));
 
@@ -72,46 +134,43 @@ public static partial class ResourceBuilderExtensions
         async Task ProcessProfiles(IServiceProvider services, T configuration)
         {
             // get the annotation
-            if (configuration.TryGetAnnotationsOfType<AWSConfigurationFileAnnotation>(out var fileAnnotaions)
-                && fileAnnotaions.FirstOrDefault() is { } fileAnnotation)
+            if (configuration.TryGetLastAnnotation<AWSConfigurationFileAnnotation>(out var fileAnnotation))
             {
                 var rns = services.GetRequiredService<ResourceNotificationService>();
                 var rls = services.GetRequiredService<ResourceLoggerService>();
                 var logger = rls.GetLogger(configuration);
 
-                LogCreatingAwsConfiguration(logger, fileAnnotation.FileName);
-                var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileAnnotation.FileName);
-                foreach (var profile in configuration.Profiles)
+                var fileName = fileAnnotation.FileName;
+                if (!Path.Exists(fileName))
                 {
-                    LogRegisteringProfile(logger, profile.Name);
-                    sharedCredentialsFile.RegisterProfile(
-                        new Amazon.Runtime.CredentialManagement.CredentialProfile(
-                            profile.Name,
-                            new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
-                            {
-                                AccessKey = profile.AccessKeyId.Value,
-                                SecretKey = profile.SecretAccessKey.Value,
-                                Token = profile.SessionToken?.Value,
-                            }));
-                }
+                    LogCreatingAwsConfiguration(logger, fileName);
+                    var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileName);
+                    foreach (var profile in configuration.Profiles)
+                    {
+                        LogRegisteringProfile(logger, profile.Name);
+                        sharedCredentialsFile.RegisterProfile(
+                            new Amazon.Runtime.CredentialManagement.CredentialProfile(
+                                profile.Name,
+                                new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
+                                {
+                                    AccessKey = profile.AccessKeyId.Value,
+                                    SecretKey = profile.SecretAccessKey.Value,
+                                    Token = profile.SessionToken?.Value,
+                                }));
+                    }
 
-                LogCompleted(logger);
+                    LogCompleted(logger);
+                }
 
                 await rns.PublishUpdateAsync(configuration, s => s with
                 {
                     State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success),
                     Properties = [
                         .. s.Properties,
-                        new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileAnnotation.FileName),
+                        new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileName),
                     ],
                 }).ConfigureAwait(false);
             }
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Vulnerability", "S5445:Insecure temporary file creation methods should not be used", Justification = "This is fine")]
-        static string GetFileName()
-        {
-            return Path.GetTempFileName();
         }
     }
 
@@ -136,25 +195,46 @@ public static partial class ResourceBuilderExtensions
         where T : IResourceWithEnvironment
     {
         // add the configuration to the resource
-        if (configuration.Annotations.OfType<AWSConfigurationFileAnnotation>().FirstOrDefault() is { } fileAnnotaion)
+        if (configuration.Annotations.OfType<AWSConfigurationFileAnnotation>().FirstOrDefault() is { } fileAnnotation)
         {
-            _ = builder.WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = fileAnnotaion.FileName);
+            _ = builder.WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = fileAnnotation.FileName);
         }
 
         return builder;
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at {FileName}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at '{FileName}'")]
     private static partial void LogCreatingAwsConfiguration(ILogger logger, string fileName);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Registering Profile {Name}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Registering Profile '{Name}'")]
     private static partial void LogRegisteringProfile(ILogger logger, string name);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "AWS configuration completed")]
     private static partial void LogCompleted(ILogger logger);
 
-    private sealed class AWSConfigurationFileAnnotation : ApplicationModel.IResourceAnnotation
+    private static void RefreshEnvironmentVariables(IConfigurationRoot configurationRoot)
     {
-        public required string FileName { get; init; }
+        foreach (var provider in configurationRoot.Providers.OfType<Microsoft.Extensions.Configuration.EnvironmentVariables.EnvironmentVariablesConfigurationProvider>())
+        {
+            provider.Load();
+        }
+    }
+
+    private sealed class AWSConfigurationFileAnnotation(AWS.IAWSProfileConfig profileConfig) : IResourceAnnotation
+    {
+        [field: System.Diagnostics.CodeAnalysis.AllowNull]
+        [field: System.Diagnostics.CodeAnalysis.MaybeNull]
+        public string FileName => field ??= this.GetFileName();
+
+        private string GetFileName()
+        {
+            return Path.Combine(Path.GetTempPath(), $"{profileConfig.Name}-{ConvertHashToString(profileConfig.GetHashCode())}");
+
+            static string ConvertHashToString(int hash)
+            {
+                var bytes = BitConverter.GetBytes(hash);
+                return Convert.ToHexString(bytes).Replace("-", string.Empty, StringComparison.Ordinal);
+            }
+        }
     }
 }
