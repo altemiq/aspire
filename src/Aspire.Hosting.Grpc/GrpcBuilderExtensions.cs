@@ -136,11 +136,12 @@ public static class GrpcBuilderExtensions
         var endpointType = "tcp";
         if (builder.Resource.TryGetEndpoints(out var endpoints))
         {
-            if (endpoints.Any(ea => string.Equals(ea.UriScheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+            var endpointsArray = endpoints.ToArray();
+            if (endpointsArray.Any(ea => string.Equals(ea.UriScheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
             {
                 endpointType = Uri.UriSchemeHttps;
             }
-            else if (endpoints.Any(ea => string.Equals(ea.UriScheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)))
+            else if (endpointsArray.Any(ea => string.Equals(ea.UriScheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)))
             {
                 endpointType = Uri.UriSchemeHttp;
             }
