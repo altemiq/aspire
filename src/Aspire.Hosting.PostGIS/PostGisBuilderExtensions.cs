@@ -7,11 +7,12 @@
 namespace Aspire.Hosting;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Extensions for <c>PostGIS</c>.
 /// </summary>
-public static class PostGisBuilderExtensions
+public static partial class PostGisBuilderExtensions
 {
     private const string UserEnvVarName = "POSTGRES_USER";
     private const string PasswordEnvVarName = "POSTGRES_PASSWORD";
@@ -98,20 +99,45 @@ public static class PostGisBuilderExtensions
 
         string? connectionString = null;
 
-        _ = builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, ct) =>
+        builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, ct) =>
         {
-            connectionString = await postgisServer.GetConnectionStringAsync(ct).ConfigureAwait(false);
+            connectionString = await postgisServer.GetConnectionStringAsync(ct).ConfigureAwait(false)
+                ?? throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
+        });
 
+        builder.Eventing.Subscribe<ResourceReadyEvent>(postgisServer, async (@event, ct) =>
+        {
             if (connectionString is null)
             {
-                throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
+                throw new DistributedApplicationException($"{nameof(ResourceReadyEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
+            }
+
+            // Non-database scoped connection string
+            var npgsqlConnection = new Npgsql.NpgsqlConnection(connectionString + ";Database=postgres;");
+
+            await using (npgsqlConnection.ConfigureAwait(false))
+            {
+                await npgsqlConnection.OpenAsync(ct).ConfigureAwait(false);
+
+                if (npgsqlConnection.State != System.Data.ConnectionState.Open)
+                {
+                    throw new InvalidOperationException($"Could not open connection to '{postgisServer.Name}'");
+                }
+
+                foreach (var databaseName in postgisServer.Databases.Keys)
+                {
+                    if (builder.Resources.FirstOrDefault(n => string.Equals(n.Name, databaseName, StringComparison.OrdinalIgnoreCase)) is PostgresDatabaseResource postgreDatabase)
+                    {
+                        await CreateDatabaseAsync(npgsqlConnection, postgreDatabase, @event.Services, ct).ConfigureAwait(false);
+                    }
+                }
             }
         });
 
         var healthCheckKey = $"{name}_check";
-        _ = builder.Services.AddHealthChecks().AddNpgSql(
+        builder.Services.AddHealthChecks().AddNpgSql(
             _ => connectionString ?? throw new InvalidOperationException("Connection string is unavailable"),
-            configure: (connection) => connection.ConnectionString += ";Database=postgres;",
+            configure: connection => connection.ConnectionString += ";Database=postgres;",
             name: healthCheckKey);
 
         return builder.AddResource(postgisServer)
@@ -127,4 +153,46 @@ public static class PostGisBuilderExtensions
                       })
                       .WithHealthCheck(healthCheckKey);
     }
+
+    private static async Task CreateDatabaseAsync(Npgsql.NpgsqlConnection npgsqlConnection, PostgresDatabaseResource npgsqlDatabase, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    {
+        var scriptAnnotation = GetScripAnnotation(npgsqlDatabase);
+
+        try
+        {
+            var quotedDatabaseIdentifier = new Npgsql.NpgsqlCommandBuilder().QuoteIdentifier(npgsqlDatabase.DatabaseName);
+            var command = npgsqlConnection.CreateCommand();
+            await using (command.ConfigureAwait(false))
+            {
+                command.CommandText = GetScript(scriptAnnotation) ?? $"CREATE DATABASE {quotedDatabaseIdentifier}";
+                await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Npgsql.PostgresException p) when (p.SqlState is "42P04")
+        {
+            // Ignore the error if the database already exists.
+        }
+        catch (Exception e)
+        {
+            LogCreateDatabaseFailed(
+                serviceProvider.GetRequiredService<ResourceLoggerService>().GetLogger(npgsqlDatabase.Parent),
+                e,
+                npgsqlDatabase.DatabaseName);
+        }
+
+        static object? GetScripAnnotation(PostgresDatabaseResource npgsqlDatabase)
+        {
+            return typeof(PostgresDatabaseResource).Assembly.GetType("Aspire.Hosting.Postgres.PostgresCreateDatabaseScriptAnnotation") is { } type
+                ? npgsqlDatabase.Annotations.LastOrDefault(a => type.IsInstanceOfType(a))
+                : default;
+        }
+
+        static string? GetScript(object? annotation)
+        {
+            return annotation?.GetType().GetProperty("Script")?.GetValue(annotation) as string;
+        }
+    }
+
+    [LoggerMessage(LogLevel.Error, "Failed to create database '{DatabaseName}'")]
+    private static partial void LogCreateDatabaseFailed(ILogger logger, Exception exception, string databaseName);
 }

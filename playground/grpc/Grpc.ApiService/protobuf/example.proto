@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package altavec.service;
+package altemiq.service;
 
-option csharp_namespace = "Altavec.Protobuf.Service";
+option csharp_namespace = "Altemiq.Protobuf.Service";
 
 import "protobuf/referenced.proto";
 import "google/protobuf/empty.proto";
@@ -15,5 +15,5 @@ message ActualMessage
 {
   int32 id = 1;
   string description = 2;
-  altavec.protobuf.ImportedMessage message = 3;
+  altemiq.protobuf.ImportedMessage message = 3;
 }
