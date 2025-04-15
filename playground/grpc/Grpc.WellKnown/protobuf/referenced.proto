@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package altavec.protobuf;
+
+option csharp_namespace = "Altavec.Protobuf.WellKnownTypes";
+
+message ImportedMessage
+{
+  int32 id = 1;
+  string description = 2;
+}

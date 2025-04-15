@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package altavec.service;
+
+option csharp_namespace = "Altavec.Protobuf.Service";
+
+import "protobuf/referenced.proto";
+import "google/protobuf/empty.proto";
+
+service Example {
+  rpc Accept(ActualMessage) returns (google.protobuf.Empty);
+}
+
+message ActualMessage
+{
+  int32 id = 1;
+  string description = 2;
+  altavec.protobuf.ImportedMessage message = 3;
+}

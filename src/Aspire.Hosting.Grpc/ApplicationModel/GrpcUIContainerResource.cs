@@ -10,4 +10,4 @@ namespace Aspire.Hosting.ApplicationModel;
 /// Represents a container resource for <c>GrpcUI</c>.
 /// </summary>
 /// <param name="name">The name of the container resource.</param>
-public sealed class GrpcUIContainerResource(string name) : ContainerResource(name);
+public sealed class GrpcUIContainerResource(string name) : ContainerResource(name), IGrpcUIResource;

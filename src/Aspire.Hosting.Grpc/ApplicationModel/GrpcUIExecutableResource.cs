@@ -11,7 +11,7 @@ namespace Aspire.Hosting.ApplicationModel;
 /// </summary>
 /// <param name="name">The name of the executable resource.</param>
 /// <exception cref="InvalidOperationException">Could not find the gRPC executable.</exception>
-public sealed class GrpcUIExecutableResource(string name) : ExecutableResource(name, GetToolPath(), Environment.CurrentDirectory)
+public sealed class GrpcUIExecutableResource(string name) : ExecutableResource(name, GetToolPath(), Environment.CurrentDirectory), IGrpcUIResource
 {
     private static string GetToolPath() => Altemiq.Runtime.Resolve.Tool(Altemiq.Runtime.InteropServices.RuntimeEnvironment.CreateExecutableName("grpcui")) ?? throw new InvalidOperationException("Failed to find the grpcui executable");
 }

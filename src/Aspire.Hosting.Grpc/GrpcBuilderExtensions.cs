@@ -124,13 +124,33 @@ public static class GrpcBuilderExtensions
             configureExecutable,
             executableName);
 
+    /// <summary>
+    /// Add the import path for the resource.
+    /// </summary>
+    /// <typeparam name="T">The type of gRPC resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="path">The path.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithImportPath<T>(this IResourceBuilder<T> builder, string path)
+        where T : IGrpcUIResource => builder.WithAnnotation(new GrpcImportPathAnnotation(path));
+
+    /// <summary>
+    /// Add the base path for the resource.
+    /// </summary>
+    /// <typeparam name="T">The type of gRPC resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="path">The path.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithBasePath<T>(this IResourceBuilder<T> builder, string path)
+        where T : IGrpcUIResource => builder.WithAnnotation(new GrpcBasePathAnnotation(path), ResourceAnnotationMutationBehavior.Replace);
+
     private static IResourceBuilder<TResource> WithGrpcUI<TResource, TGrpcResource>(
         IResourceBuilder<TResource> builder,
         Func<IDistributedApplicationBuilder, string, IResourceBuilder<TGrpcResource>> factory,
         Action<IResourceBuilder<TResource>, IResourceBuilder<TGrpcResource>>? configureResource,
         string? resourceName)
         where TResource : IResourceWithEndpoints
-        where TGrpcResource : IResourceWithEndpoints, IResourceWithArgs
+        where TGrpcResource : IGrpcUIResource
     {
         // get the end point type
         var endpointType = "tcp";
@@ -158,6 +178,17 @@ public static class GrpcBuilderExtensions
         });
 
         _ = resource.WithEndpoint(targetPort: GetTargetPort(resource.Resource), scheme: endpointType);
+
+        _ = resource.WithUrlForEndpoint(
+            endpointType,
+            c =>
+            {
+                if (resource.Resource.TryGetLastAnnotation<GrpcBasePathAnnotation>(out var basePathAnnotation))
+                {
+                    var uriBuilder = new UriBuilder(c.Url) { Path = basePathAnnotation.Path };
+                    c.Url = uriBuilder.ToString();
+                }
+            });
 
         configureResource?.Invoke(builder, resource);
 
@@ -217,6 +248,19 @@ public static class GrpcBuilderExtensions
                 yield return $"-connect-timeout={Timeout}";
                 yield return "-vv";
 
+                if (resource.Resource.TryGetAnnotationsOfType<GrpcImportPathAnnotation>(out var importPathAnnotations))
+                {
+                    foreach (var importPathAnnotation in importPathAnnotations)
+                    {
+                        yield return $"-import-path=\"{Path.GetFullPath(importPathAnnotation.Path.Replace('\\', Path.DirectorySeparatorChar))}\"";
+                    }
+                }
+
+                if (resource.Resource.TryGetLastAnnotation<GrpcBasePathAnnotation>(out var basePathAnnotation))
+                {
+                    yield return $"-base-path={basePathAnnotation.Path}";
+                }
+
                 endpoint = builder.GetEndpoint(endpointType);
                 if (string.Equals(endpoint.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
                 {
@@ -234,7 +278,7 @@ public static class GrpcBuilderExtensions
                     var hostName = containerResource
                         .GetEndpoints()
                         .Select(ep => ep.ContainerHost)
-                        .FirstOrDefault(x => x is not null) ?? "host.docker.internal";
+                        .First();
 
                     return endpoint.Host
                         .Replace("localhost", hostName, StringComparison.OrdinalIgnoreCase)
@@ -260,4 +304,8 @@ public static class GrpcBuilderExtensions
 
         public void Dispose() => channel.Dispose();
     }
+
+    private sealed record GrpcImportPathAnnotation(string Path) : IResourceAnnotation;
+
+    private sealed record GrpcBasePathAnnotation(string Path) : IResourceAnnotation;
 }

@@ -17,6 +17,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Playground.ServiceDefaults\Playground.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Grpc.WellKnown\Grpc.WellKnown.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Protobuf Include="protobuf\example.proto" GrpcServices="Server" AdditionalImportDirs="..\Grpc.WellKnown" />
   </ItemGroup>
 
 </Project>
