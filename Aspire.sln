@@ -91,6 +91,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.AWS.S3", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Grpc.WellKnown", "playground\grpc\Grpc.WellKnown\Grpc.WellKnown.csproj", "{EDDCEFA3-1CF9-4FF9-81A5-D8324832834F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.PostgreSQL", "src\Aspire.Hosting.PostgreSQL\Aspire.Hosting.PostgreSQL.csproj", "{B8D359AB-5166-47A3-BAD1-231690BCF741}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -174,6 +176,10 @@ Global
 		{EDDCEFA3-1CF9-4FF9-81A5-D8324832834F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDDCEFA3-1CF9-4FF9-81A5-D8324832834F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDDCEFA3-1CF9-4FF9-81A5-D8324832834F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8D359AB-5166-47A3-BAD1-231690BCF741}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8D359AB-5166-47A3-BAD1-231690BCF741}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8D359AB-5166-47A3-BAD1-231690BCF741}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8D359AB-5166-47A3-BAD1-231690BCF741}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -205,6 +211,7 @@ Global
 		{A1BB85F6-FA3E-4788-A74C-7264A2E64DA2} = {2408E169-CEBE-4358-AA81-AC214F8DB7EA}
 		{8168CCB2-4E02-0F4D-64C2-A814B03FFEE4} = {2408E169-CEBE-4358-AA81-AC214F8DB7EA}
 		{EDDCEFA3-1CF9-4FF9-81A5-D8324832834F} = {E760AE97-EDCB-463C-8751-ADDAB983FFAB}
+		{B8D359AB-5166-47A3-BAD1-231690BCF741} = {2408E169-CEBE-4358-AA81-AC214F8DB7EA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C899F23-0968-4F50-A1A7-F6F0EC84BF13}
