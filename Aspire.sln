@@ -40,6 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", 
 		playground\.editorconfig = playground\.editorconfig
 		playground\Directory.Build.props = playground\Directory.Build.props
 		playground\Directory.Packages.props = playground\Directory.Packages.props
+		playground\Directory.Build.targets = playground\Directory.Build.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postgis", "postgis", "{C67CB863-FB3C-44C4-A71B-C824CB9318FE}"
