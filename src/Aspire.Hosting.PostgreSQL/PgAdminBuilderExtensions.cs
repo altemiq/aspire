@@ -17,7 +17,9 @@ public static class PgAdminBuilderExtensions
     /// <param name="builder">The builder.</param>
     /// <param name="theme">The theme.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<Postgres.PgAdminContainerResource> WithTheme(this IResourceBuilder<Postgres.PgAdminContainerResource> builder, PgAdminTheme theme) => builder.WithPreference("misc:user_interface:theme", theme.ToString().ToLowerInvariant());
+    public static IResourceBuilder<Postgres.PgAdminContainerResource> WithTheme(this IResourceBuilder<Postgres.PgAdminContainerResource> builder, PgAdminTheme theme) => builder
+        .WithPreference("misc:themes:theme", theme.ToString().ToLowerInvariant())
+        .WithPreference("misc:user_interface:theme", theme.ToString().ToLowerInvariant());
 
     /// <summary>
     /// Adds the preference to the container.
@@ -57,10 +59,21 @@ public static class PgAdminBuilderExtensions
                     IEnumerable<ContainerFileSystemItem> items = [];
                     if (builder.Resource.TryGetAnnotationsOfType<PgAdminPreferenceAnnotation>(out var annotations))
                     {
-                        var preferences = annotations.Select(a => $"\"{a.Key}\":\"{GetValue(a.Value)}\"");
+                        var preferences = annotations.Select(a => $"\"{a.Key}\":{GetValue(a.Value)}");
                         items =
                         [
-                            new ContainerFile { Name = "preferences.json", Contents = $$"""{"preferences":{{{string.Join(',', preferences)}}}""" },
+                            new ContainerFile
+                            {
+                                Name = "preferences.json",
+                                Contents = $$"""
+                                             {
+                                               "preferences":
+                                               {
+                                                 {{string.Join("    ," + Environment.NewLine, preferences)}}
+                                               }
+                                             }
+                                             """,
+                            },
                         ];
 
                         static string GetValue(object? value)
