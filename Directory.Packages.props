@@ -10,12 +10,8 @@
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
-  <ItemGroup Label="gRPC">
-    <PackageVersion Include="Grpc.HealthCheck" Version="2.70.0" />
-  </ItemGroup>
-
   <ItemGroup Label="Analyzers">
-    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.73" />
+    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.79" />
     <GlobalPackageReference Include="Altemiq.SemanticVersioning.MSBuild" Version="2.1.9" />
   </ItemGroup>
 

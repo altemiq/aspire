@@ -6,6 +6,7 @@
     <AssemblyName>$(MSBuildProjectName)</AssemblyName>
     <IsPackable>false</IsPackable>
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
 </Project>

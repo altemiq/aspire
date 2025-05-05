@@ -6,4 +6,8 @@
     <PackageVersion Include="PolySharp" Version="1.15.0" />
   </ItemGroup>
 
+  <ItemGroup Label="gRPC">
+    <PackageVersion Include="Grpc.HealthCheck" Version="2.70.0" />
+  </ItemGroup>
+
 </Project>
