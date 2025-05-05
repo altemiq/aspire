@@ -7,6 +7,7 @@
 namespace Aspire.Hosting;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extensions for <c>MinIO</c>.
@@ -278,13 +279,12 @@ public static class MinIOBuilderExtensions
                 && names.FirstOrDefault() is { } name
                 && e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
             {
-                // get name
-                var fileName = Environment.GetEnvironmentVariable("DOTNET_ASPIRE_CONTAINER_RUNTIME") ?? "docker";
+                var containerRuntime = await GetContainerRuntime(e.Services).ConfigureAwait(false);
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {
-                    _ = await AddUser(fileName, name, profile, ct).ConfigureAwait(false);
-                    _ = await AttachPolicy(fileName, name, profile, ct).ConfigureAwait(false);
+                    _ = await AddUser(containerRuntime, name, profile, ct).ConfigureAwait(false);
+                    _ = await AttachPolicy(containerRuntime, name, profile, ct).ConfigureAwait(false);
                 }
             }
 
@@ -296,6 +296,20 @@ public static class MinIOBuilderExtensions
             static Task<int> AttachPolicy(string containerRuntime, string containerName, AWS.AWSProfile profile, CancellationToken cancellationToken)
             {
                 return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], cancellationToken);
+            }
+
+            static Task<string> GetContainerRuntime(IServiceProvider serviceProvider)
+            {
+                // get the options type
+                var dcpOptionsType = typeof(DistributedApplication).Assembly.GetType("Aspire.Hosting.Dcp.DcpOptions") ?? throw new InvalidOperationException();
+                var optionsType = typeof(Microsoft.Extensions.Options.IOptions<>).MakeGenericType(dcpOptionsType) ?? throw new InvalidOperationException();
+                var options = serviceProvider.GetRequiredService(optionsType);
+
+                var dcpOptions = optionsType.GetProperty(nameof(Microsoft.Extensions.Options.IOptions<>.Value))?.GetValue(options);
+
+                var containerRuntimeProperty = dcpOptionsType.GetProperty("ContainerRuntime");
+
+                return Task.FromResult(containerRuntimeProperty?.GetValue(dcpOptions) as string ?? throw new InvalidOperationException());
             }
 
             static async Task<int> RunProcess(string fileName, IEnumerable<string> arguments, CancellationToken cancellationToken)

@@ -252,7 +252,7 @@ public static partial class PostgresBuilderExtensions
                     var logger = rls.GetLogger(evt.Resource);
 
                     // get name
-                    var containerRuntime = Environment.GetEnvironmentVariable("DOTNET_ASPIRE_CONTAINER_RUNTIME") ?? "docker";
+                    var containerRuntime = await GetContainerRuntime(evt.Services).ConfigureAwait(false);
                     string? database = null;
                     string? password = null;
                     if (evt.Resource is IResourceWithConnectionString databaseResource)
@@ -279,6 +279,20 @@ public static partial class PostgresBuilderExtensions
                                 "install",
                             ],
                             cancellationToken).ConfigureAwait(false);
+                    }
+
+                    static Task<string> GetContainerRuntime(IServiceProvider serviceProvider)
+                    {
+                        // get the options type
+                        var dcpOptionsType = typeof(DistributedApplication).Assembly.GetType("Aspire.Hosting.Dcp.DcpOptions") ?? throw new InvalidOperationException();
+                        var optionsType = typeof(Microsoft.Extensions.Options.IOptions<>).MakeGenericType(dcpOptionsType) ?? throw new InvalidOperationException();
+                        var options = serviceProvider.GetRequiredService(optionsType);
+
+                        var dcpOptions = optionsType.GetProperty(nameof(Microsoft.Extensions.Options.IOptions<>.Value))?.GetValue(options);
+
+                        var containerRuntimeProperty = dcpOptionsType.GetProperty("ContainerRuntime");
+
+                        return Task.FromResult(containerRuntimeProperty?.GetValue(dcpOptions) as string ?? throw new InvalidOperationException());
                     }
 
                     static async Task<int> RunProcess(ILogger logger, string fileName, IEnumerable<string> arguments, CancellationToken cancellationToken)
