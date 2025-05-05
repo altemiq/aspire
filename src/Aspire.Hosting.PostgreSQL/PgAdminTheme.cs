@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="Mode.cs" company="Altemiq">
+// <copyright file="PgAdminTheme.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------

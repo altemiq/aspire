@@ -6,6 +6,7 @@
     <PackageTags>aspire hosting postgresql</PackageTags>
     <Description>PostgreSQL support for .NET Aspire.</Description>
     <PackageIcon>postgresql.png</PackageIcon>
+    <PackageId>$(Company).$(MSBuildProjectName)</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
