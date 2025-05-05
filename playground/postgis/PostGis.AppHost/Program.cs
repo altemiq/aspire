@@ -7,10 +7,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var db1 = builder
-    .AddPostGis("db1").WithImageTag("16-3.5")
-    .WithDataVolume()
-    .WithTle()
-    .WithPlRust();
+    .AddPostGis("db1")
+    .WithDataVolume();
 
 db1.WithPgAdmin(container =>
     container
