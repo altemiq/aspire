@@ -24,7 +24,7 @@ builder.Services
 // Add services to the container.
 builder.Services.AddProblemDetails();
 
-builder.AddNpgsqlDataSource("db1");
+builder.AddNpgsqlDataSource("db1-database");
 
 var app = builder.Build();
 
@@ -39,99 +39,117 @@ app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, Can
 {
     counter.Add(1);
     using var source = activitySource.StartActivity("GET postgis version", System.Diagnostics.ActivityKind.Server);
-    Program.LogMapGet(logger, dataSource);
+    LogMapGet(logger, dataSource);
 
     _ = source?.AddEvent(new("connection.opening"));
     var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
     await using (connection.ConfigureAwait(false))
     {
-        _ = source?.AddEvent(new("command.creating"));
-        var command = connection.CreateCommand();
-        await using (command.ConfigureAwait(false))
+        using (source?.AddEvent(new("extensions.setup")))
         {
-            command.CommandText = "SELECT PostGIS_full_version();";
-
-            _ = source?.AddEvent(new("command.executing"));
-            var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            await using (reader.ConfigureAwait(false))
+            var command = connection.CreateCommand();
+            await using (command.ConfigureAwait(false))
             {
-                var stringBuilder = new System.Text.StringBuilder();
-                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                using (source?.AddEvent(new("extensions.setup.postgis")))
                 {
-                    var value = reader.GetString(0).AsSpan();
+                    command.CommandText = "CREATE EXTENSION IF NOT EXISTS postgis";
+                    await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
 
-                    while (value.Length > 0)
+        using (source?.AddEvent(new("command.creating")))
+        {
+            var command = connection.CreateCommand();
+            await using (command.ConfigureAwait(false))
+            {
+                command.CommandText = "SELECT PostGIS_full_version();";
+
+                _ = source?.AddEvent(new("command.executing"));
+                var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                await using (reader.ConfigureAwait(false))
+                {
+                    var stringBuilder = new System.Text.StringBuilder();
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        var index = value.IndexOf('=');
-                        if (index is -1)
+                        var value = reader.GetString(0).AsSpan();
+
+                        while (value.Length > 0)
                         {
-                            // go up until the next space
-                            index = value.IndexOf(' ');
+                            var index = value.IndexOf('=');
                             if (index is -1)
                             {
-                                stringBuilder.Append(value);
-                                value = [];
-                            }
-                            else
-                            {
-                                stringBuilder.Append(value[..index]);
-                                value = value[(index + 1)..];
-                            }
-
-                            stringBuilder.AppendLine();
-                        }
-                        else
-                        {
-                            stringBuilder
-                                .Append(value[..index])
-                                .Append('=');
-                            value = value[(index + 1)..];
-                            if (value[0] is '"')
-                            {
-                                // go until the next quote
-                                stringBuilder.Append('"');
-                                value = value[1..];
-                                index = value.IndexOf('"') + 1;
-                                stringBuilder.Append(value[..index]);
-                                value = value[(index + 1)..];
-                            }
-                            else
-                            {
+                                // go up until the next space
                                 index = value.IndexOf(' ');
                                 if (index is -1)
                                 {
-                                    stringBuilder.Append(value).AppendLine();
-                                    break;
+                                    stringBuilder.Append(value);
+                                    value = [];
+                                }
+                                else
+                                {
+                                    stringBuilder.Append(value[..index]);
+                                    value = value[(index + 1)..];
                                 }
 
-                                stringBuilder.Append(value[..index]);
-                                value = value[(index + 1)..];
+                                stringBuilder.AppendLine();
                             }
-
-                            // see if the next character is something other than a letter
-                            _ = value[0] switch
+                            else
                             {
-                                '[' => AppendSuffix(stringBuilder, ref value, ']'),
-                                '(' => AppendSuffix(stringBuilder, ref value, ')'),
-                                _ => stringBuilder,
-                            };
-
-                            stringBuilder.AppendLine();
-
-                            static System.Text.StringBuilder AppendSuffix(System.Text.StringBuilder stringBuilder, ref ReadOnlySpan<char> value, char val)
-                            {
-                                var index = value.IndexOf(val) + 1;
-                                stringBuilder.Append(' ').Append(value[..index]);
+                                stringBuilder
+                                    .Append(value[..index])
+                                    .Append('=');
                                 value = value[(index + 1)..];
-                                return stringBuilder;
+                                if (value[0] is '"')
+                                {
+                                    // go until the next quote
+                                    stringBuilder.Append('"');
+                                    value = value[1..];
+                                    index = value.IndexOf('"') + 1;
+                                    stringBuilder.Append(value[..index]);
+                                    value = value.Length > index ? value[(index + 1)..] : ReadOnlySpan<char>.Empty;
+                                }
+                                else
+                                {
+                                    index = value.IndexOf(' ');
+                                    if (index is -1)
+                                    {
+                                        stringBuilder.Append(value).AppendLine();
+                                        break;
+                                    }
+
+                                    stringBuilder.Append(value[..index]);
+                                    value = value[(index + 1)..];
+                                }
+
+                                // see if the next character is something other than a letter
+                                if (value.Length > 0)
+                                {
+                                    _ = value[0] switch
+                                    {
+                                        '[' => AppendSuffix(stringBuilder, ref value, ']'),
+                                        '(' => AppendSuffix(stringBuilder, ref value, ')'),
+                                        _ => stringBuilder,
+                                    };
+
+                                    stringBuilder.AppendLine();
+                                }
+
+                                static System.Text.StringBuilder AppendSuffix(System.Text.StringBuilder stringBuilder, ref ReadOnlySpan<char> value, char val)
+                                {
+                                    var index = value.IndexOf(val) + 1;
+                                    stringBuilder.Append(' ').Append(value[..index]);
+                                    value = value[(index + 1)..];
+                                    return stringBuilder;
+                                }
                             }
                         }
+
+                        stringBuilder.AppendLine();
                     }
 
-                    stringBuilder.AppendLine();
+                    return stringBuilder.ToString();
                 }
-
-                return stringBuilder.ToString();
             }
         }
     }

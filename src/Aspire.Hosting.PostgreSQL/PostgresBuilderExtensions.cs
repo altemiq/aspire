@@ -6,10 +6,13 @@
 
 namespace Aspire.Hosting;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// <c>postgres</c> extensions.
 /// </summary>
-public static class PostgresBuilderExtensions
+public static partial class PostgresBuilderExtensions
 {
     /// <summary>
     /// Adds <c>tle</c> support for the database.
@@ -17,11 +20,9 @@ public static class PostgresBuilderExtensions
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The builder.</param>
     /// <param name="version">The version.</param>
-    /// <param name="extensions">The extensions to load.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<T> WithTle<T>(this IResourceBuilder<T> builder, string? version = default, params string[] extensions)
-        where T : PostgresServerResource
-    {
+    public static IResourceBuilder<T> WithTle<T>(this IResourceBuilder<T> builder, string? version = default)
+        where T : PostgresServerResource =>
         builder
             .SetupDockerfile()
             .WithAnnotation(new TleAnnotation(version ?? "v1.5.0"))
@@ -40,21 +41,12 @@ public static class PostgresBuilderExtensions
                                         PGHOST=localhost
                                         PGPORT={(int)endpoint.TargetPort!}
                                         PGUSER={postgresInstance.UserNameParameter?.Value ?? "postgres"}
-                                        PGDB=postgres
                                         """,
                         },
                     ];
 
                     return Task.FromResult(items);
                 });
-
-        foreach (var extension in extensions)
-        {
-            builder.WithAnnotation(new TleExtensionAnnotation(extension));
-        }
-
-        return builder;
-    }
 
     /// <summary>
     /// Adds <c>plrust</c> support for the database.
@@ -64,10 +56,34 @@ public static class PostgresBuilderExtensions
     /// <param name="branch">The branch.</param>
     /// <returns>The input builder.</returns>
     public static IResourceBuilder<T> WithPlRust<T>(this IResourceBuilder<T> builder, string? branch = default)
-        where T : PostgresServerResource
+        where T : PostgresServerResource => builder.SetupDockerfile().WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
+
+    /// <summary>
+    /// Installs the TLE extension for the database.
+    /// </summary>
+    /// <typeparam name="T">The type of database.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="extension">The extension to install.</param>
+    /// <returns>The input database.</returns>
+    public static IResourceBuilder<T> WithTleExtension<T>(this IResourceBuilder<T> builder, string extension)
+        where T : PostgresDatabaseResource => builder.WithTleExtensions(extension);
+
+    /// <summary>
+    /// Installs the TLE extensions for the database.
+    /// </summary>
+    /// <typeparam name="T">The type of database.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="extensions">The extensions to install.</param>
+    /// <returns>The input database.</returns>
+    public static IResourceBuilder<T> WithTleExtensions<T>(this IResourceBuilder<T> builder, params string[] extensions)
+        where T : PostgresDatabaseResource
     {
-        SetupDockerfile(builder);
-        builder.WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
+        _ = builder.SetupTleExtensions();
+        foreach (var extension in extensions)
+        {
+            builder.WithAnnotation(new TleExtensionAnnotation(extension));
+        }
+
         return builder;
     }
 
@@ -205,11 +221,144 @@ public static class PostgresBuilderExtensions
 
         if (tle)
         {
+            // make sure that installing PL_TLE extensions works
             yield return "USER root";
             yield return "RUN mv /bin/sh /bin/sh.original && ln -s /bin/bash /bin/sh";
             yield return "USER postgres";
         }
     }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
+    private static IResourceBuilder<T> SetupTleExtensions<T>(this IResourceBuilder<T> builder)
+        where T : PostgresDatabaseResource
+    {
+        if (builder.Resource.HasAnnotationOfType<TleExtensionAnnotation>())
+        {
+            return builder;
+        }
+
+        builder.ApplicationBuilder.Eventing.Subscribe<ResourceReadyEvent>(
+            builder.Resource,
+            async (evt, cancellationToken) =>
+            {
+                // get the docker image name
+                var containerResource = GetParentOfType<ContainerResource>(evt.Resource as IResourceWithParent);
+
+                if (typeof(ResourceExtensions).GetMethod("GetResolvedResourceNames", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic) is { } method
+                    && method.Invoke(null, [containerResource]) is IEnumerable<string> names
+                    && names.FirstOrDefault() is { } containerName)
+                {
+                    var rls = evt.Services.GetRequiredService<ResourceLoggerService>();
+                    var logger = rls.GetLogger(evt.Resource);
+
+                    // get name
+                    var containerRuntime = Environment.GetEnvironmentVariable("DOTNET_ASPIRE_CONTAINER_RUNTIME") ?? "docker";
+                    string? database = null;
+                    string? password = null;
+                    if (evt.Resource is IResourceWithConnectionString databaseResource)
+                    {
+                        var connectionString = new Npgsql.NpgsqlConnectionStringBuilder(await databaseResource.GetConnectionStringAsync(cancellationToken).ConfigureAwait(false));
+                        database = connectionString.Database;
+                        password = connectionString.Password;
+                    }
+
+                    foreach (var extension in evt.Resource.Annotations.OfType<TleExtensionAnnotation>())
+                    {
+                        _ = await RunProcess(
+                            logger,
+                            containerRuntime,
+                            [
+                                "exec",
+                                "--env",
+                                $"PGPASSWORD={password}",
+                                "--env",
+                                $"PGDB={database}",
+                                containerName,
+                                "make",
+                                $"--directory=/pg_tle/examples/{extension.Name}",
+                                "install",
+                            ],
+                            cancellationToken).ConfigureAwait(false);
+                    }
+
+                    static async Task<int> RunProcess(ILogger logger, string fileName, IEnumerable<string> arguments, CancellationToken cancellationToken)
+                    {
+                        var process = new System.Diagnostics.Process
+                        {
+                            StartInfo = new(fileName)
+                            {
+                                CreateNoWindow = true,
+                                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+                                UseShellExecute = false,
+                                RedirectStandardError = true,
+                                RedirectStandardOutput = true,
+                            },
+                        };
+
+                        foreach (var argument in arguments)
+                        {
+                            process.StartInfo.ArgumentList.Add(argument);
+                        }
+
+                        process.OutputDataReceived += (_, e) =>
+                        {
+                            if (e.Data is { } data)
+                            {
+                                LogOutputData(logger, data);
+                            }
+                        };
+
+                        process.ErrorDataReceived += (_, e) =>
+                        {
+                            if (e.Data is { } data)
+                            {
+                                LogErrorData(logger, data);
+                            }
+                        };
+
+                        LogStartingProcess(logger, process.StartInfo.FileName, string.Join(' ', process.StartInfo.ArgumentList));
+
+                        process.Start();
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+
+                        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                        return process.ExitCode;
+                    }
+                }
+
+                static TParent GetParentOfType<TParent>(IResourceWithParent? resource)
+                    where TParent : IResource
+                {
+                    while (true)
+                    {
+                        switch (resource)
+                        {
+                            case IResourceWithParent<TParent> { Parent: { } typedParent }:
+                                return typedParent;
+                            case { Parent: TParent untypedParent }:
+                                return untypedParent;
+                            case { Parent: IResourceWithParent parentResource }:
+                                resource = parentResource;
+                                continue;
+                            default:
+                                throw new InvalidOperationException();
+                        }
+                    }
+                }
+            });
+
+        return builder;
+    }
+
+    [LoggerMessage(LogLevel.Information, Message = "{Data}")]
+    private static partial void LogOutputData(ILogger logger, string data);
+
+    [LoggerMessage(LogLevel.Error, Message = "{Data}")]
+    private static partial void LogErrorData(ILogger logger, string data);
+
+    [LoggerMessage(LogLevel.Debug, Message = "Starting process {FileName} {Arguments}")]
+    private static partial void LogStartingProcess(ILogger logger, string fileName, string arguments);
 
     private record PostgresAnnotation : IResourceAnnotation;
 
