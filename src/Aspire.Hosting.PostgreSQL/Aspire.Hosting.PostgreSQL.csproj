@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName.Replace('.PostgreSQL', ''))</RootNamespace>
+    <PackageTags>aspire hosting postgresql</PackageTags>
+    <Description>PostgreSQL support for .NET Aspire.</Description>
+    <PackageIcon>postgresql.png</PackageIcon>
+    <PackageId>$(Company).$(MSBuildProjectName)</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="postgresql.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="*.Dockerfile" />
+  </ItemGroup>
+
+</Project>

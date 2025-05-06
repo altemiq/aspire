@@ -4,11 +4,16 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var db1 = builder
-    .AddPostGis("db1")
-    .WithDataVolume();
+    .AddPostgres("db1").WithImageTag("16")
+    .WithDataVolume()
+    .WithTle()
+    .WithPlRust();
 
 db1.WithPgAdmin(container =>
     container
@@ -17,9 +22,10 @@ db1.WithPgAdmin(container =>
         .WithImagePullPolicy(ImagePullPolicy.Always)
         .WithTheme(PgAdminTheme.System));
 
-var database = db1.AddDatabase("db1-database");
+var database = db1.AddDatabase("db1-database")
+    .WithTleExtension("uuid_v7");
 
-_ = builder.AddProject<Projects.PostGis_ApiService>("apiservice")
+_ = builder.AddProject<Projects.Postgres_ApiService>("apiservice")
     .WithReference(database)
     .WaitFor(database);
 
