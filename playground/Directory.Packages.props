@@ -28,7 +28,7 @@
 
   <ItemGroup Label="Microsoft">
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.4" />
-    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.8.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
   </ItemGroup>
   
   <ItemGroup Label="RabbitMQ">
