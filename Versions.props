@@ -1,7 +1,7 @@
 ﻿<Project>
 
   <PropertyGroup>
-    <Ver_AspireHosting>9.2.1</Ver_AspireHosting>
+    <Ver_AspireHosting>9.3.0</Ver_AspireHosting>
   </PropertyGroup>
 
 </Project>
