@@ -6,13 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.6" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.2.0" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.4" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.4.0" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">

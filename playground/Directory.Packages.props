@@ -7,24 +7,14 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(Ver_AspireHosting)" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.9" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.2.0" />
     <PackageVersion Include="Aspire.Npgsql" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="Aspire.RabbitMQ.Client.v7" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="Amazon.CDK.Lib" Version="2.189.0" />
-    <PackageVersion Include="Amazon.JSII.Runtime" Version="1.111.0" />
-    <PackageVersion Include="AWSSDK.CloudFormation" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.Core" Version="4.0.0.2" />
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0" />
-    <PackageVersion Include="AWSSDK.Lambda" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.SQS" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.SSO" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.0.1" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.0.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.0.2" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="1.4.0" />
   </ItemGroup>
 
@@ -51,7 +41,7 @@
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.11.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.12.0-beta.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
