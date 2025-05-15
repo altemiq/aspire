@@ -87,7 +87,7 @@ public class LocalStackPublicApiTests
 
         static LocalStackServerResource Action()
         {
-            return new LocalStackServerResource(name: name, region: string.Empty);
+            return new(name: name, region: string.Empty);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(name));

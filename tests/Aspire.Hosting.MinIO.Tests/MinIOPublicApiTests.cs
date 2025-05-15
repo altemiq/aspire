@@ -89,7 +89,7 @@ public class MinIOPublicApiTests
 
         MinIOServerResource Action()
         {
-            return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
+            return new(name: name, userName: null, password: password, region: string.Empty);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(name));
@@ -103,7 +103,7 @@ public class MinIOPublicApiTests
 
         MinIOServerResource Action()
         {
-            return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
+            return new(name: name, userName: null, password: password, region: string.Empty);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(password));

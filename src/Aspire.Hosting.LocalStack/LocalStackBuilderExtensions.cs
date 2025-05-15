@@ -164,7 +164,7 @@ public static class LocalStackBuilderExtensions
             Uri? uri = null;
             _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, _) =>
             {
-                uri = new Uri(endpoint.Url, UriKind.Absolute);
+                uri = new(endpoint.Url, UriKind.Absolute);
                 return Task.CompletedTask;
             });
 
@@ -181,7 +181,7 @@ public static class LocalStackBuilderExtensions
 
             _ = builder.ApplicationBuilder.Services
                 .AddHealthChecks()
-                .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
+                .Add(new(
                     healthCheckKey,
                     serviceProvider => uri switch
                     {
