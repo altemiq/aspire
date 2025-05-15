@@ -6,6 +6,7 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting" Version="$(Ver_AspireHosting)" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="KubernetesClient" Version="16.0.7" />
