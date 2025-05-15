@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="IGrpcUIResource.cs" company="altemiq">
-// Copyright (c) altemiq. All rights reserved.
+// <copyright file="IGrpcUIResource.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

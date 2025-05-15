@@ -18,5 +18,28 @@ public class AWSProfileConfig : IAWSProfileConfig
     public required string Name { get; init; }
 
     /// <inheritdoc/>
-    public ApplicationModel.ResourceAnnotationCollection Annotations { get; } = [];
+    public ResourceAnnotationCollection Annotations { get; } = [];
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is AWSProfileConfig profileConfig && this.Profiles.SequenceEqual(profileConfig.Profiles);
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        var hash = 17;
+        foreach (var profile in this.Profiles)
+        {
+            hash = Add(hash, profile.GetHashCode());
+        }
+
+        return hash;
+
+        static int Add(int hash, int hashCode)
+        {
+            unchecked
+            {
+                return (hash * 31) + hashCode;
+            }
+        }
+    }
 }

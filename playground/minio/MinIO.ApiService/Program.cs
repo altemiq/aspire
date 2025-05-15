@@ -22,10 +22,10 @@ _ = builder.Services
 // Add services to the container.
 _ = builder.Services
     .AddProblemDetails()
-    .AddAWSService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
+    .AddAWSService<Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
 
 builder.AddRabbitMQClient("rabbitmq");
-_ = builder.Services.AddHostedService<Program.RabbitMqListener>();
+_ = builder.Services.AddHostedService<RabbitMqListener>();
 
 var app = builder.Build();
 
@@ -110,7 +110,7 @@ internal partial class Program
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             const string name = "minio";
-            var connection = serviceProvider.GetRequiredService<RabbitMQ.Client.IConnection>();
+            var connection = serviceProvider.GetRequiredService<IConnection>();
             var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RabbitMqListener>();
             var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
 

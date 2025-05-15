@@ -9,7 +9,7 @@ namespace Aspire.Hosting.AWS;
 /// <summary>
 /// The AWS configuration file.
 /// </summary>
-public interface IAWSProfileConfig : ApplicationModel.IResource
+public interface IAWSProfileConfig : IResource
 {
     /// <summary>
     /// Gets the profiles.

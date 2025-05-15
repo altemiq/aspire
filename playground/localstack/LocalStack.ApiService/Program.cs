@@ -21,7 +21,7 @@ _ = builder.Services
 _ = builder.Services
     .AddProblemDetails()
     .AddLocalStack(builder.Configuration)
-    .AddAwsService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
+    .AddAwsService<Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
 
 var app = builder.Build();
 
