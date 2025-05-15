@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// The resource builder extensions.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static partial class ResourceBuilderExtensions
 {
     /// <summary>

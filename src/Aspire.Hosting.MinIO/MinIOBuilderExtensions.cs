@@ -12,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Extensions for <c>MinIO</c>.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Public API")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static class MinIOBuilderExtensions
 {
     private const string UserEnvVarName = "MINIO_ROOT_USER";
