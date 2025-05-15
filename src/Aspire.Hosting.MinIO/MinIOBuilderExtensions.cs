@@ -8,11 +8,12 @@ namespace Aspire.Hosting;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Extensions for <c>MinIO</c>.
 /// </summary>
-public static class MinIOBuilderExtensions
+public static partial class MinIOBuilderExtensions
 {
     private const string UserEnvVarName = "MINIO_ROOT_USER";
     private const string PasswordEnvVarName = "MINIO_ROOT_PASSWORD";
@@ -27,8 +28,18 @@ public static class MinIOBuilderExtensions
     /// <param name="resourceBuilder">The MinIO resource builder.</param>
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
-    public static IDistributedApplicationBuilder AddAmazonS3<TResource>(this IDistributedApplicationBuilder builder, IResourceBuilder<TResource> resourceBuilder, AWS.IAWSSDKConfig configuration)
-        where TResource : MinIOServerResource => builder.AddAmazonS3(resourceBuilder, configuration, "api", config => UpdateConfiguration(resourceBuilder.Resource, config));
+    public static IDistributedApplicationBuilder AddAmazonS3<TResource>(this IDistributedApplicationBuilder builder, IResourceBuilder<TResource> resourceBuilder, AWS.IAWSSDKConfig? configuration = default)
+        where TResource : MinIOServerResource
+    {
+        return configuration is null
+            ? builder.AddAmazonS3(resourceBuilder, ApiEndpointName, UpdateConfigurationCore)
+            : builder.AddAmazonS3(resourceBuilder, configuration, ApiEndpointName, UpdateConfigurationCore);
+
+        void UpdateConfigurationCore(IConfigurationBuilder config)
+        {
+            UpdateConfiguration(resourceBuilder.Resource, config);
+        }
+    }
 
     /// <summary>
     /// Adds Amazon S3 to the host.
@@ -38,8 +49,18 @@ public static class MinIOBuilderExtensions
     /// <param name="resource">The MinIO resource.</param>
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
-    public static IDistributedApplicationBuilder AddAmazonS3<TResource>(this IDistributedApplicationBuilder builder, TResource resource, AWS.IAWSSDKConfig configuration)
-        where TResource : MinIOServerResource => builder.AddAmazonS3(resource, configuration, "api", config => UpdateConfiguration(resource, config));
+    public static IDistributedApplicationBuilder AddAmazonS3<TResource>(this IDistributedApplicationBuilder builder, TResource resource, AWS.IAWSSDKConfig? configuration = default)
+        where TResource : MinIOServerResource
+    {
+        return configuration is null
+            ? builder.AddAmazonS3(resource, ApiEndpointName, UpdateConfigurationCore)
+            : builder.AddAmazonS3(resource, configuration, ApiEndpointName, UpdateConfigurationCore);
+
+        void UpdateConfigurationCore(IConfigurationBuilder config)
+        {
+            UpdateConfiguration(resource, config);
+        }
+    }
 
     /// <summary>
     /// Injects service discovery information as environment variables from the project resource into the destination resource, using the source resource's name as the service name.
@@ -181,6 +202,32 @@ public static class MinIOBuilderExtensions
     /// Adds the profile to the MinIO container resource.
     /// </summary>
     /// <param name="builder">The builder.</param>
+    /// <param name="config">The profile configuration.</param>
+    /// <param name="profile">The profile.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MinIOServerResource> WithProfile(this IResourceBuilder<MinIOServerResource> builder, IResourceBuilder<AWS.IAWSProfileConfig> config, string profile) => builder.WithProfile(config.Resource, profile);
+
+    /// <summary>
+    /// Adds the profile to the MinIO container resource.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="config">The profile configuration.</param>
+    /// <param name="profile">The profile.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MinIOServerResource> WithProfile(this IResourceBuilder<MinIOServerResource> builder, AWS.IAWSProfileConfig config, string profile)
+    {
+        if (config.Profiles.FirstOrDefault(p => string.Equals(p.Name, profile, StringComparison.Ordinal)) is { } profileConfig)
+        {
+            return builder.WithProfile(profileConfig);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds the profile to the MinIO container resource.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
     /// <param name="profile">The profile.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     public static IResourceBuilder<MinIOServerResource> WithProfile(this IResourceBuilder<MinIOServerResource> builder, AWS.AWSProfile profile) =>
@@ -247,9 +294,9 @@ public static class MinIOBuilderExtensions
             .WithImage(MinIO.MinIOContainerImageTags.Image, MinIO.MinIOContainerImageTags.Tag)
             .WithImageRegistry(MinIO.MinIOContainerImageTags.Registry)
             .WithHttpEndpoint(port: apiPort, targetPort: ApiPort, name: ApiEndpointName)
-            .WithUrlForEndpoint(ApiEndpointName, callback => callback.DisplayText = "api")
+            .WithUrlForEndpoint(ApiEndpointName, callback => callback.DisplayText = ApiEndpointName)
             .WithHttpEndpoint(port: consolePort, targetPort: ConsolePort, name: ConsoleEndpointName)
-            .WithUrlForEndpoint(ConsoleEndpointName, callback => callback.DisplayText = "console")
+            .WithUrlForEndpoint(ConsoleEndpointName, callback => callback.DisplayText = ConsoleEndpointName)
             .WithEnvironment(context =>
             {
                 context.EnvironmentVariables[UserEnvVarName] = minIOServer.UserNameReference;
@@ -279,23 +326,25 @@ public static class MinIOBuilderExtensions
                 && names.FirstOrDefault() is { } name
                 && e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
             {
+                var rls = e.Services.GetRequiredService<ResourceLoggerService>();
+                var logger = rls.GetLogger(e.Resource);
                 var containerRuntime = await GetContainerRuntime(e.Services).ConfigureAwait(false);
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {
-                    _ = await AddUser(containerRuntime, name, profile, ct).ConfigureAwait(false);
-                    _ = await AttachPolicy(containerRuntime, name, profile, ct).ConfigureAwait(false);
+                    _ = await AddUser(containerRuntime, name, profile, logger, ct).ConfigureAwait(false);
+                    _ = await AttachPolicy(containerRuntime, name, profile, logger, ct).ConfigureAwait(false);
                 }
             }
 
-            static Task<int> AddUser(string containerRuntime, string containerName, AWS.AWSProfile profile, CancellationToken cancellationToken)
+            static Task<int> AddUser(string containerRuntime, string containerName, AWS.AWSProfile profile, ILogger logger, CancellationToken cancellationToken)
             {
-                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "user", "add", Alias, profile.AccessKeyId.Value, profile.SecretAccessKey.Value], cancellationToken);
+                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "user", "add", Alias, profile.AccessKeyId.Value, profile.SecretAccessKey.Value], logger, cancellationToken);
             }
 
-            static Task<int> AttachPolicy(string containerRuntime, string containerName, AWS.AWSProfile profile, CancellationToken cancellationToken)
+            static Task<int> AttachPolicy(string containerRuntime, string containerName, AWS.AWSProfile profile, ILogger logger, CancellationToken cancellationToken)
             {
-                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], cancellationToken);
+                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], logger, cancellationToken);
             }
 
             static Task<string> GetContainerRuntime(IServiceProvider serviceProvider)
@@ -312,11 +361,14 @@ public static class MinIOBuilderExtensions
                 return Task.FromResult(containerRuntimeProperty?.GetValue(dcpOptions) as string ?? throw new InvalidOperationException());
             }
 
-            static async Task<int> RunProcess(string fileName, IEnumerable<string> arguments, CancellationToken cancellationToken)
+            static async Task<int> RunProcess(string fileName, IEnumerable<string> arguments, ILogger logger, CancellationToken cancellationToken)
             {
                 var processStartInfo = new System.Diagnostics.ProcessStartInfo(fileName)
                 {
                     CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
                     WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
                 };
 
@@ -325,13 +377,31 @@ public static class MinIOBuilderExtensions
                     processStartInfo.ArgumentList.Add(argument);
                 }
 
-                if (System.Diagnostics.Process.Start(processStartInfo) is { } process)
+                var process = new System.Diagnostics.Process { StartInfo = processStartInfo };
+
+                process.OutputDataReceived += (_, e) =>
                 {
-                    await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-                    return process.ExitCode;
+                    if (e.Data is { } data)
+                    {
+                        LogInformation(logger, data);
+                    }
+                };
+
+                process.ErrorDataReceived += (_, e) =>
+                {
+                    if (e.Data is { } data)
+                    {
+                        LogError(logger, data);
+                    }
+                };
+
+                if (!process.Start())
+                {
+                    return -1;
                 }
 
-                return -1;
+                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                return process.ExitCode;
             }
         }
     }
@@ -348,6 +418,12 @@ public static class MinIOBuilderExtensions
 
         _ = configuration.AddInMemoryCollection(dictionary);
     }
+
+    [LoggerMessage(LogLevel.Information, "{Message}")]
+    private static partial void LogInformation(ILogger logger, string message);
+
+    [LoggerMessage(LogLevel.Error, "{Message}")]
+    private static partial void LogError(ILogger logger, string message);
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "Checked")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This suppression is required.")]
