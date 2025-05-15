@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.4" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.5" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
