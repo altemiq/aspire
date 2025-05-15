@@ -53,7 +53,7 @@ public class WithPostGisTests
             .WithImageTag(postgresTag)
             .WithPostGis();
 
-        _ = await Assert.That(postgres.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out ContainerImageAnnotation? annotation)).IsTrue();
+        _ = await Assert.That(postgres.Resource.TryGetLastAnnotation(out ContainerImageAnnotation? annotation)).IsTrue();
         _ = await Assert.That(annotation?.Tag).IsEqualTo(postgisTag);
     }
 

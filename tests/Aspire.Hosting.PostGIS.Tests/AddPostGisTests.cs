@@ -35,7 +35,7 @@ public class AddPostGisTests
 
         IResourceBuilder<PostGisServerResource> postGis = appBuilder.AddPostGis("postgis");
 
-        _ = await Assert.That(postGis.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out ContainerImageAnnotation? annotation)).IsTrue();
+        _ = await Assert.That(postGis.Resource.TryGetLastAnnotation(out ContainerImageAnnotation? annotation)).IsTrue();
         _ = await Assert.That(annotation?.Image).IsEqualTo("postgis/postgis");
     }
 }

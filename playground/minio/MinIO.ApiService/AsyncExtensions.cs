@@ -32,9 +32,9 @@ public static class AsyncExtensions
         internal CancellationToken CancellationToken = cancellationToken;
 
         /// <inheritdoc cref="System.Runtime.CompilerServices.TaskAwaiter.IsCompleted" />
-#pragma warning disable IDE0251 // Make member 'readonly'
+#pragma warning disable IDE0251, MA0102
         public bool IsCompleted => this.CancellationToken.IsCancellationRequested;
-#pragma warning restore IDE0251 // Make member 'readonly'
+#pragma warning restore IDE0251, MA0102
 
         /// <inheritdoc cref="System.Runtime.CompilerServices.TaskAwaiter.GetResult" />
         public object GetResult()

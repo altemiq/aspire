@@ -78,7 +78,7 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
         var putObjectRequest = new Amazon.S3.Model.PutObjectRequest
         {
             BucketName = BucketName,
-            Key = $"apire-test-{DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss", System.Globalization.CultureInfo.InvariantCulture)}",
+            Key = $"aspire-test-{DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss", System.Globalization.CultureInfo.InvariantCulture)}",
             InputStream = stream,
         };
 
@@ -109,14 +109,14 @@ internal partial class Program
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            const string name = "minio";
+            const string Name = "minio";
             var connection = serviceProvider.GetRequiredService<IConnection>();
             var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RabbitMqListener>();
             var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
 
-            await channel.ExchangeDeclareAsync(name, ExchangeType.Direct, cancellationToken: stoppingToken).ConfigureAwait(false);
-            _ = await channel.QueueDeclareAsync(name, cancellationToken: stoppingToken).ConfigureAwait(false);
-            await channel.QueueBindAsync(name, name, name, cancellationToken: stoppingToken).ConfigureAwait(false);
+            await channel.ExchangeDeclareAsync(Name, ExchangeType.Direct, cancellationToken: stoppingToken).ConfigureAwait(false);
+            _ = await channel.QueueDeclareAsync(Name, cancellationToken: stoppingToken).ConfigureAwait(false);
+            await channel.QueueBindAsync(Name, Name, Name, cancellationToken: stoppingToken).ConfigureAwait(false);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (_, ea) =>
@@ -126,7 +126,7 @@ internal partial class Program
             };
 
             // this consumer tag identifies the subscription when it has to be cancelled
-            var consumerTag = await channel.BasicConsumeAsync(name, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
+            var consumerTag = await channel.BasicConsumeAsync(Name, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
 
             _ = await stoppingToken;
 

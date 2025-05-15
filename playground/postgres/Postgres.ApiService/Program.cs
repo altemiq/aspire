@@ -33,36 +33,14 @@ app.UseExceptionHandler();
 
 app.MapDefaultEndpoints();
 
-var dataSource = app.Services.GetRequiredService<NpgsqlDataSource>();
-var connection = await dataSource.OpenConnectionAsync().ConfigureAwait(false);
-await using (connection.ConfigureAwait(false))
-{
-    using var source = activitySource.StartActivity("create.extensions", System.Diagnostics.ActivityKind.Server);
-    var command = connection.CreateCommand();
-    await using (command.ConfigureAwait(false))
-    {
-        await CreateExtension(command, "plrust", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        await CreateExtension(command, "pg_tle", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        await CreateExtension(command, "uuid_v7", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+await CreateExtensions(app, activitySource).ConfigureAwait(false);
 
-        async Task CreateExtension(NpgsqlCommand npgsqlCommand, string name, System.Diagnostics.Activity? activity,  CancellationToken cancellationToken)
-        {
-            using (activity?.AddEvent(new($"extensions.setup.{name}")))
-            {
-                // check to see if this exists as an extension
-                npgsqlCommand.CommandText = $"CREATE EXTENSION IF NOT EXISTS {name}";
-                await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-}
-
-var counter = meter.CreateCounter<int>("mapget.count");
+var counter = meter.CreateCounter<int>("map.get.count");
 
 app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, CancellationToken cancellationToken) =>
 {
     counter.Add(1);
-    using var source = activitySource.StartActivity("GET extensions", System.Diagnostics.ActivityKind.Server);
+    using var source = activitySource.StartActivity(System.Diagnostics.ActivityKind.Server);
     LogMapGet(logger, dataSource);
 
     _ = source?.AddEvent(new("connection.opening"));
@@ -111,6 +89,33 @@ app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, Can
 });
 
 await app.RunAsync().ConfigureAwait(false);
+
+static async Task CreateExtensions(WebApplication app, System.Diagnostics.ActivitySource activitySource1)
+{
+    var dataSource = app.Services.GetRequiredService<NpgsqlDataSource>();
+    var connection = await dataSource.OpenConnectionAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+    await using (connection.ConfigureAwait(false))
+    {
+        using var source = activitySource1.StartActivity(System.Diagnostics.ActivityKind.Server);
+        var command = connection.CreateCommand();
+        await using (command.ConfigureAwait(false))
+        {
+            await CreateExtension(command, "plrust", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+            await CreateExtension(command, "pg_tle", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+            await CreateExtension(command, "uuid_v7", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+            async Task CreateExtension(NpgsqlCommand npgsqlCommand, string name, System.Diagnostics.Activity? activity,  CancellationToken cancellationToken)
+            {
+                using (activity?.AddEvent(new($"extensions.setup.{name}")))
+                {
+                    // check to see if this exists as an extension
+                    npgsqlCommand.CommandText = $"CREATE EXTENSION IF NOT EXISTS {name}";
+                    await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+    }
+}
 
 /// <content>
 /// Program class.
