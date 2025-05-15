@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public static partial class ResourceBuilderExtensions
 {
+    private const string DefaultProfileName = "default";
+
     /// <summary>
     /// Adds the AWS configuration to the application.
     /// </summary>
@@ -145,7 +147,7 @@ public static partial class ResourceBuilderExtensions
                 {
                     LogCreatingAwsConfiguration(logger, fileName);
                     var sharedCredentialsFile = new Amazon.Runtime.CredentialManagement.SharedCredentialsFile(fileName);
-                    foreach (var profile in configuration.Profiles)
+                    foreach (var profile in GetAllProfiles(configuration.Profiles))
                     {
                         LogRegisteringProfile(logger, profile.Name);
                         sharedCredentialsFile.RegisterProfile(
@@ -170,6 +172,27 @@ public static partial class ResourceBuilderExtensions
                         new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileName),
                     ],
                 }).ConfigureAwait(false);
+
+                static IEnumerable<AWS.AWSProfile> GetAllProfiles(IEnumerable<AWS.AWSProfile> profiles)
+                {
+                    bool hasDefault = false;
+                    foreach (var profile in profiles)
+                    {
+                        yield return profile;
+                        hasDefault |= string.Equals(profile.Name, DefaultProfileName, StringComparison.Ordinal);
+                    }
+
+                    if (!hasDefault)
+                    {
+                        const string Dummy = nameof(Dummy);
+                        yield return new()
+                        {
+                            Name = DefaultProfileName,
+                            AccessKeyId = new($"{DefaultProfileName}-dummy-access-key-id", _ => Dummy,  secret: true),
+                            SecretAccessKey = new($"{DefaultProfileName}-dummy-secret-access-key", _ => Dummy, secret: true),
+                        };
+                    }
+                }
             }
         }
     }
