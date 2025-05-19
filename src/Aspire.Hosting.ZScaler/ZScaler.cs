@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="ZScaler.cs" company="Altavec">
-// Copyright (c) Altavec. All rights reserved.
+// <copyright file="ZScaler.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 

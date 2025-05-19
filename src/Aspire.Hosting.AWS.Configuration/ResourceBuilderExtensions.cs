@@ -189,7 +189,7 @@ public static partial class ResourceBuilderExtensions
                         yield return new()
                         {
                             Name = DefaultProfileName,
-                            AccessKeyId = new($"{DefaultProfileName}-dummy-access-key-id", _ => Dummy,  secret: true),
+                            AccessKeyId = new($"{DefaultProfileName}-dummy-access-key-id", _ => Dummy, secret: true),
                             SecretAccessKey = new($"{DefaultProfileName}-dummy-secret-access-key", _ => Dummy, secret: true),
                         };
                     }

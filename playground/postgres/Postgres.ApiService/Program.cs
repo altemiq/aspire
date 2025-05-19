@@ -104,7 +104,7 @@ static async Task CreateExtensions(WebApplication app, System.Diagnostics.Activi
             await CreateExtension(command, "pg_tle", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
             await CreateExtension(command, "uuid_v7", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
-            async Task CreateExtension(NpgsqlCommand npgsqlCommand, string name, System.Diagnostics.Activity? activity,  CancellationToken cancellationToken)
+            async Task CreateExtension(NpgsqlCommand npgsqlCommand, string name, System.Diagnostics.Activity? activity, CancellationToken cancellationToken)
             {
                 using (activity?.AddEvent(new($"extensions.setup.{name}")))
                 {

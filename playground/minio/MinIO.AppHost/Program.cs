@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="Program.cs" company="Altavec">
-// Copyright (c) Altavec. All rights reserved.
+// <copyright file="Program.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
