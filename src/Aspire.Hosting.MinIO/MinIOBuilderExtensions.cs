@@ -328,8 +328,8 @@ public static class MinIOBuilderExtensions
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {
-                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "user", "add", Alias, profile.AccessKeyId.Value, profile.SecretAccessKey.Value], logger, ct).ConfigureAwait(false);
-                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], logger, ct).ConfigureAwait(false);
+                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "user", "add", Alias, profile.AccessKeyId, profile.SecretAccessKey], logger, ct).ConfigureAwait(false);
+                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId], logger, ct).ConfigureAwait(false);
                 }
             }
         }

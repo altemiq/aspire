@@ -259,7 +259,7 @@ public static partial class PostgresBuilderExtensions
                 }
 
                 var containerRuntime = await ContainerResources.GetContainerRuntimeAsync(evt.Services, cancellationToken).ConfigureAwait(false);
-                var env = new Dictionary<string, string?>(StringComparer.Ordinal)
+                var env = new Dictionary<string, object?>(StringComparer.Ordinal)
                 {
                     { "PGPASSWORD", password },
                     { "PGDB", database },

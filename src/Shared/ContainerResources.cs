@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 internal static partial class ContainerResources
 {
-    private static readonly Dictionary<string, string?> EmptyDictionary = [];
+    private static readonly Dictionary<string, object?> EmptyDictionary = [];
 
     /// <summary>
     /// Executes the arguments against the container.
@@ -29,7 +29,7 @@ internal static partial class ContainerResources
     public static Task<int> ExecAsync(
         this IResource containerResource,
         IServiceProvider services,
-        IEnumerable<string> args,
+        IEnumerable<object> args,
         ILogger? logger = default,
         CancellationToken cancellationToken = default) => containerResource.ExecAsync(services, EmptyDictionary, args, logger, cancellationToken);
 
@@ -46,8 +46,8 @@ internal static partial class ContainerResources
     public static async Task<int> ExecAsync(
         this IResource containerResource,
         IServiceProvider services,
-        IDictionary<string, string?> env,
-        IEnumerable<string> args,
+        IDictionary<string, object?> env,
+        IEnumerable<object> args,
         ILogger? logger = default,
         CancellationToken cancellationToken = default) => await containerResource.ExecAsync(await GetContainerRuntimeAsync(services, cancellationToken).ConfigureAwait(continueOnCapturedContext: false), env, args, logger, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 
@@ -63,7 +63,7 @@ internal static partial class ContainerResources
     public static Task<int> ExecAsync(
         this IResource containerResource,
         string containerRuntime,
-        IEnumerable<string> args,
+        IEnumerable<object> args,
         ILogger? logger = default,
         CancellationToken cancellationToken = default) => ExecAsync(containerResource, containerRuntime, EmptyDictionary, args, logger, cancellationToken);
 
@@ -80,26 +80,29 @@ internal static partial class ContainerResources
     public static Task<int> ExecAsync(
         this IResource containerResource,
         string containerRuntime,
-        IDictionary<string, string?> env,
-        IEnumerable<string> args,
+        IDictionary<string, object?> env,
+        IEnumerable<object> args,
         ILogger? logger = default,
         CancellationToken cancellationToken = default)
     {
-        return RunProcessAsync(containerRuntime, GetArgs(containerResource.GetContainerName(), env, args), logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, cancellationToken);
+        var arguments = Create("exec")
+            .Concat(FromEnv(env))
+            .Concat(Create(containerResource.GetContainerName()))
+            .Concat(args)
+            .ToList();
+        return RunProcessAsync(containerRuntime, arguments, logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, cancellationToken);
 
-        static IEnumerable<string> GetArgs(string containerName, IDictionary<string, string?> env, IEnumerable<string> enumerable)
+        static IEnumerable<object> Create(object item)
         {
-            yield return "exec";
+            yield return item;
+        }
+
+        static IEnumerable<object> FromEnv(IDictionary<string, object?> env)
+        {
             foreach (var e in env)
             {
                 yield return "--env";
                 yield return $"{e.Key}={e.Value}";
-            }
-
-            yield return containerName;
-            foreach (string item in enumerable)
-            {
-                yield return item;
             }
         }
     }
@@ -163,7 +166,7 @@ internal static partial class ContainerResources
         }
     }
 
-    private static async Task<int> RunProcessAsync(string containerRuntime, IEnumerable<string> args, ILogger logger, CancellationToken cancellationToken)
+    private static async Task<int> RunProcessAsync(string containerRuntime, ICollection<object> args, ILogger logger, CancellationToken cancellationToken)
     {
         var process = new System.Diagnostics.Process
         {
@@ -177,9 +180,9 @@ internal static partial class ContainerResources
             },
         };
 
-        foreach (var argument in args)
+        foreach (var arg in GetArgs(args))
         {
-            process.StartInfo.ArgumentList.Add(argument);
+            process.StartInfo.ArgumentList.Add(arg);
         }
 
         process.OutputDataReceived += (_, e) =>
@@ -198,7 +201,7 @@ internal static partial class ContainerResources
             }
         };
 
-        LogStartingProcess(logger, process.StartInfo.FileName, string.Join(' ', process.StartInfo.ArgumentList));
+        LogStartingProcess(logger, process.StartInfo.FileName, string.Join(' ', GetArgs(args, hideSecrets: true)));
 
         process.Start();
         process.BeginOutputReadLine();
@@ -207,6 +210,34 @@ internal static partial class ContainerResources
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
         return process.ExitCode;
+
+        static IEnumerable<string> GetArgs(IEnumerable<object> args, bool hideSecrets = false)
+        {
+            foreach (var arg in NotNull(args.Select(arg => GetArgValue(arg, hideSecrets))))
+            {
+                yield return arg;
+            }
+
+            static string? GetArgValue(object arg, bool hideSecrets)
+            {
+                return arg switch
+                {
+                    ParameterResource { Secret: true } when hideSecrets => "********",
+                    ParameterResource parameterResource => parameterResource.Value,
+                    string stringValue => stringValue,
+                    not null => arg.ToString(),
+                    _ => null,
+                };
+            }
+
+            static IEnumerable<string> NotNull(IEnumerable<string?> values)
+            {
+                foreach (var value in values.Where(static value => value is not null))
+                {
+                    yield return value!;
+                }
+            }
+        }
     }
 
     [LoggerMessage(LogLevel.Information, Message = "{Data}")]
