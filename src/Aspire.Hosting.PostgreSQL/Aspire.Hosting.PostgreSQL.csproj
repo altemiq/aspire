@@ -25,4 +25,8 @@
     <EmbeddedResource Include="*.Dockerfile" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
+  </ItemGroup>
+
 </Project>

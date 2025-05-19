@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
