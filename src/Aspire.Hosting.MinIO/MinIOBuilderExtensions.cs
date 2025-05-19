@@ -8,12 +8,13 @@ namespace Aspire.Hosting;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Extensions for <c>MinIO</c>.
 /// </summary>
-public static partial class MinIOBuilderExtensions
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Public API")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
+public static class MinIOBuilderExtensions
 {
     private const string UserEnvVarName = "MINIO_ROOT_USER";
     private const string PasswordEnvVarName = "MINIO_ROOT_PASSWORD";
@@ -317,91 +318,19 @@ public static partial class MinIOBuilderExtensions
             .WithHttpHealthCheck(path: "minio/health/live", endpointName: ApiEndpointName)
             .PublishAsContainer();
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
         static async Task AddUsers(ResourceReadyEvent e, CancellationToken ct)
         {
-            var type = typeof(ResourceExtensions);
-            if (type.GetMethod("GetResolvedResourceNames", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic) is { } method
-                && method.Invoke(null, [e.Resource]) is IEnumerable<string> names
-                && names.FirstOrDefault() is { } name
-                && e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
+            if (e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
             {
                 var rls = e.Services.GetRequiredService<ResourceLoggerService>();
                 var logger = rls.GetLogger(e.Resource);
-                var containerRuntime = await GetContainerRuntime(e.Services).ConfigureAwait(false);
+                var containerRuntime = await ContainerResources.GetContainerRuntimeAsync(e.Services, ct).ConfigureAwait(false);
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {
-                    _ = await AddUser(containerRuntime, name, profile, logger, ct).ConfigureAwait(false);
-                    _ = await AttachPolicy(containerRuntime, name, profile, logger, ct).ConfigureAwait(false);
+                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "user", "add", Alias, profile.AccessKeyId.Value, profile.SecretAccessKey.Value], logger, ct).ConfigureAwait(false);
+                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], logger, ct).ConfigureAwait(false);
                 }
-            }
-
-            static Task<int> AddUser(string containerRuntime, string containerName, AWS.AWSProfile profile, ILogger logger, CancellationToken cancellationToken)
-            {
-                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "user", "add", Alias, profile.AccessKeyId.Value, profile.SecretAccessKey.Value], logger, cancellationToken);
-            }
-
-            static Task<int> AttachPolicy(string containerRuntime, string containerName, AWS.AWSProfile profile, ILogger logger, CancellationToken cancellationToken)
-            {
-                return RunProcess(containerRuntime, ["exec", containerName, "mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId.Value], logger, cancellationToken);
-            }
-
-            static Task<string> GetContainerRuntime(IServiceProvider serviceProvider)
-            {
-                // get the options type
-                var dcpOptionsType = typeof(DistributedApplication).Assembly.GetType("Aspire.Hosting.Dcp.DcpOptions") ?? throw new InvalidOperationException();
-                var optionsType = typeof(Microsoft.Extensions.Options.IOptions<>).MakeGenericType(dcpOptionsType) ?? throw new InvalidOperationException();
-                var options = serviceProvider.GetRequiredService(optionsType);
-
-                var dcpOptions = optionsType.GetProperty(nameof(Microsoft.Extensions.Options.IOptions<>.Value))?.GetValue(options);
-
-                var containerRuntimeProperty = dcpOptionsType.GetProperty("ContainerRuntime");
-
-                return Task.FromResult(containerRuntimeProperty?.GetValue(dcpOptions) as string ?? throw new InvalidOperationException());
-            }
-
-            static async Task<int> RunProcess(string fileName, IEnumerable<string> arguments, ILogger logger, CancellationToken cancellationToken)
-            {
-                var processStartInfo = new System.Diagnostics.ProcessStartInfo(fileName)
-                {
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-                };
-
-                foreach (var argument in arguments)
-                {
-                    processStartInfo.ArgumentList.Add(argument);
-                }
-
-                var process = new System.Diagnostics.Process { StartInfo = processStartInfo };
-
-                process.OutputDataReceived += (_, e) =>
-                {
-                    if (e.Data is { } data)
-                    {
-                        LogInformation(logger, data);
-                    }
-                };
-
-                process.ErrorDataReceived += (_, e) =>
-                {
-                    if (e.Data is { } data)
-                    {
-                        LogError(logger, data);
-                    }
-                };
-
-                if (!process.Start())
-                {
-                    return -1;
-                }
-
-                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-                return process.ExitCode;
             }
         }
     }
@@ -418,12 +347,6 @@ public static partial class MinIOBuilderExtensions
 
         _ = configuration.AddInMemoryCollection(dictionary);
     }
-
-    [LoggerMessage(LogLevel.Information, "{Message}")]
-    private static partial void LogInformation(ILogger logger, string message);
-
-    [LoggerMessage(LogLevel.Error, "{Message}")]
-    private static partial void LogError(ILogger logger, string message);
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "Checked")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This suppression is required.")]

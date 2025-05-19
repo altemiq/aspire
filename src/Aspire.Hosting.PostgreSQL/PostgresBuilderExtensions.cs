@@ -156,13 +156,13 @@ public static partial class PostgresBuilderExtensions
                 if (evt.Resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuild))
                 {
                     var tle = false;
-                    var plrust = false;
                     if (evt.Resource.TryGetLastAnnotation<TleAnnotation>(out var tleAnnotation))
                     {
                         tle = true;
                         dockerfileBuild.BuildArguments["TLE_BRANCH"] = tleAnnotation.Branch;
                     }
 
+                    var plrust = false;
                     if (evt.Resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
                     {
                         plrust = true;
@@ -245,101 +245,31 @@ public static partial class PostgresBuilderExtensions
                 // get the docker image name
                 var containerResource = GetParentOfType<ContainerResource>(evt.Resource as IResourceWithParent);
 
-                if (typeof(ResourceExtensions).GetMethod("GetResolvedResourceNames", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic) is { } method
-                    && method.Invoke(null, [containerResource]) is IEnumerable<string> names
-                    && names.FirstOrDefault() is { } containerName)
+                var rls = evt.Services.GetRequiredService<ResourceLoggerService>();
+                var logger = rls.GetLogger(evt.Resource);
+
+                // get name
+                string? database = null;
+                string? password = null;
+                if (evt.Resource is IResourceWithConnectionString databaseResource)
                 {
-                    var rls = evt.Services.GetRequiredService<ResourceLoggerService>();
-                    var logger = rls.GetLogger(evt.Resource);
+                    var connectionString = new Npgsql.NpgsqlConnectionStringBuilder(await databaseResource.GetConnectionStringAsync(cancellationToken).ConfigureAwait(false));
+                    database = connectionString.Database;
+                    password = connectionString.Password;
+                }
 
-                    // get name
-                    var containerRuntime = await GetContainerRuntime(evt.Services).ConfigureAwait(false);
-                    string? database = null;
-                    string? password = null;
-                    if (evt.Resource is IResourceWithConnectionString databaseResource)
-                    {
-                        var connectionString = new Npgsql.NpgsqlConnectionStringBuilder(await databaseResource.GetConnectionStringAsync(cancellationToken).ConfigureAwait(false));
-                        database = connectionString.Database;
-                        password = connectionString.Password;
-                    }
+                var containerRuntime = await ContainerResources.GetContainerRuntimeAsync(evt.Services, cancellationToken).ConfigureAwait(false);
+                var env = new Dictionary<string, string?>(StringComparer.Ordinal)
+                {
+                    { "PGPASSWORD", password },
+                    { "PGDB", database },
+                };
 
-                    foreach (var extension in evt.Resource.Annotations.OfType<TleExtensionAnnotation>())
-                    {
-                        _ = await RunProcess(
-                            logger,
-                            containerRuntime,
-                            [
-                                "exec",
-                                "--env",
-                                $"PGPASSWORD={password}",
-                                "--env",
-                                $"PGDB={database}",
-                                containerName,
-                                "make",
-                                $"--directory=/pg_tle/examples/{extension.Name}",
-                                "install",
-                            ],
-                            cancellationToken).ConfigureAwait(false);
-                    }
-
-                    static Task<string> GetContainerRuntime(IServiceProvider serviceProvider)
-                    {
-                        // get the options type
-                        var dcpOptionsType = typeof(DistributedApplication).Assembly.GetType("Aspire.Hosting.Dcp.DcpOptions") ?? throw new InvalidOperationException();
-                        var optionsType = typeof(Microsoft.Extensions.Options.IOptions<>).MakeGenericType(dcpOptionsType) ?? throw new InvalidOperationException();
-                        var options = serviceProvider.GetRequiredService(optionsType);
-
-                        var dcpOptions = optionsType.GetProperty(nameof(Microsoft.Extensions.Options.IOptions<>.Value))?.GetValue(options);
-
-                        var containerRuntimeProperty = dcpOptionsType.GetProperty("ContainerRuntime");
-
-                        return Task.FromResult(containerRuntimeProperty?.GetValue(dcpOptions) as string ?? throw new InvalidOperationException());
-                    }
-
-                    static async Task<int> RunProcess(ILogger logger, string fileName, IEnumerable<string> arguments, CancellationToken cancellationToken)
-                    {
-                        var process = new System.Diagnostics.Process
-                        {
-                            StartInfo = new(fileName)
-                            {
-                                CreateNoWindow = true,
-                                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-                                UseShellExecute = false,
-                                RedirectStandardError = true,
-                                RedirectStandardOutput = true,
-                            },
-                        };
-
-                        foreach (var argument in arguments)
-                        {
-                            process.StartInfo.ArgumentList.Add(argument);
-                        }
-
-                        process.OutputDataReceived += (_, e) =>
-                        {
-                            if (e.Data is { } data)
-                            {
-                                LogOutputData(logger, data);
-                            }
-                        };
-
-                        process.ErrorDataReceived += (_, e) =>
-                        {
-                            if (e.Data is { } data)
-                            {
-                                LogErrorData(logger, data);
-                            }
-                        };
-
-                        LogStartingProcess(logger, process.StartInfo.FileName, string.Join(' ', process.StartInfo.ArgumentList));
-
-                        process.Start();
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
-
-                        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-                        return process.ExitCode;
-                    }
+                foreach (var extension in evt.Resource.Annotations.OfType<TleExtensionAnnotation>())
+                {
+                    await containerResource
+                        .ExecAsync(containerRuntime, env, ["make", $"--directory=/pg_tle/examples/{extension.Name}", "install"], logger, cancellationToken)
+                        .ConfigureAwait(false);
                 }
 
                 static TParent GetParentOfType<TParent>(IResourceWithParent? resource)
