@@ -230,8 +230,15 @@ public static partial class MinIOBuilderExtensions
     /// <param name="builder">The builder.</param>
     /// <param name="profile">The profile.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<MinIOServerResource> WithProfile(this IResourceBuilder<MinIOServerResource> builder, AWS.AWSProfile profile) =>
-        builder.WithAnnotation(new AWSProfileAnnotation { Profile = profile });
+    public static IResourceBuilder<MinIOServerResource> WithProfile(this IResourceBuilder<MinIOServerResource> builder, AWS.AWSProfile profile)
+    {
+        if (builder.Resource.Annotations.OfType<AWSProfileAnnotation>().Any(a => a.Profile.Equals(profile)))
+        {
+            return builder;
+        }
+
+        return builder.WithAnnotation(new AWSProfileAnnotation { Profile = profile });
+    }
 
     /// <summary>
     /// Adds a MinIO container to the application.
