@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aspire.Hosting.PostgreSQL\Aspire.Hosting.PostgreSQL.csproj" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Aliases="core" />
   </ItemGroup>
 
   <ItemGroup>

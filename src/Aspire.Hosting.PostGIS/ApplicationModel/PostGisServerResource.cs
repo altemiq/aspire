@@ -6,10 +6,12 @@
 
 namespace Aspire.Hosting.ApplicationModel;
 
+extern alias core;
+
 /// <summary>
 /// A resource that represents a PostGIS container.
 /// </summary>
-public class PostGisServerResource(string name, ParameterResource? userName, ParameterResource password) : PostgresServerResource(name, userName, password)
+public class PostGisServerResource(string name, ParameterResource? userName, ParameterResource password) : core::Aspire.Hosting.ApplicationModel.PostgresServerResource(name, userName, password)
 {
     /// <summary>
     /// The primary end point name.
@@ -27,6 +29,6 @@ public class PostGisServerResource(string name, ParameterResource? userName, Par
     [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Required")]
     private static class Utilities
     {
-        public static System.Reflection.PropertyInfo GetUserNameReferenceProperty() => typeof(PostgresServerResource).GetProperty(nameof(UserNameReference), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) ?? throw new InvalidOperationException();
+        public static System.Reflection.PropertyInfo GetUserNameReferenceProperty() => typeof(core::Aspire.Hosting.ApplicationModel.PostgresServerResource).GetProperty(nameof(UserNameReference), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) ?? throw new InvalidOperationException();
     }
 }

@@ -6,6 +6,8 @@
 
 namespace Aspire.Hosting;
 
+extern alias core;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +22,7 @@ public static partial class PostgresBuilderExtensions
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
-    /// <param name="userName">The parameter used to provide the user name for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
@@ -33,14 +35,14 @@ public static partial class PostgresBuilderExtensions
     /// </para>
     /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V13.Tag" /> tag.
     /// </remarks>
-    public static IResourceBuilder<PostgresServerResource> AddPostgres13(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V13.Tag, name, userName, password, port);
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres13(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V13.Tag, name, userName, password, port);
 
     /// <summary>
     /// Adds a PostgreSQL resource to the application model. A container is used for local development.
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
-    /// <param name="userName">The parameter used to provide the user name for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
@@ -53,14 +55,14 @@ public static partial class PostgresBuilderExtensions
     /// </para>
     /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V14.Tag" /> tag.
     /// </remarks>
-    public static IResourceBuilder<PostgresServerResource> AddPostgres14(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V14.Tag, name, userName, password, port);
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres14(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V14.Tag, name, userName, password, port);
 
     /// <summary>
     /// Adds a PostgreSQL resource to the application model. A container is used for local development.
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
-    /// <param name="userName">The parameter used to provide the user name for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
@@ -73,14 +75,14 @@ public static partial class PostgresBuilderExtensions
     /// </para>
     /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V15.Tag" /> tag.
     /// </remarks>
-    public static IResourceBuilder<PostgresServerResource> AddPostgres15(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V15.Tag, name, userName, password, port);
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres15(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V15.Tag, name, userName, password, port);
 
     /// <summary>
     /// Adds a PostgreSQL resource to the application model. A container is used for local development.
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
-    /// <param name="userName">The parameter used to provide the user name for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
@@ -93,14 +95,14 @@ public static partial class PostgresBuilderExtensions
     /// </para>
     /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V16.Tag" /> tag.
     /// </remarks>
-    public static IResourceBuilder<PostgresServerResource> AddPostgres16(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V16.Tag, name, userName, password, port);
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres16(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V16.Tag, name, userName, password, port);
 
     /// <summary>
     /// Adds a PostgreSQL resource to the application model. A container is used for local development.
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
-    /// <param name="userName">The parameter used to provide the user name for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
@@ -113,7 +115,7 @@ public static partial class PostgresBuilderExtensions
     /// </para>
     /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V17.Tag" /> tag.
     /// </remarks>
-    public static IResourceBuilder<PostgresServerResource> AddPostgres17(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V17.Tag, name, userName, password, port);
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres17(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V17.Tag, name, userName, password, port);
 
     /// <summary>
     /// Adds <c>tle</c> support for the database.
@@ -123,7 +125,7 @@ public static partial class PostgresBuilderExtensions
     /// <param name="version">The version.</param>
     /// <returns>The input builder.</returns>
     public static IResourceBuilder<T> WithTle<T>(this IResourceBuilder<T> builder, string? version = default)
-        where T : PostgresServerResource =>
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource =>
         builder
             .SetupDockerfile()
             .WithAnnotation(new TleAnnotation(version ?? "v1.5.0"))
@@ -157,7 +159,7 @@ public static partial class PostgresBuilderExtensions
     /// <param name="branch">The branch.</param>
     /// <returns>The input builder.</returns>
     public static IResourceBuilder<T> WithPlRust<T>(this IResourceBuilder<T> builder, string? branch = default)
-        where T : PostgresServerResource => builder.SetupDockerfile().WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.SetupDockerfile().WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
 
     /// <summary>
     /// Installs the TLE extension for the database.
@@ -167,7 +169,7 @@ public static partial class PostgresBuilderExtensions
     /// <param name="extension">The extension to install.</param>
     /// <returns>The input database.</returns>
     public static IResourceBuilder<T> WithTleExtension<T>(this IResourceBuilder<T> builder, string extension)
-        where T : PostgresDatabaseResource => builder.WithTleExtensions(extension);
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource => builder.WithTleExtensions(extension);
 
     /// <summary>
     /// Installs the TLE extensions for the database.
@@ -177,7 +179,7 @@ public static partial class PostgresBuilderExtensions
     /// <param name="extensions">The extensions to install.</param>
     /// <returns>The input database.</returns>
     public static IResourceBuilder<T> WithTleExtensions<T>(this IResourceBuilder<T> builder, params string[] extensions)
-        where T : PostgresDatabaseResource
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource
     {
         _ = builder.SetupTleExtensions();
         foreach (var extension in extensions)
@@ -189,7 +191,7 @@ public static partial class PostgresBuilderExtensions
     }
 
     private static IResourceBuilder<T> SetupDockerfile<T>(this IResourceBuilder<T> builder)
-        where T : PostgresServerResource
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource
     {
         // see if this has been set up already
         if (builder.Resource.HasAnnotationOfType<PostgresAnnotation>())
@@ -331,7 +333,7 @@ public static partial class PostgresBuilderExtensions
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
     private static IResourceBuilder<T> SetupTleExtensions<T>(this IResourceBuilder<T> builder)
-        where T : PostgresDatabaseResource
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource
     {
         if (builder.Resource.HasAnnotationOfType<TleExtensionAnnotation>())
         {
@@ -396,7 +398,7 @@ public static partial class PostgresBuilderExtensions
         return builder;
     }
 
-    private static IResourceBuilder<PostgresServerResource> AddPostgresWithTag(IDistributedApplicationBuilder builder, string tag, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => builder.AddPostgres(name, userName, password, port).WithImageTag(tag);
+    private static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgresWithTag(IDistributedApplicationBuilder builder, string tag, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => core::Aspire.Hosting.PostgresBuilderExtensions.AddPostgres(builder, name, userName, password, port).WithImageTag(tag);
 
     [LoggerMessage(LogLevel.Information, Message = "{Data}")]
     private static partial void LogOutputData(ILogger logger, string data);
