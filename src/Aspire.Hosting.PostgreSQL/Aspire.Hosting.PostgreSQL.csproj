@@ -22,7 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="*.Dockerfile" />
+    <EmbeddedResource Include="*.Dockerfile;*.sh" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.ZScaler\Aspire.Hosting.ZScaler.csproj" />
   </ItemGroup>
 
 </Project>

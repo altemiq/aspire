@@ -4,6 +4,7 @@ ARG RUST_BRANCH=main
 
 # Install just enough to set up the official Postgres debian repository,
 # then install everything else needed for Rust and plrust
+COPY --chmod=544 llvm.sh /tmp/
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -14,7 +15,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
         software-properties-common && \
     sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null && \
-    wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh && rm ./llvm.sh && \
+    /tmp/llvm.sh && \
     apt-get update -y -qq --fix-missing && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -35,12 +36,12 @@ RUN chmod a+rwx `$(which pg_config) --pkglibdir` `$(which pg_config) --sharedir`
 # and install toml so TOML files can be parsed later
 RUN gem install --no-document fpm toml
 
-RUN git clone https://github.com/altemiq/plrust.git /plrust --branch ${RUST_BRANCH} && \
+RUN git clone -c advice.detachedHead=false https://github.com/altemiq/plrust.git /plrust --branch ${RUST_BRANCH} && \
     chown -R postgres /plrust
 
 # The 'postgres' user is the default user that the official postgres image sets up
 USER postgres
-ENV USER postgres
+ENV USER=postgres
 
 # Copy in plrust source
 WORKDIR /plrust
@@ -57,7 +58,9 @@ end
 EOF
 
 ## Install Rust
-RUN TOOLCHAIN_VER=`cat /tmp/.toolchain-ver` && wget -qO- https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain=$TOOLCHAIN_VER    
+COPY --chmod=555 rust.sh /tmp/
+RUN TOOLCHAIN_VER=`cat /tmp/.toolchain-ver` && \
+    /tmp/rust.sh -y --profile minimal --default-toolchain=$TOOLCHAIN_VER
 ENV PATH="/var/lib/postgresql/.cargo/bin:${PATH}"
 
 RUN PGRX_VERSION=$(cargo metadata --format-version 1 | jq -r '.packages[]|select(.name=="pgrx")|.version') && \

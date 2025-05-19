@@ -111,7 +111,8 @@ public static partial class PostgresBuilderExtensions
         }
 
         var suffix = GenerateImageSuffix(builder)[..8];
-        builder.WithDockerfile(".", Path.Combine(Path.GetTempPath(), $"postgres-{suffix}.Dockerfile"))
+        var contextDirectory = Path.Combine(Path.GetTempPath(), "postgres-" + suffix);
+        builder.WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"postgres-{suffix}.Dockerfile"))
             .WithImage($"{image}/{suffix}")
             .WithImageTag(tag)
             .WithBuildArg("IMAGE", image)
@@ -155,25 +156,45 @@ public static partial class PostgresBuilderExtensions
             {
                 if (evt.Resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuild))
                 {
+                    bool zscaler = ZScaler.IsRunning();
+
                     var tle = false;
-                    var plrust = false;
                     if (evt.Resource.TryGetLastAnnotation<TleAnnotation>(out var tleAnnotation))
                     {
                         tle = true;
                         dockerfileBuild.BuildArguments["TLE_BRANCH"] = tleAnnotation.Branch;
                     }
 
+                    var plrust = false;
                     if (evt.Resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
                     {
                         plrust = true;
                         dockerfileBuild.BuildArguments["RUST_BRANCH"] = rustAnnotation.Branch;
+
+                        await WriteManifestResource("llvm.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+                        await WriteManifestResource("rust.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
                     }
 
                     // write out the docker file
                     await File.WriteAllLinesAsync(
                         dockerfileBuild.DockerfilePath,
-                        GetDockerfileContents(tle, plrust),
+                        GetDockerfileContents(tle, plrust, zscaler),
                         cancellationToken).ConfigureAwait(false);
+
+                    static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
+                    {
+                        Directory.CreateDirectory(destination);
+
+                        var stream = typeof(PgAdminTheme).Assembly.GetManifestResourceStream(typeof(PgAdminTheme), name) ?? throw new InvalidOperationException();
+                        await using (stream.ConfigureAwait(continueOnCapturedContext: false))
+                        {
+                            var output = new FileStream(Path.Combine(destination, name), FileMode.Create);
+                            await using (output.ConfigureAwait(continueOnCapturedContext: false))
+                            {
+                                await stream.CopyToAsync(output, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+                            }
+                        }
+                    }
                 }
             });
 
@@ -188,13 +209,22 @@ public static partial class PostgresBuilderExtensions
         }
     }
 
-    private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust)
+    private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust, bool zscaler)
     {
         yield return "ARG IMAGE=postgres";
         yield return "ARG TAG=17";
         yield return string.Empty;
         yield return "FROM ${IMAGE}:${TAG}";
         yield return string.Empty;
+
+        if (zscaler)
+        {
+            yield return string.Empty;
+            foreach (string dockerfileLine in ZScaler.GetDockerfileLines())
+            {
+                yield return dockerfileLine;
+            }
+        }
 
         if (tle)
         {

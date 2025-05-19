@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName.Replace('.ZScaler', ''))</RootNamespace>
+    <PackageTags>aspire hosting zscaler</PackageTags>
+    <Description>ZScaler support for .NET Aspire.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="*.Dockerfile" />
+  </ItemGroup>
+
+</Project>
