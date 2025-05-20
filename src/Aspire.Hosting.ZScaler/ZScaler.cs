@@ -22,7 +22,57 @@ public static class ZScaler
     /// Gets the docker file lines to insert the <see cref="ZScaler" /> certificate.
     /// </summary>
     /// <returns>The docker file lines.</returns>
-    public static IEnumerable<string> GetDockerfileLines() => GetLines("zscaler");
+    public static IEnumerable<string> GetDockerfileLines()
+    {
+        var first = true;
+        string? lineToWrite = default;
+
+        foreach (var line in GetLines("zscaler.sh").Skip(1))
+        {
+            if (lineToWrite is not null)
+            {
+                yield return GetLine(lineToWrite, ref first);
+                lineToWrite = null;
+            }
+
+            if (string.IsNullOrEmpty(line))
+            {
+                continue;
+            }
+
+            lineToWrite = line;
+        }
+
+        if (lineToWrite is not null)
+        {
+            if (first)
+            {
+                yield return "RUN " + lineToWrite;
+            }
+            else
+            {
+                yield return "    " + lineToWrite;
+            }
+        }
+
+        static string GetLine(string line, ref bool first)
+        {
+            if (first)
+            {
+                first = false;
+                return "RUN " + AppendLineContinuation(line);
+            }
+
+            return "    " + AppendLineContinuation(line);
+
+            static string AppendLineContinuation(string line)
+            {
+                return line.StartsWith('#') || line.EndsWith("&& \\", StringComparison.Ordinal)
+                    ? line
+                    : line + " && \\";
+            }
+        }
+    }
 
     /// <summary>
     /// Exports the certificates to the file glob.
@@ -82,18 +132,12 @@ public static class ZScaler
 
     private static IEnumerable<string> GetLines(string name)
     {
-        using Stream stream = typeof(ZScaler).Assembly.GetManifestResourceStream(typeof(ZScaler), name + ".Dockerfile") ?? throw new InvalidOperationException();
-        using StreamReader reader = new StreamReader(stream);
-        while (true)
+        using StreamReader reader = new StreamReader(GetManifestResourceStream(name));
+        while (reader.ReadLine() is { } line)
         {
-            string? line = reader.ReadLine();
-            if (line != null)
-            {
-                yield return line;
-                continue;
-            }
-
-            break;
+            yield return line;
         }
     }
+
+    private static Stream GetManifestResourceStream(string name) => typeof(ZScaler).Assembly.GetManifestResourceStream(typeof(ZScaler), name) ?? throw new InvalidOperationException();
 }
