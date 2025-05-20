@@ -174,14 +174,20 @@ internal static partial class ContainerResources
         {
             switch (OperatingSystem.IsWindows(), containerRuntime)
             {
-                case (true, _) or (_, "docker"):
-                    yield return GetDockerHost();
-                    yield return await GetDockerSocket(cancellationToken).ConfigureAwait(false);
-                    break;
+                case (true, "podman"):
+                    yield return "/var/run/podman/podman.sock";
+                    yield break;
+                case (true, _):
+                    yield return "/var/run/docker.sock";
+                    yield break;
                 case (_, "podman"):
                     yield return await GetPodmanSocket(cancellationToken).ConfigureAwait(false);
                     yield return await GetPodmanMachineSock(cancellationToken).ConfigureAwait(false);
-                    break;
+                    yield break;
+                case (_, _):
+                    yield return GetDockerHost();
+                    yield return await GetDockerSocket(cancellationToken).ConfigureAwait(false);
+                    yield break;
             }
 
             static string? GetDockerHost()
