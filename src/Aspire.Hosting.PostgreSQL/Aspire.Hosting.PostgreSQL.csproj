@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Aliases="core" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +27,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aspire.Hosting.ZScaler\Aspire.Hosting.ZScaler.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
   </ItemGroup>
 
 </Project>

@@ -8,6 +8,11 @@
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.Testing" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
+  
+  <ItemGroup Label="AWS">
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.0.5" />
+  </ItemGroup>
 
   <ItemGroup Label="Microsoft">
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.5" />
@@ -16,7 +21,7 @@
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.6.3" />
-    <PackageVersion Include="TUnit" Version="0.19.148" />
+    <PackageVersion Include="TUnit" Version="0.21.1" />
   </ItemGroup>
 
 </Project>

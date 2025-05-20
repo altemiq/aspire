@@ -12,13 +12,13 @@
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.0.3" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.0.5" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Google.Protobuf" Version="3.30.2" />
+    <PackageVersion Include="Google.Protobuf" Version="3.31.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0" />
     <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.71.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.71.0" />

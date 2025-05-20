@@ -6,8 +6,10 @@
 
 namespace Aspire.Hosting;
 
+extern alias core;
+
 /// <summary>
-/// The <see cref="Postgres.PgAdminContainerResource"/> extensions.
+/// The <see cref="core::Aspire.Hosting.Postgres.PgAdminContainerResource"/> extensions.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Public API")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
@@ -19,7 +21,7 @@ public static class PgAdminBuilderExtensions
     /// <param name="builder">The builder.</param>
     /// <param name="theme">The theme.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<Postgres.PgAdminContainerResource> WithTheme(this IResourceBuilder<Postgres.PgAdminContainerResource> builder, PgAdminTheme theme) => builder
+    public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithTheme(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, PgAdminTheme theme) => builder
         .WithPreference("misc:themes:theme", theme.ToString().ToLowerInvariant())
         .WithPreference("misc:user_interface:theme", theme.ToString().ToLowerInvariant());
 
@@ -30,7 +32,7 @@ public static class PgAdminBuilderExtensions
     /// <param name="key">The preference key.</param>
     /// <param name="value">The preference value.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<Postgres.PgAdminContainerResource> WithPreference(this IResourceBuilder<Postgres.PgAdminContainerResource> builder, string key, object? value) => builder.WithPreferences(new Dictionary<string, object?>(StringComparer.Ordinal) { { key, value } });
+    public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithPreference(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, string key, object? value) => builder.WithPreferences(new Dictionary<string, object?>(StringComparer.Ordinal) { { key, value } });
 
     /// <summary>
     /// Adds the preferences to the container.
@@ -38,7 +40,7 @@ public static class PgAdminBuilderExtensions
     /// <param name="builder">The builder.</param>
     /// <param name="preferences">The preferences.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<Postgres.PgAdminContainerResource> WithPreferences(this IResourceBuilder<Postgres.PgAdminContainerResource> builder, IDictionary<string, object?> preferences)
+    public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithPreferences(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, IDictionary<string, object?> preferences)
     {
         _ = builder.EnsureContainerFiles();
         foreach (var kvp in preferences)
