@@ -17,6 +17,9 @@ using Microsoft.Extensions.Logging;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static partial class PostgresBuilderExtensions
 {
+    private const string DefaultImage = "library/postgres";
+    private const string DefaultTag = "17.4";
+
     /// <summary>
     /// Adds a PostgreSQL resource to the application model. A container is used for local development.
     /// </summary>
@@ -201,8 +204,8 @@ public static partial class PostgresBuilderExtensions
         }
 
         // get the versions
-        var image = "library/postgres";
-        var tag = "17.4";
+        var image = DefaultImage;
+        var tag = DefaultTag;
         if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var imageAnnotation))
         {
             image = imageAnnotation.Image;
@@ -366,8 +369,8 @@ public static partial class PostgresBuilderExtensions
 
     private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust, bool zscaler)
     {
-        yield return "ARG IMAGE=postgres";
-        yield return "ARG TAG=17";
+        yield return $"ARG IMAGE={DefaultImage}";
+        yield return $"ARG TAG={DefaultTag}";
         yield return string.Empty;
         yield return "FROM ${IMAGE}:${TAG}";
         yield return string.Empty;
