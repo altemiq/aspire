@@ -287,13 +287,65 @@ public static partial class PostgresBuilderExtensions
                     {
                         Directory.CreateDirectory(destination);
 
-                        var stream = typeof(PgAdminTheme).Assembly.GetManifestResourceStream(typeof(PgAdminTheme), name) ?? throw new InvalidOperationException();
-                        await using (stream.ConfigureAwait(continueOnCapturedContext: false))
+                        var stream = GetManifestResourceStream(name);
+                        await using (stream.ConfigureAwait(false))
                         {
-                            var output = new FileStream(Path.Combine(destination, name), FileMode.Create);
-                            await using (output.ConfigureAwait(continueOnCapturedContext: false))
+                            // write to a temp file
+                            var outputPath = Path.Combine(destination, name);
+                            if (File.Exists(outputPath))
                             {
-                                await stream.CopyToAsync(output, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+                                byte[] outputBytes;
+                                var memoryStream = new MemoryStream();
+                                await using (memoryStream.ConfigureAwait(false))
+                                {
+                                    await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
+                                    outputBytes = memoryStream.ToArray();
+                                }
+
+                                // check the contents
+                                if (!Equal(
+                                    await ComputeArrayHashAsync(outputBytes, cancellationToken).ConfigureAwait(false),
+                                    await ComputeFileHashAsync(outputPath, cancellationToken).ConfigureAwait(false)))
+                                {
+                                    await File.WriteAllBytesAsync(outputPath, outputBytes, cancellationToken).ConfigureAwait(false);
+                                }
+
+                                static bool Equal(byte[] first, byte[] second)
+                                {
+                                    return first.Length == second.Length && first.Zip(second).All(item => item.First == item.Second);
+                                }
+
+                                static async Task<byte[]> ComputeFileHashAsync(string fileName, CancellationToken cancellationToken)
+                                {
+                                    var stream = File.OpenRead(fileName);
+                                    await using (stream.ConfigureAwait(false))
+                                    {
+                                        return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+                                    }
+                                }
+
+                                static async Task<byte[]> ComputeArrayHashAsync(byte[] data, CancellationToken cancellationToken)
+                                {
+                                    var stream = new MemoryStream(data);
+                                    await using (stream.ConfigureAwait(false))
+                                    {
+                                        return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+                                    }
+                                }
+
+                                [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "This is a file hash")]
+                                static Task<byte[]> ComputeHashAsync(Stream stream, CancellationToken cancellationToken)
+                                {
+                                    return System.Security.Cryptography.MD5.Create().ComputeHashAsync(stream, cancellationToken);
+                                }
+                            }
+                            else
+                            {
+                                var output = File.OpenWrite(outputPath);
+                                await using (output.ConfigureAwait(false))
+                                {
+                                    await stream.CopyToAsync(output, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+                                }
                             }
                         }
                     }
@@ -311,6 +363,8 @@ public static partial class PostgresBuilderExtensions
         }
     }
 
+    private static Stream GetManifestResourceStream(string name) => typeof(PostgresBuilderExtensions).Assembly.GetManifestResourceStream(typeof(PostgresBuilderExtensions), name) ?? throw new InvalidOperationException();
+
     private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust, bool zscaler)
     {
         yield return "ARG IMAGE=postgres";
@@ -322,19 +376,16 @@ public static partial class PostgresBuilderExtensions
         if (zscaler)
         {
             yield return string.Empty;
-            foreach (string dockerfileLine in ZScaler.GetDockerfileLines())
+            foreach (var line in ZScaler.GetDockerfileLines())
             {
-                yield return dockerfileLine;
+                yield return line;
             }
         }
 
         if (tle)
         {
-            using var stream = typeof(PgAdminTheme).Assembly.GetManifestResourceStream(typeof(PgAdminTheme), $"{nameof(tle)}.Dockerfile") ?? throw new InvalidOperationException();
-            using var reader = new StreamReader(stream);
-
             yield return string.Empty;
-            while (reader.ReadLine() is { } line)
+            foreach (var line in GetDockerfileLines(nameof(tle)))
             {
                 yield return line;
             }
@@ -342,11 +393,8 @@ public static partial class PostgresBuilderExtensions
 
         if (plrust)
         {
-            using var stream = typeof(PgAdminTheme).Assembly.GetManifestResourceStream(typeof(PgAdminTheme), $"{nameof(plrust)}.Dockerfile") ?? throw new InvalidOperationException();
-            using var reader = new StreamReader(stream);
-
             yield return string.Empty;
-            while (reader.ReadLine() is { } line)
+            foreach (var line in GetDockerfileLines(nameof(plrust)))
             {
                 yield return line;
             }
@@ -358,6 +406,16 @@ public static partial class PostgresBuilderExtensions
             yield return "USER root";
             yield return "RUN mv /bin/sh /bin/sh.original && ln -s /bin/bash /bin/sh";
             yield return "USER postgres";
+        }
+
+        static IEnumerable<string> GetDockerfileLines(string name)
+        {
+            using var reader = new StreamReader(GetManifestResourceStream($"{name}.Dockerfile"));
+
+            while (reader.ReadLine() is { } line)
+            {
+                yield return line;
+            }
         }
     }
 
