@@ -5,7 +5,7 @@ RUN apt-get update && \
     # this one does not contain a certificate, just the start of the file before the first certificate
     rm /tmp/zscaler.0.crt && \
     # strip out any extra lines, and ensure that the files are in PEM format
-    for file in /tmp/zscaler.*.crt; do cat $file | openssl x509 -outform PEM > /usr/local/share/ca-certificates/$file.crt; done && \
+    for file in /tmp/zscaler.*.crt; do cat $file | openssl x509 -outform PEM > /usr/local/share/ca-certificates/$(basename $file); done && \
     # remove the intermediate files
     rm /tmp/zscaler.*.crt && \
     # update the certificates
