@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static partial class PostgresBuilderExtensions
 {
+    private const string DefaultRegistry = "docker.io";
     private const string DefaultImage = "library/postgres";
     private const string DefaultTag = "17.4";
 
@@ -206,13 +207,12 @@ public static partial class PostgresBuilderExtensions
         // get the versions
         var image = DefaultImage;
         var tag = DefaultTag;
+        var registry = DefaultRegistry;
         if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var imageAnnotation))
         {
             image = imageAnnotation.Image;
-            if (imageAnnotation.Tag is { } t)
-            {
-                tag = t;
-            }
+            tag = imageAnnotation.Tag ?? DefaultTag;
+            registry = imageAnnotation.Registry ?? DefaultRegistry;
         }
 
         var suffix = GenerateImageSuffix(builder)[..8];
@@ -221,6 +221,7 @@ public static partial class PostgresBuilderExtensions
         builder.WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"{name}.Dockerfile"))
             .WithImage($"{image}/{suffix}")
             .WithImageTag(tag)
+            .WithBuildArg("REGISTRY", registry)
             .WithBuildArg("IMAGE", image)
             .WithBuildArg("TAG", tag)
             .WithArgs(
@@ -369,10 +370,11 @@ public static partial class PostgresBuilderExtensions
 
     private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust, bool zscaler)
     {
+        yield return $"ARG REGISTRY={DefaultRegistry}";
         yield return $"ARG IMAGE={DefaultImage}";
         yield return $"ARG TAG={DefaultTag}";
         yield return string.Empty;
-        yield return "FROM ${IMAGE}:${TAG}";
+        yield return "FROM ${REGISTRY}/${IMAGE}:${TAG}";
         yield return string.Empty;
 
         if (zscaler)
