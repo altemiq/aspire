@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="localstack-dotnet-square.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 

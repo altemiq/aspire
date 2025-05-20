@@ -125,6 +125,8 @@ public static class LocalStackBuilderExtensions
 
         var localStack = new LocalStackServerResource(name, region ?? "us-east-1") { Services = services };
 
+        IServiceProvider? serviceProvider = default;
+
         var resourceBuilder = builder.AddResource(localStack)
             .WithImage(LocalStack.LocalStackContainerImageTags.Image, LocalStack.LocalStackContainerImageTags.Tag)
             .WithImageRegistry(LocalStack.LocalStackContainerImageTags.Registry)
@@ -143,10 +145,18 @@ public static class LocalStackBuilderExtensions
                     context.EnvironmentVariables["LOCALSTACK_SERVICES"] = string.Join(',', localStack.GetServiceNames());
                 }
             })
-            .WithDockerSock()
+            .WithDockerSock(() => serviceProvider ?? throw new InvalidOperationException())
             .PublishAsContainer();
 
         AddHealthCheck(resourceBuilder, Uri.UriSchemeHttp, Uri.UriSchemeHttp, services);
+
+        // get the services from the event.
+        builder.Eventing.Subscribe<BeforeStartEvent>((evt, ct) =>
+        {
+            ct.ThrowIfCancellationRequested();
+            serviceProvider = evt.Services;
+            return Task.CompletedTask;
+        });
 
         return resourceBuilder;
 
@@ -195,94 +205,18 @@ public static class LocalStackBuilderExtensions
         }
     }
 
-    private static IResourceBuilder<T> WithDockerSock<T>(this IResourceBuilder<T> builder)
+    private static IResourceBuilder<T> WithDockerSock<T>(this IResourceBuilder<T> builder, Func<IServiceProvider> servicesFactory)
         where T : ContainerResource
     {
-        var local = GetDockerHost() ?? "/var/run/docker.sock";
-        if (!OperatingSystem.IsLinux() || CheckSock(local))
-        {
-            AddDockerSockWithPath(builder, local);
-            return builder;
-        }
+        return builder.WithContainerRuntimeArgs(ProcessSocks);
 
-        local = GetPodmanMachineSock();
-        if (CheckSock(local))
+        async Task ProcessSocks(ContainerRuntimeArgsCallbackContext callback)
         {
-            AddDockerSockWithPath(builder, local);
-            return builder;
-        }
-
-        // Failed to find the socket
-        return builder;
-
-        static string? GetDockerHost()
-        {
-            return Environment.GetEnvironmentVariable("DOCKER_HOST") is { } value
-                   && Uri.TryCreate(value, UriKind.Absolute, out var uri)
-                   && uri is { Scheme: "unix" }
-                ? uri.LocalPath
-                : default;
-        }
-
-        static bool CheckSock([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
-        {
-            if (path is null)
+            if (await ContainerResources.GetContainerRuntimeSockAsync(servicesFactory(), callback.CancellationToken).ConfigureAwait(false) is { } sock)
             {
-                return false;
+                callback.Args.Add("-v");
+                callback.Args.Add($"{sock}:/var/run/docker.sock:ro");
             }
-
-            var endpoint = new System.Net.Sockets.UnixDomainSocketEndPoint(path);
-            var socket = new System.Net.Sockets.Socket(
-                System.Net.Sockets.AddressFamily.Unix,
-                System.Net.Sockets.SocketType.Stream,
-                System.Net.Sockets.ProtocolType.Unspecified);
-
-            try
-            {
-                socket.Connect(endpoint);
-                return true;
-            }
-            catch (System.Net.Sockets.SocketException)
-            {
-                return false;
-            }
-        }
-
-        static string? GetPodmanMachineSock()
-        {
-            var process = new System.Diagnostics.Process
-            {
-                StartInfo =
-                {
-                    FileName = "podman",
-                    Arguments = "machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}'",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                },
-            };
-
-            using (process)
-            {
-                try
-                {
-                    process.Start();
-                }
-                catch (System.ComponentModel.Win32Exception)
-                {
-                    return default;
-                }
-
-                var output = process.StandardOutput.ReadToEnd();
-
-                process.WaitForExit();
-
-                return output.Trim('\r', '\n', '\'');
-            }
-        }
-
-        static void AddDockerSockWithPath(IResourceBuilder<T> builder, string path)
-        {
-            builder.WithContainerRuntimeArgs("-v", $"{path}:/var/run/docker.sock:ro");
         }
     }
 }
