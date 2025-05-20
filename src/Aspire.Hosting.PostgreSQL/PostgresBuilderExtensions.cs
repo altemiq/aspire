@@ -213,8 +213,9 @@ public static partial class PostgresBuilderExtensions
         }
 
         var suffix = GenerateImageSuffix(builder)[..8];
-        var contextDirectory = Path.Combine(Path.GetTempPath(), "postgres-" + suffix);
-        builder.WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"postgres-{suffix}.Dockerfile"))
+        var name = "postgres-" + suffix;
+        var contextDirectory = Path.Combine(Path.GetTempPath(), name);
+        builder.WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"{name}.Dockerfile"))
             .WithImage($"{image}/{suffix}")
             .WithImageTag(tag)
             .WithBuildArg("IMAGE", image)
@@ -258,8 +259,6 @@ public static partial class PostgresBuilderExtensions
             {
                 if (evt.Resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuild))
                 {
-                    bool zscaler = ZScaler.IsRunning();
-
                     var tle = false;
                     if (evt.Resource.TryGetLastAnnotation<TleAnnotation>(out var tleAnnotation))
                     {
@@ -280,7 +279,7 @@ public static partial class PostgresBuilderExtensions
                     // write out the docker file
                     await File.WriteAllLinesAsync(
                         dockerfileBuild.DockerfilePath,
-                        GetDockerfileContents(tle, plrust, zscaler),
+                        GetDockerfileContents(tle, plrust, ZScaler.IsRunning()),
                         cancellationToken).ConfigureAwait(false);
 
                     static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
