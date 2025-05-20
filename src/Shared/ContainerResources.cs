@@ -131,6 +131,152 @@ internal static partial class ContainerResources
     }
 
     /// <summary>
+    /// Gets the container runtime socket.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
+    public static async Task<string?> GetContainerRuntimeSockAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default) => await GetContainerRuntimeSockAsync(await GetContainerRuntimeAsync(serviceProvider, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+
+    /// <summary>
+    /// Gets the container runtime socket.
+    /// </summary>
+    /// <param name="containerRuntime">The container runtime.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "These are async enumerable")]
+    public static async Task<string?> GetContainerRuntimeSockAsync(string containerRuntime, CancellationToken cancellationToken = default)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            await foreach (var sock in GetCompatibleSocksAsync(containerRuntime, cancellationToken).ConfigureAwait(false))
+            {
+                if (sock is not null)
+                {
+                    return sock;
+                }
+            }
+        }
+        else
+        {
+            await foreach (var sock in GetCompatibleSocksAsync(containerRuntime, cancellationToken).ConfigureAwait(false))
+            {
+                if (CheckSock(sock))
+                {
+                    return sock;
+                }
+            }
+        }
+
+        return default;
+
+        static async IAsyncEnumerable<string?> GetCompatibleSocksAsync(string containerRuntime, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            switch (OperatingSystem.IsWindows(), containerRuntime)
+            {
+                case (true, "podman"):
+                    yield return "/var/run/podman/podman.sock";
+                    yield break;
+                case (true, _):
+                    yield return "/var/run/docker.sock";
+                    yield break;
+                case (_, "podman"):
+                    yield return await GetPodmanSocket(cancellationToken).ConfigureAwait(false);
+                    yield return await GetPodmanMachineSock(cancellationToken).ConfigureAwait(false);
+                    yield break;
+                case (_, _):
+                    yield return GetDockerHost();
+                    yield return await GetDockerSocket(cancellationToken).ConfigureAwait(false);
+                    yield break;
+            }
+
+            static string? GetDockerHost()
+            {
+                return Environment.GetEnvironmentVariable("DOCKER_HOST") is { } value
+                       && Uri.TryCreate(value, UriKind.Absolute, out var uri)
+                       && uri is { Scheme: "unix" }
+                    ? uri.LocalPath
+                    : default;
+            }
+
+            static Task<string?> GetDockerSocket(CancellationToken cancellationToken)
+            {
+                return RunAsync("docker", ["context", "inspect", "--format", "'{{.Endpoints.docker.Host}}'"], cancellationToken);
+            }
+
+            static Task<string?> GetPodmanSocket(CancellationToken cancellationToken)
+            {
+                return RunAsync("podman", ["info", "--format", "'{{.Host.RemoteSocket.Path}}'"], cancellationToken);
+            }
+
+            static Task<string?> GetPodmanMachineSock(CancellationToken cancellationToken)
+            {
+                return RunAsync("podman", ["machine", "inspect", "--format", "'{{.ConnectionInfo.PodmanSocket.Path}}'"], cancellationToken);
+            }
+
+            static async Task<string?> RunAsync(string fileName,  IEnumerable<string> args, CancellationToken cancellationToken)
+            {
+                var process = new System.Diagnostics.Process
+                {
+                    StartInfo =
+                    {
+                        FileName = fileName,
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                    },
+                };
+
+                foreach (var arg in args)
+                {
+                    process.StartInfo.ArgumentList.Add(arg);
+                }
+
+                using (process)
+                {
+                    try
+                    {
+                        process.Start();
+                    }
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        return default;
+                    }
+
+                    var output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+
+                    await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+                    return output.Trim('\r', '\n', '\'');
+                }
+            }
+        }
+
+        static bool CheckSock([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
+        {
+            if (path is null)
+            {
+                return false;
+            }
+
+            var endpoint = new System.Net.Sockets.UnixDomainSocketEndPoint(path);
+            var socket = new System.Net.Sockets.Socket(
+                System.Net.Sockets.AddressFamily.Unix,
+                System.Net.Sockets.SocketType.Stream,
+                System.Net.Sockets.ProtocolType.Unspecified);
+
+            try
+            {
+                socket.Connect(endpoint);
+                return true;
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets the container runtime.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>

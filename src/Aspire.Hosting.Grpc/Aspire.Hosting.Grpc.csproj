@@ -4,7 +4,6 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting grpc</PackageTags>
     <Description>gRPC support for .NET Aspire.</Description>
-    <PackageIcon>logo.png</PackageIcon>
     <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
   </PropertyGroup>
 
@@ -28,8 +27,14 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Packaging">
     <None Update="logo.png" Pack="true" PackagePath="\" />
+    <None Update="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

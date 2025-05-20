@@ -5,16 +5,21 @@
     <RootNamespace>$(RootNamespace.Replace('.AWS.Configuration', ''))</RootNamespace>
     <Description>AWS Configuration support for .NET Aspire.</Description>
     <NoWarn>$(NoWarn);S101</NoWarn>
-    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting" />
     <PackageReference Include="Aspire.Hosting.AWS" />
   </ItemGroup>
+  
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>    
+  </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Label="Packaging">
     <None Update="icon.png" Pack="true" PackagePath="\" />
+    <None Update="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
