@@ -4,7 +4,6 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting minio</PackageTags>
     <Description>MinIO support for .NET Aspire.</Description>
-    <PackageIcon>icon.png</PackageIcon>
     <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
   </PropertyGroup>
 
@@ -24,8 +23,14 @@
     <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
   </ItemGroup>
 
-  <ItemGroup>
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Packaging">
     <None Update="icon.png" Pack="true" PackagePath="\" />
+    <None Update="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

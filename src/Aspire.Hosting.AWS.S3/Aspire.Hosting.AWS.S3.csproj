@@ -15,4 +15,14 @@
     <ProjectReference Include="..\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj" />
   </ItemGroup>
 
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Packaging">
+    <None Update="icon.png" Pack="true" PackagePath="/" />
+    <None Update="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
 </Project>

@@ -4,7 +4,6 @@
     <TargetFramework>$(NetCurrent)</TargetFramework>
     <PackageTags>aspire hosting localstack</PackageTags>
     <Description>LocalStack support for .NET Aspire.</Description>
-    <PackageIcon>localstack-dotnet-square.png</PackageIcon>
     <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
   </PropertyGroup>
 
@@ -21,8 +20,14 @@
     <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
   </ItemGroup>
 
-  <ItemGroup>
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>localstack-dotnet-square.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Packaging">
     <None Update="localstack-dotnet-square.png" Pack="true" PackagePath="\" />
+    <None Update="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
