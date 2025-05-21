@@ -1,6 +1,6 @@
 # modified from https://github.com/tcdi/plrust/blob/main/Dockerfile.try
 
-ARG RUST_BRANCH=main
+ARG PL_RUST_BRANCH=main
 
 # Install just enough to set up the official Postgres debian repository,
 # then install everything else needed for Rust and plrust
@@ -35,12 +35,14 @@ RUN chmod a+rwx `$(which pg_config) --pkglibdir` `$(which pg_config) --sharedir`
 # and install toml so TOML files can be parsed later
 RUN gem install --no-document fpm toml
 
-RUN git clone https://github.com/altemiq/plrust.git /plrust --branch ${RUST_BRANCH} && \
-    chown -R postgres /plrust
+RUN --mount=type=bind,source=0001-fix-version.patch,target=/tmp/0001-fix-version.patch \
+    git clone -c advice.detachedHead=false https://github.com/tcdi/plrust.git /plrust --depth 1 --branch ${PL_RUST_BRANCH} && \
+    chown -R postgres /plrust && \
+    cd /plrust && git apply /tmp/0001-fix-version.patch
 
 # The 'postgres' user is the default user that the official postgres image sets up
 USER postgres
-ENV USER postgres
+ENV USER=postgres
 
 # Copy in plrust source
 WORKDIR /plrust

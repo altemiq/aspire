@@ -297,7 +297,9 @@ public static partial class PostgresBuilderExtensions
                     if (evt.Resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
                     {
                         plrust = true;
-                        dockerfileBuild.BuildArguments["RUST_BRANCH"] = rustAnnotation.Branch;
+                        dockerfileBuild.BuildArguments["PL_RUST_BRANCH"] = rustAnnotation.Branch;
+
+                        await WriteManifestResource("0001-fix-version.patch", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
                     }
 
                     // write out the docker file
@@ -305,6 +307,73 @@ public static partial class PostgresBuilderExtensions
                         dockerfileBuild.DockerfilePath,
                         GetDockerfileContents(tle, plrust),
                         cancellationToken).ConfigureAwait(false);
+
+                    static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
+                    {
+                        Directory.CreateDirectory(destination);
+
+                        var stream = GetManifestResourceStream(name);
+                        await using (stream.ConfigureAwait(false))
+                        {
+                            // write to a temp file
+                            var outputPath = Path.Combine(destination, name);
+                            if (File.Exists(outputPath))
+                            {
+                                byte[] outputBytes;
+                                var memoryStream = new MemoryStream();
+                                await using (memoryStream.ConfigureAwait(false))
+                                {
+                                    await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
+                                    outputBytes = memoryStream.ToArray();
+                                }
+
+                                // check the contents
+                                if (!Equal(
+                                    await ComputeArrayHashAsync(outputBytes, cancellationToken).ConfigureAwait(false),
+                                    await ComputeFileHashAsync(outputPath, cancellationToken).ConfigureAwait(false)))
+                                {
+                                    await File.WriteAllBytesAsync(outputPath, outputBytes, cancellationToken).ConfigureAwait(false);
+                                }
+
+                                static bool Equal(byte[] first, byte[] second)
+                                {
+                                    return first.Length == second.Length && first.Zip(second).All(item => item.First == item.Second);
+                                }
+
+                                static async Task<byte[]> ComputeFileHashAsync(string fileName, CancellationToken cancellationToken)
+                                {
+                                    var stream = File.OpenRead(fileName);
+                                    await using (stream.ConfigureAwait(false))
+                                    {
+                                        return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+                                    }
+                                }
+
+                                static async Task<byte[]> ComputeArrayHashAsync(byte[] data, CancellationToken cancellationToken)
+                                {
+                                    var stream = new MemoryStream(data);
+                                    await using (stream.ConfigureAwait(false))
+                                    {
+                                        return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+                                    }
+                                }
+
+                                [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "This is a file hash")]
+                                static Task<byte[]> ComputeHashAsync(Stream stream, CancellationToken cancellationToken)
+                                {
+                                    return System.Security.Cryptography.MD5.Create().ComputeHashAsync(stream, cancellationToken);
+                                }
+                            }
+                            else
+                            {
+                                var output = File.OpenWrite(outputPath);
+                                await using (output.ConfigureAwait(false))
+                                {
+                                    await stream.CopyToAsync(output, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
