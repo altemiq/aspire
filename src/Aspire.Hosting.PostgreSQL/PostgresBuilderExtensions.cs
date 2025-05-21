@@ -392,38 +392,9 @@ public static partial class PostgresBuilderExtensions
 
     private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust)
     {
-        yield return $"ARG REGISTRY={DefaultRegistry}";
-        yield return $"ARG IMAGE={DefaultImage}";
-        yield return $"ARG TAG={DefaultTag}";
-        yield return string.Empty;
-        yield return "FROM ${REGISTRY}/${IMAGE}:${TAG}";
-        yield return string.Empty;
-
-        if (tle)
-        {
-            yield return string.Empty;
-            foreach (var line in GetDockerfileLines(nameof(tle)))
-            {
-                yield return line;
-            }
-        }
-
-        if (plrust)
-        {
-            yield return string.Empty;
-            foreach (var line in GetDockerfileLines(nameof(plrust)))
-            {
-                yield return line;
-            }
-        }
-
-        if (tle)
-        {
-            // make sure that installing PL_TLE extensions works
-            yield return "USER root";
-            yield return "RUN mv /bin/sh /bin/sh.original && ln -s /bin/bash /bin/sh";
-            yield return "USER postgres";
-        }
+        return GetArguments(tle, plrust)
+            .Concat(GetBuildInstructions(tle, plrust))
+            .Concat(GetInstructions(tle, plrust));
 
         static IEnumerable<string> GetDockerfileLines(string name)
         {
@@ -432,6 +403,71 @@ public static partial class PostgresBuilderExtensions
             while (reader.ReadLine() is { } line)
             {
                 yield return line;
+            }
+        }
+
+        static IEnumerable<string> GetArguments(bool tle, bool plrust)
+        {
+            yield return $"ARG REGISTRY={DefaultRegistry}";
+            yield return $"ARG IMAGE={DefaultImage}";
+            yield return $"ARG TAG={DefaultTag}";
+
+            if (tle)
+            {
+                yield return "ARG TLE_BRANCH=main";
+            }
+
+            if (plrust)
+            {
+                yield return "ARG PL_RUST_BRANCH=main";
+            }
+        }
+
+        static IEnumerable<string> GetBuildInstructions(bool tle, bool plrust)
+        {
+            // build the TLE extension
+            if (tle)
+            {
+                yield return string.Empty;
+                foreach (var line in GetDockerfileLines($"{nameof(tle)}.build"))
+                {
+                    yield return line;
+                }
+            }
+
+            // build PL/Rust
+            if (plrust)
+            {
+                yield return string.Empty;
+                foreach (var line in GetDockerfileLines($"{nameof(plrust)}.build"))
+                {
+                    yield return line;
+                }
+            }
+        }
+
+        static IEnumerable<string> GetInstructions(bool tle, bool plrust)
+        {
+            // build the actual container
+            yield return string.Empty;
+            yield return "FROM ${REGISTRY}/${IMAGE}:${TAG}";
+
+            if (tle)
+            {
+                yield return string.Empty;
+                foreach (var line in GetDockerfileLines(nameof(tle)))
+                {
+                    yield return line;
+                }
+            }
+
+            if (plrust)
+            {
+                yield return string.Empty;
+                foreach (var line in GetDockerfileLines(nameof(plrust)))
+                {
+                    yield return line;
+                }
             }
         }
     }
