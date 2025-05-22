@@ -63,7 +63,6 @@ public static class PgAdminBuilderExtensions
                     IEnumerable<ContainerFileSystemItem> items = [];
                     if (builder.Resource.TryGetAnnotationsOfType<PgAdminPreferenceAnnotation>(out var annotations))
                     {
-                        var preferences = annotations.Select(a => $"\"{a.Key}\":{GetValue(a.Value)}");
                         items =
                         [
                             new ContainerFile
@@ -73,7 +72,7 @@ public static class PgAdminBuilderExtensions
                                              {
                                                "preferences":
                                                {
-                                                 {{string.Join("    ," + Environment.NewLine, preferences)}}
+                                                 {{string.Join("    ," + Environment.NewLine, annotations.Select(a => $"\"{a.Key}\":{GetValue(a.Value)}"))}}
                                                }
                                              }
                                              """,
