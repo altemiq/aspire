@@ -3,10 +3,12 @@
 * text=auto
 
 # Declare files that will always have LF line endings on checkout.
-*.sh text eol=lf
+*.sh    text eol=lf
+*.patch text eol=lf
 
 # Declare files that will always have CRLF line endings on checkout.
-*.sln text eol=crlf
+*.sln   text eol=crlf
+*.cmd   text eol=crlf
 
 # Denote all files that are truly binary and should not be modified.
-*.png binary
+*.png   binary

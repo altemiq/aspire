@@ -297,13 +297,8 @@ public static partial class PostgresBuilderExtensions
                             var outputPath = Path.Combine(destination, name);
                             if (File.Exists(outputPath))
                             {
-                                byte[] outputBytes;
-                                var memoryStream = new MemoryStream();
-                                await using (memoryStream.ConfigureAwait(false))
-                                {
-                                    await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
-                                    outputBytes = memoryStream.ToArray();
-                                }
+                                // make sure the files have UNIX line endings
+                                var outputBytes = await ReadAsUnixAsync(stream, cancellationToken).ConfigureAwait(false);
 
                                 // check the contents
                                 if (!Equal(
@@ -311,6 +306,65 @@ public static partial class PostgresBuilderExtensions
                                     await ComputeFileHashAsync(outputPath, cancellationToken).ConfigureAwait(false)))
                                 {
                                     await File.WriteAllBytesAsync(outputPath, outputBytes, cancellationToken).ConfigureAwait(false);
+                                }
+
+                                static async Task<byte[]> ReadAsUnixAsync(Stream stream, CancellationToken cancellationToken)
+                                {
+                                    var memoryStream = new MemoryStream();
+                                    await using (memoryStream.ConfigureAwait(false))
+                                    {
+                                        const byte CarriageReturn = 0x0D;
+                                        const byte LineFeed = 0x0A;
+                                        var data = System.Buffers.ArrayPool<byte>.Shared.Rent((int)Math.Min(short.MaxValue, stream.Length));
+                                        var position = 0;
+                                        int count;
+                                        while ((count = await stream.ReadAsync(data.AsMemory(position, data.Length), cancellationToken).ConfigureAwait(false)) is not 0)
+                                        {
+                                            // reset the position
+                                            position = 0;
+                                            int index;
+                                            do
+                                            {
+                                                index = Array.IndexOf(data, CarriageReturn, position, count - position);
+                                                if (index >= 0)
+                                                {
+                                                    if (count >= index && (data[index + 1] is LineFeed))
+                                                    {
+                                                        // next item is a LF, so copy before the CR.
+                                                        await memoryStream.WriteAsync(data.AsMemory(position, index - position), cancellationToken).ConfigureAwait(false);
+                                                    }
+                                                    else
+                                                    {
+                                                        // next item is not a LF, so copy the CR.
+                                                        await memoryStream.WriteAsync(data.AsMemory(position, index - position + 1), cancellationToken).ConfigureAwait(false);
+                                                    }
+
+                                                    position = index + 1;
+                                                }
+                                                else
+                                                {
+                                                    await memoryStream.WriteAsync(data.AsMemory(position, count - position), cancellationToken).ConfigureAwait(false);
+                                                    position = count;
+                                                }
+                                            }
+                                            while (index >= 0);
+
+                                            if (count > position)
+                                            {
+                                                // copy the last bytes to the start of the array
+                                                Array.Copy(data, position, data, 0, count - position);
+                                                position = count - position;
+                                            }
+                                            else
+                                            {
+                                                position = 0;
+                                            }
+                                        }
+
+                                        System.Buffers.ArrayPool<byte>.Shared.Return(data);
+
+                                        return memoryStream.ToArray();
+                                    }
                                 }
 
                                 static bool Equal(byte[] first, byte[] second)
