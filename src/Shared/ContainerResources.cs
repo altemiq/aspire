@@ -186,24 +186,11 @@ internal static partial class ContainerResources
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "These are async enumerable")]
     public static async Task<string?> GetContainerRuntimeSockAsync(string containerRuntime, CancellationToken cancellationToken = default)
     {
-        if (OperatingSystem.IsWindows())
+        await foreach (var sock in GetCompatibleSocksAsync(containerRuntime, cancellationToken).ConfigureAwait(false))
         {
-            await foreach (var sock in GetCompatibleSocksAsync(containerRuntime, cancellationToken).ConfigureAwait(false))
+            if (CheckSock(sock))
             {
-                if (sock is not null)
-                {
-                    return sock;
-                }
-            }
-        }
-        else
-        {
-            await foreach (var sock in GetCompatibleSocksAsync(containerRuntime, cancellationToken).ConfigureAwait(false))
-            {
-                if (CheckSock(sock))
-                {
-                    return sock;
-                }
+                return sock;
             }
         }
 
@@ -295,6 +282,11 @@ internal static partial class ContainerResources
             if (path is null)
             {
                 return false;
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                return true;
             }
 
             var endpoint = new System.Net.Sockets.UnixDomainSocketEndPoint(path);
