@@ -141,6 +141,12 @@ internal static partial class ContainerResources
             return false;
         }
 
+        // ensure we listed to the output/error
+        process.OutputDataReceived += (_, _) => { };
+        process.ErrorDataReceived += (_, _) => { };
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
         return process.ExitCode is 0;
