@@ -22,7 +22,7 @@ public static class ZScaler
     /// Gets the docker file lines to insert the <see cref="ZScaler" /> certificate.
     /// </summary>
     /// <returns>The docker file lines.</returns>
-    public static IEnumerable<string> GetDockerfileLines()
+    public static IEnumerable<string> GetContainerfileLines()
     {
         var first = true;
         string? lineToWrite = default;

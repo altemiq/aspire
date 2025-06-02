@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="PostgresBuilderExtensions.cs" company="Altemiq">
-// Copyright (c) Altemiq. All rights reserved.
+// <copyright file="PostgresBuilderExtensions.cs" company="Altavec">
+// Copyright (c) Altavec. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -131,7 +131,7 @@ public static partial class PostgresBuilderExtensions
     public static IResourceBuilder<T> WithTle<T>(this IResourceBuilder<T> builder, string? version = default)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource =>
         builder
-            .SetupDockerfile()
+            .SetupContainerfile()
             .WithAnnotation(new TleAnnotation(version ?? "v1.5.0"))
             .WithContainerFiles(
                 "/pg_tle/examples",
@@ -163,7 +163,17 @@ public static partial class PostgresBuilderExtensions
     /// <param name="branch">The branch.</param>
     /// <returns>The input builder.</returns>
     public static IResourceBuilder<T> WithPlRust<T>(this IResourceBuilder<T> builder, string? branch = default)
-        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.SetupDockerfile().WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.SetupContainerfile().WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
+
+    /// <summary>
+    /// Adds <c>pldotnet</c> support for the database.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="branch">The branch.</param>
+    /// <returns>The input builder.</returns>
+    public static IResourceBuilder<T> WithPlDotnet<T>(this IResourceBuilder<T> builder, string? branch = default)
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.SetupContainerfile().WithAnnotation(new DotnetAnnotation(branch ?? "tag-v0.99-rc1"));
 
     /// <summary>
     /// Installs the TLE extension for the database.
@@ -194,7 +204,7 @@ public static partial class PostgresBuilderExtensions
         return builder;
     }
 
-    private static IResourceBuilder<T> SetupDockerfile<T>(this IResourceBuilder<T> builder)
+    private static IResourceBuilder<T> SetupContainerfile<T>(this IResourceBuilder<T> builder)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource
     {
         // see if this has been set up already
@@ -204,58 +214,81 @@ public static partial class PostgresBuilderExtensions
             return builder;
         }
 
-        // get the versions
-        var image = DefaultImage;
-        var tag = DefaultTag;
-        var registry = DefaultRegistry;
-        if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var imageAnnotation))
+        builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>(async (evt, cancellationToken) =>
         {
-            image = imageAnnotation.Image;
-            tag = imageAnnotation.Tag ?? DefaultTag;
-            registry = imageAnnotation.Registry ?? DefaultRegistry;
-        }
+            // get the versions
+            var baseImage = DefaultImage;
+            var tag = DefaultTag;
+            var registry = DefaultRegistry;
+            if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var imageAnnotation))
+            {
+                baseImage = imageAnnotation.Image;
+                tag = imageAnnotation.Tag ?? DefaultTag;
+                registry = imageAnnotation.Registry ?? DefaultRegistry;
+            }
 
-        var suffix = GenerateImageSuffix(builder)[..8];
-        var name = "postgres-" + suffix;
-        var contextDirectory = Path.Combine(Path.GetTempPath(), name);
-        builder.WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"{name}.Dockerfile"))
-            .WithImage($"{image}/{suffix}")
-            .WithImageTag(tag)
-            .WithBuildArg("REGISTRY", registry)
-            .WithBuildArg("IMAGE", image)
-            .WithBuildArg("TAG", tag)
-            .WithArgs(
-                context =>
-                {
-                    context.Args.Add("postgres");
+            var suffix = GenerateImageSuffix(builder)[..8];
+            var image = $"{baseImage}/{suffix}";
 
-                    var tle = builder.Resource.HasAnnotationOfType<TleAnnotation>();
-                    var plrust = builder.Resource.HasAnnotationOfType<RustAnnotation>();
+            var imagePullPolicy = ImagePullPolicy.Default;
+            if (builder.Resource.TryGetLastAnnotation<ContainerImagePullPolicyAnnotation>(out var imagePullPolicyAnnotation))
+            {
+                imagePullPolicy = imagePullPolicyAnnotation.ImagePullPolicy;
+            }
 
-                    // shared libraries
-                    ICollection<string> sharedPreloadLibraries = [];
-                    if (tle)
-                    {
-                        sharedPreloadLibraries.Add("pg_tle");
-                    }
+            // if we're always pulling or if the container doesn't exist
+            if (imagePullPolicy is ImagePullPolicy.Always || !await ContainerResources.ImageExistsAsync(evt.Services, image, tag, cancellationToken).ConfigureAwait(false))
+            {
+                // add the docker file
+                var name = "postgres-" + suffix;
 
-                    if (plrust)
-                    {
-                        sharedPreloadLibraries.Add("plrust");
-                    }
+                // isolate this into its own context
+                var contextDirectory = Path.Combine(Path.GetTempPath(), name);
+                _ = builder
+                    .WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"{name}.Dockerfile"))
+                    .WithBuildArg("REGISTRY", registry)
+                    .WithBuildArg("IMAGE", baseImage)
+                    .WithBuildArg("TAG", tag);
+            }
 
-                    if (sharedPreloadLibraries.Count is not 0)
-                    {
-                        context.Args.Add("-c");
-                        context.Args.Add($"shared_preload_libraries={string.Join(',', sharedPreloadLibraries)}");
-                    }
+            // reset the registry/image/tag
+            _ = builder
+                .WithImageRegistry(registry: null)
+                .WithImage(image)
+                .WithImageTag(tag);
+        });
 
-                    if (plrust)
-                    {
-                        context.Args.Add("-c");
-                        context.Args.Add("plrust.work_dir=/tmp");
-                    }
-                });
+        _ = builder.WithArgs(context =>
+        {
+            context.Args.Add("postgres");
+
+            var tle = builder.Resource.HasAnnotationOfType<TleAnnotation>();
+            var plrust = builder.Resource.HasAnnotationOfType<RustAnnotation>();
+
+            // shared libraries
+            ICollection<string> sharedPreloadLibraries = [];
+            if (tle)
+            {
+                sharedPreloadLibraries.Add("pg_tle");
+            }
+
+            if (plrust)
+            {
+                sharedPreloadLibraries.Add("plrust");
+            }
+
+            if (sharedPreloadLibraries.Count is not 0)
+            {
+                context.Args.Add("-c");
+                context.Args.Add($"shared_preload_libraries={string.Join(',', sharedPreloadLibraries)}");
+            }
+
+            if (plrust)
+            {
+                context.Args.Add("-c");
+                context.Args.Add("plrust.work_dir=/tmp");
+            }
+        });
 
         builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(
             builder.Resource,
@@ -274,16 +307,34 @@ public static partial class PostgresBuilderExtensions
                     if (evt.Resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
                     {
                         plrust = true;
-                        dockerfileBuild.BuildArguments["RUST_BRANCH"] = rustAnnotation.Branch;
+                        dockerfileBuild.BuildArguments["PL_RUST_BRANCH"] = rustAnnotation.Branch;
 
+                        // downloaded from https://apt.llvm.org/llvm.sh
                         await WriteManifestResource("llvm.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+
+                        // downloaded from https://sh.rustup.rs
                         await WriteManifestResource("rust.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+
+                        // git patch for versions not compatible with the PL/Rust toolchain
+                        await WriteManifestResource("0001-fix-version.patch", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    var pldotnet = false;
+                    if (evt.Resource.TryGetLastAnnotation<DotnetAnnotation>(out var dotnetAnnotation))
+                    {
+                        pldotnet = true;
+                        dockerfileBuild.BuildArguments["PL_DOTNET_BRANCH"] = dotnetAnnotation.Branch;
                     }
 
                     // write out the docker file
+                    if (Path.GetDirectoryName(dockerfileBuild.DockerfilePath) is { } dockerfileDirectory)
+                    {
+                        Directory.CreateDirectory(dockerfileDirectory);
+                    }
+
                     await File.WriteAllLinesAsync(
                         dockerfileBuild.DockerfilePath,
-                        GetDockerfileContents(tle, plrust, ZScaler.IsRunning()),
+                        GetContainerfileContents(tle, plrust, pldotnet),
                         cancellationToken).ConfigureAwait(false);
 
                     static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
@@ -422,57 +473,150 @@ public static partial class PostgresBuilderExtensions
 
     private static Stream GetManifestResourceStream(string name) => typeof(PostgresBuilderExtensions).Assembly.GetManifestResourceStream(typeof(PostgresBuilderExtensions), name) ?? throw new InvalidOperationException();
 
-    private static IEnumerable<string> GetDockerfileContents(bool tle, bool plrust, bool zscaler)
+    private static IEnumerable<string> GetContainerfileContents(bool tle, bool plrust, bool pldotnet)
     {
-        yield return $"ARG REGISTRY={DefaultRegistry}";
-        yield return $"ARG IMAGE={DefaultImage}";
-        yield return $"ARG TAG={DefaultTag}";
-        yield return string.Empty;
-        yield return "FROM ${REGISTRY}/${IMAGE}:${TAG}";
-        yield return string.Empty;
+        return GetArguments(tle, plrust, pldotnet)
+            .Concat(GetBuildInstructions(tle, plrust, pldotnet))
+            .Concat(GetInstructions(tle, plrust, pldotnet));
 
-        if (zscaler)
+        static IEnumerable<string> GetContainerfileLines(string name)
         {
-            yield return string.Empty;
-            foreach (var line in ZScaler.GetDockerfileLines())
-            {
-                yield return line;
-            }
-        }
-
-        if (tle)
-        {
-            yield return string.Empty;
-            foreach (var line in GetDockerfileLines(nameof(tle)))
-            {
-                yield return line;
-            }
-        }
-
-        if (plrust)
-        {
-            yield return string.Empty;
-            foreach (var line in GetDockerfileLines(nameof(plrust)))
-            {
-                yield return line;
-            }
-        }
-
-        if (tle)
-        {
-            // make sure that installing PL_TLE extensions works
-            yield return "USER root";
-            yield return "RUN mv /bin/sh /bin/sh.original && ln -s /bin/bash /bin/sh";
-            yield return "USER postgres";
-        }
-
-        static IEnumerable<string> GetDockerfileLines(string name)
-        {
-            using var reader = new StreamReader(GetManifestResourceStream($"{name}.Dockerfile"));
+            using var reader = new StreamReader(GetManifestResourceStream($"{name}.Containerfile"));
 
             while (reader.ReadLine() is { } line)
             {
                 yield return line;
+            }
+        }
+
+        static IEnumerable<string> GetArguments(bool tle, bool plrust, bool pldotnet)
+        {
+            yield return $"ARG REGISTRY={DefaultRegistry}";
+            yield return $"ARG IMAGE={DefaultImage}";
+            yield return $"ARG TAG={DefaultTag}";
+
+            if (tle)
+            {
+                yield return "ARG TLE_BRANCH=main";
+            }
+
+            if (plrust)
+            {
+                yield return "ARG PL_RUST_BRANCH=main";
+            }
+
+            if (pldotnet)
+            {
+                yield return "ARG PL_DOTNET_BRANCH=master";
+            }
+        }
+
+        static IEnumerable<string> GetBuildInstructions(bool tle, bool plrust, bool pldotnet)
+        {
+            var zscaler = ZScaler.IsRunning;
+
+            // build the TLE extension
+            if (tle)
+            {
+                yield return string.Empty;
+                foreach (var line in GetContainerfileLines($"{nameof(tle)}.build"))
+                {
+                    yield return line;
+
+                    if (zscaler && line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // insert ZScaler lines
+                        yield return string.Empty;
+                        foreach (var zscalerLine in ZScaler.GetContainerfileLines())
+                        {
+                            yield return zscalerLine;
+                        }
+                    }
+                }
+            }
+
+            // build PL/Rust
+            if (plrust)
+            {
+                yield return string.Empty;
+                foreach (var line in GetContainerfileLines($"{nameof(plrust)}.build"))
+                {
+                    yield return line;
+
+                    if (zscaler && line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // insert ZScaler lines
+                        yield return string.Empty;
+                        foreach (var zscalerLine in ZScaler.GetContainerfileLines())
+                        {
+                            yield return zscalerLine;
+                        }
+                    }
+                }
+            }
+
+            // build PL/Dotnet
+            if (pldotnet)
+            {
+                yield return string.Empty;
+                foreach (var line in GetContainerfileLines($"{nameof(pldotnet)}.build"))
+                {
+                    yield return line;
+
+                    if (zscaler && line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // insert ZScaler lines
+                        yield return string.Empty;
+                        foreach (var zscalerLine in ZScaler.GetContainerfileLines())
+                        {
+                            yield return zscalerLine;
+                        }
+                    }
+                }
+            }
+        }
+
+        static IEnumerable<string> GetInstructions(bool tle, bool plrust, bool pldotnet)
+        {
+            // build the actual container
+            yield return string.Empty;
+            yield return "FROM ${REGISTRY}/${IMAGE}:${TAG}";
+
+            if (ZScaler.IsRunning)
+            {
+                // insert ZScaler lines
+                yield return string.Empty;
+                foreach (var line in ZScaler.GetContainerfileLines())
+                {
+                    yield return line;
+                }
+            }
+
+            if (tle)
+            {
+                yield return string.Empty;
+                foreach (var line in GetContainerfileLines(nameof(tle)))
+                {
+                    yield return line;
+                }
+            }
+
+            if (plrust)
+            {
+                yield return string.Empty;
+                foreach (var line in GetContainerfileLines(nameof(plrust)))
+                {
+                    yield return line;
+                }
+            }
+
+            if (pldotnet)
+            {
+                yield return string.Empty;
+                foreach (var line in GetContainerfileLines(nameof(pldotnet)))
+                {
+                    yield return line;
+                }
             }
         }
     }
@@ -562,4 +706,6 @@ public static partial class PostgresBuilderExtensions
     private sealed record TleExtensionAnnotation(string Name) : IResourceAnnotation;
 
     private sealed record RustAnnotation(string Branch) : PostgresAnnotation;
+
+    private sealed record DotnetAnnotation(string Branch) : PostgresAnnotation;
 }

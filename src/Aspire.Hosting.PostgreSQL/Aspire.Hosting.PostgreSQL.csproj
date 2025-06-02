@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="*.Dockerfile;*.sh" />
+    <EmbeddedResource Include="*.Containerfile;*.sh;*.patch" />
   </ItemGroup>
 
   <ItemGroup>
