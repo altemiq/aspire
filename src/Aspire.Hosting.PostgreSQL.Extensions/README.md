@@ -1,4 +1,4 @@
-# Altemiq.Aspire.Hosting.PostgreSQL library
+# Altemiq.Aspire.Hosting.PostgreSQL.Extensions library
 
 This integration contains extensions for the [PostgreSQL hosting package](https://nuget.org/packages/Aspire.Hosting.PostgreSQL) for .NET Aspire.
 
