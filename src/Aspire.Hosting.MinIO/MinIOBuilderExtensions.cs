@@ -331,7 +331,7 @@ public static class MinIOBuilderExtensions
             {
                 var rls = e.Services.GetRequiredService<ResourceLoggerService>();
                 var logger = rls.GetLogger(e.Resource);
-                var containerRuntime = await ContainerResources.GetContainerRuntimeAsync(e.Services, ct).ConfigureAwait(false);
+                var containerRuntime = await ContainerRuntime.GetNameAsync(e.Services, ct).ConfigureAwait(false);
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {

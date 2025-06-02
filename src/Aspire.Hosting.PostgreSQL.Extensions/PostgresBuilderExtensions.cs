@@ -230,14 +230,11 @@ public static partial class PostgresBuilderExtensions
             var suffix = GenerateImageSuffix(builder)[..8];
             var image = $"{baseImage}/{suffix}";
 
-            var imagePullPolicy = ImagePullPolicy.Default;
-            if (builder.Resource.TryGetLastAnnotation<ContainerImagePullPolicyAnnotation>(out var imagePullPolicyAnnotation))
-            {
-                imagePullPolicy = imagePullPolicyAnnotation.ImagePullPolicy;
-            }
+            // set the image/tag
+            SetImageMetadata(builder, image, tag);
 
             // if we're always pulling or if the container doesn't exist
-            if (imagePullPolicy is ImagePullPolicy.Always || !await ContainerResources.ImageExistsAsync(evt.Services, image, tag, cancellationToken).ConfigureAwait(false))
+            if (await builder.Resource.ShouldBuildAsync(evt.Services, cancellationToken).ConfigureAwait(false))
             {
                 // add the docker file
                 var name = "postgres-" + suffix;
@@ -249,13 +246,18 @@ public static partial class PostgresBuilderExtensions
                     .WithBuildArg("REGISTRY", registry)
                     .WithBuildArg("IMAGE", baseImage)
                     .WithBuildArg("TAG", tag);
+
+                // reset the image/tag
+                SetImageMetadata(builder, image, tag);
             }
 
-            // reset the registry/image/tag
-            _ = builder
-                .WithImageRegistry(registry: null)
-                .WithImage(image)
-                .WithImageTag(tag);
+            static void SetImageMetadata(IResourceBuilder<ContainerResource> builder, string image, string tag)
+            {
+                _ = builder
+                    .WithImageRegistry(registry: null)
+                    .WithImage(image)
+                    .WithImageTag(tag);
+            }
         });
 
         _ = builder.WithArgs(context =>
@@ -650,7 +652,7 @@ public static partial class PostgresBuilderExtensions
                     password = connectionString.Password;
                 }
 
-                var containerRuntime = await ContainerResources.GetContainerRuntimeAsync(evt.Services, cancellationToken).ConfigureAwait(false);
+                var containerRuntime = await ContainerRuntime.GetNameAsync(evt.Services, cancellationToken).ConfigureAwait(false);
                 var env = new Dictionary<string, object?>(StringComparer.Ordinal)
                 {
                     { "PGPASSWORD", password },

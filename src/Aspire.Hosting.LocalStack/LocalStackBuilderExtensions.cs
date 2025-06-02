@@ -208,11 +208,11 @@ public static class LocalStackBuilderExtensions
     private static IResourceBuilder<T> WithDockerSock<T>(this IResourceBuilder<T> builder, Func<IServiceProvider> servicesFactory)
         where T : ContainerResource
     {
-        return builder.WithContainerRuntimeArgs(ProcessSocks);
+        return builder.WithContainerRuntimeArgs(GetSock);
 
-        async Task ProcessSocks(ContainerRuntimeArgsCallbackContext callback)
+        async Task GetSock(ContainerRuntimeArgsCallbackContext callback)
         {
-            if (await ContainerResources.GetContainerRuntimeSockAsync(servicesFactory(), callback.CancellationToken).ConfigureAwait(false) is { } sock)
+            if (await ContainerRuntime.GetSockAsync(servicesFactory(), callback.CancellationToken).ConfigureAwait(false) is { } sock)
             {
                 callback.Args.Add("-v");
                 callback.Args.Add($"{sock}:/var/run/docker.sock:ro");

@@ -16,10 +16,6 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
-  </ItemGroup>
-
   <PropertyGroup Label="Packaging">
     <PackageIcon>localstack-dotnet-square.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -28,6 +24,10 @@
   <ItemGroup Label="Packaging">
     <None Update="localstack-dotnet-square.png" Pack="true" PackagePath="\" />
     <None Update="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.Containers.Extensions\Aspire.Hosting.Containers.Extensions.csproj" />
   </ItemGroup>
 
 </Project>
