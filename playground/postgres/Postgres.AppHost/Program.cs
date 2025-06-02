@@ -13,8 +13,8 @@ var db1 = builder
     .WithEnvironment("RUST_LOG", "debug")
     .WithDataVolume()
     .WithTle()
-    .WithPlRust()
-    .WithPlDotnet();
+    .WithRust()
+    .WithDotnet();
 
 db1.WithPgAdmin(container =>
     container

@@ -94,7 +94,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.AWS.S3", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Grpc.WellKnown", "playground\grpc\Grpc.WellKnown\Grpc.WellKnown.csproj", "{EDDCEFA3-1CF9-4FF9-81A5-D8324832834F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.PostgreSQL", "src\Aspire.Hosting.PostgreSQL\Aspire.Hosting.PostgreSQL.csproj", "{B8D359AB-5166-47A3-BAD1-231690BCF741}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aspire.Hosting.PostgreSQL.Extensions", "src\Aspire.Hosting.PostgreSQL.Extensions\Aspire.Hosting.PostgreSQL.Extensions.csproj", "{B8D359AB-5166-47A3-BAD1-231690BCF741}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postgres", "postgres", "{47B8E01C-645C-42D1-A21B-C218057BF07B}"
 EndProject

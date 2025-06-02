@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="PostgresBuilderExtensions.cs" company="Altavec">
-// Copyright (c) Altavec. All rights reserved.
+// <copyright file="PostgresBuilderExtensions.cs" company="Altemiq">
+// Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -162,7 +162,7 @@ public static partial class PostgresBuilderExtensions
     /// <param name="builder">The builder.</param>
     /// <param name="branch">The branch.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<T> WithPlRust<T>(this IResourceBuilder<T> builder, string? branch = default)
+    public static IResourceBuilder<T> WithRust<T>(this IResourceBuilder<T> builder, string? branch = default)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.SetupContainerfile().WithAnnotation(new RustAnnotation(branch ?? "v1.2.8"));
 
     /// <summary>
@@ -172,7 +172,7 @@ public static partial class PostgresBuilderExtensions
     /// <param name="builder">The builder.</param>
     /// <param name="branch">The branch.</param>
     /// <returns>The input builder.</returns>
-    public static IResourceBuilder<T> WithPlDotnet<T>(this IResourceBuilder<T> builder, string? branch = default)
+    public static IResourceBuilder<T> WithDotnet<T>(this IResourceBuilder<T> builder, string? branch = default)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.SetupContainerfile().WithAnnotation(new DotnetAnnotation(branch ?? "tag-v0.99-rc1"));
 
     /// <summary>
@@ -263,7 +263,7 @@ public static partial class PostgresBuilderExtensions
             context.Args.Add("postgres");
 
             var tle = builder.Resource.HasAnnotationOfType<TleAnnotation>();
-            var plrust = builder.Resource.HasAnnotationOfType<RustAnnotation>();
+            var rust = builder.Resource.HasAnnotationOfType<RustAnnotation>();
 
             // shared libraries
             ICollection<string> sharedPreloadLibraries = [];
@@ -272,7 +272,7 @@ public static partial class PostgresBuilderExtensions
                 sharedPreloadLibraries.Add("pg_tle");
             }
 
-            if (plrust)
+            if (rust)
             {
                 sharedPreloadLibraries.Add("plrust");
             }
@@ -283,7 +283,7 @@ public static partial class PostgresBuilderExtensions
                 context.Args.Add($"shared_preload_libraries={string.Join(',', sharedPreloadLibraries)}");
             }
 
-            if (plrust)
+            if (rust)
             {
                 context.Args.Add("-c");
                 context.Args.Add("plrust.work_dir=/tmp");
@@ -303,10 +303,10 @@ public static partial class PostgresBuilderExtensions
                         dockerfileBuild.BuildArguments["TLE_BRANCH"] = tleAnnotation.Branch;
                     }
 
-                    var plrust = false;
+                    var rust = false;
                     if (evt.Resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
                     {
-                        plrust = true;
+                        rust = true;
                         dockerfileBuild.BuildArguments["PL_RUST_BRANCH"] = rustAnnotation.Branch;
 
                         // downloaded from https://apt.llvm.org/llvm.sh
@@ -319,10 +319,10 @@ public static partial class PostgresBuilderExtensions
                         await WriteManifestResource("0001-fix-version.patch", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
                     }
 
-                    var pldotnet = false;
+                    var dotnet = false;
                     if (evt.Resource.TryGetLastAnnotation<DotnetAnnotation>(out var dotnetAnnotation))
                     {
-                        pldotnet = true;
+                        dotnet = true;
                         dockerfileBuild.BuildArguments["PL_DOTNET_BRANCH"] = dotnetAnnotation.Branch;
                     }
 
@@ -334,7 +334,7 @@ public static partial class PostgresBuilderExtensions
 
                     await File.WriteAllLinesAsync(
                         dockerfileBuild.DockerfilePath,
-                        GetContainerfileContents(tle, plrust, pldotnet),
+                        GetContainerfileContents(tle, rust, dotnet),
                         cancellationToken).ConfigureAwait(false);
 
                     static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
@@ -473,11 +473,11 @@ public static partial class PostgresBuilderExtensions
 
     private static Stream GetManifestResourceStream(string name) => typeof(PostgresBuilderExtensions).Assembly.GetManifestResourceStream(typeof(PostgresBuilderExtensions), name) ?? throw new InvalidOperationException();
 
-    private static IEnumerable<string> GetContainerfileContents(bool tle, bool plrust, bool pldotnet)
+    private static IEnumerable<string> GetContainerfileContents(bool tle, bool rust, bool dotnet)
     {
-        return GetArguments(tle, plrust, pldotnet)
-            .Concat(GetBuildInstructions(tle, plrust, pldotnet))
-            .Concat(GetInstructions(tle, plrust, pldotnet));
+        return GetArguments(tle, rust, dotnet)
+            .Concat(GetBuildInstructions(tle, rust, dotnet))
+            .Concat(GetInstructions(tle, rust, dotnet));
 
         static IEnumerable<string> GetContainerfileLines(string name)
         {
@@ -489,7 +489,7 @@ public static partial class PostgresBuilderExtensions
             }
         }
 
-        static IEnumerable<string> GetArguments(bool tle, bool plrust, bool pldotnet)
+        static IEnumerable<string> GetArguments(bool tle, bool rust, bool dotnet)
         {
             yield return $"ARG REGISTRY={DefaultRegistry}";
             yield return $"ARG IMAGE={DefaultImage}";
@@ -500,18 +500,18 @@ public static partial class PostgresBuilderExtensions
                 yield return "ARG TLE_BRANCH=main";
             }
 
-            if (plrust)
+            if (rust)
             {
                 yield return "ARG PL_RUST_BRANCH=main";
             }
 
-            if (pldotnet)
+            if (dotnet)
             {
                 yield return "ARG PL_DOTNET_BRANCH=master";
             }
         }
 
-        static IEnumerable<string> GetBuildInstructions(bool tle, bool plrust, bool pldotnet)
+        static IEnumerable<string> GetBuildInstructions(bool tle, bool rust, bool dotnet)
         {
             var zscaler = ZScaler.IsRunning;
 
@@ -536,10 +536,10 @@ public static partial class PostgresBuilderExtensions
             }
 
             // build PL/Rust
-            if (plrust)
+            if (rust)
             {
                 yield return string.Empty;
-                foreach (var line in GetContainerfileLines($"{nameof(plrust)}.build"))
+                foreach (var line in GetContainerfileLines($"{nameof(rust)}.build"))
                 {
                     yield return line;
 
@@ -556,10 +556,10 @@ public static partial class PostgresBuilderExtensions
             }
 
             // build PL/Dotnet
-            if (pldotnet)
+            if (dotnet)
             {
                 yield return string.Empty;
-                foreach (var line in GetContainerfileLines($"{nameof(pldotnet)}.build"))
+                foreach (var line in GetContainerfileLines($"{nameof(dotnet)}.build"))
                 {
                     yield return line;
 
@@ -576,7 +576,7 @@ public static partial class PostgresBuilderExtensions
             }
         }
 
-        static IEnumerable<string> GetInstructions(bool tle, bool plrust, bool pldotnet)
+        static IEnumerable<string> GetInstructions(bool tle, bool rust, bool dotnet)
         {
             // build the actual container
             yield return string.Empty;
@@ -601,19 +601,19 @@ public static partial class PostgresBuilderExtensions
                 }
             }
 
-            if (plrust)
+            if (rust)
             {
                 yield return string.Empty;
-                foreach (var line in GetContainerfileLines(nameof(plrust)))
+                foreach (var line in GetContainerfileLines(nameof(rust)))
                 {
                     yield return line;
                 }
             }
 
-            if (pldotnet)
+            if (dotnet)
             {
                 yield return string.Empty;
-                foreach (var line in GetContainerfileLines(nameof(pldotnet)))
+                foreach (var line in GetContainerfileLines(nameof(dotnet)))
                 {
                     yield return line;
                 }

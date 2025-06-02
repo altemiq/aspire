@@ -1,6 +1,6 @@
 # Altemiq.Aspire.Hosting.PostgreSQL library
 
-Provides extension methods for a .NET Aspire AppHost to configure a PostgreSQL resource.
+This integration contains extensions for the [PostgreSQL hosting package](https://nuget.org/packages/Aspire.Hosting.PostgreSQL) for .NET Aspire.
 
 ## Getting started
 
@@ -9,7 +9,7 @@ Provides extension methods for a .NET Aspire AppHost to configure a PostgreSQL r
 In your AppHost project, install the Altemiq .NET Aspire PostgreSQL Hosting library with [NuGet](https://www.nuget.org):
 
 ```dotnetcli
-dotnet add package Altemiq.Aspire.Hosting.PostgreSQL
+dotnet add package Altemiq.Aspire.Hosting.PostgreSQL.Extensions
 ```
 
 ## Usage examples
@@ -51,6 +51,20 @@ In the _AppHost.cs_ file of `AppHost`, configure a PostgreSQL resource with PL/R
 var db = builder
     .AddPostgres("pgsql")
     .WithPlRust()
+    .AddDatabase("mydb");
+
+var myService = builder.AddProject<Projects.MyService>()
+                       .WithReference(db);
+```
+
+### Adding [PL/.NET](https://github.com/Brick-Abode/pldotnet)
+
+In the _AppHost.cs_ file of `AppHost`, configure a PostgreSQL resource with PL/.NET using the following methods:
+
+```csharp
+var db = builder
+    .AddPostgres("pgsql")
+    .WithPlDotnet()
     .AddDatabase("mydb");
 
 var myService = builder.AddProject<Projects.MyService>()

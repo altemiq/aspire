@@ -2,11 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
-    <RootNamespace>$(MSBuildProjectName.Replace('.PostgreSQL', ''))</RootNamespace>
+    <RootNamespace>$(MSBuildProjectName.Replace('.PostgreSQL.Extensions', ''))</RootNamespace>
     <PackageTags>aspire hosting postgresql</PackageTags>
     <Description>PostgreSQL support for .NET Aspire.</Description>
     <PackageIcon>postgresql.png</PackageIcon>
-    <PackageId>$(Company).$(MSBuildProjectName)</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,11 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.Containers.Extensions\Aspire.Hosting.Containers.Extensions.csproj" />
     <ProjectReference Include="..\Aspire.Hosting.ZScaler\Aspire.Hosting.ZScaler.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\Shared\ContainerResources.cs" Link="ApplicationModel\%(FileName)%(Extension)" />
   </ItemGroup>
 
 </Project>

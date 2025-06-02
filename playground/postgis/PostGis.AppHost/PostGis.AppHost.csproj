@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostGIS\Aspire.Hosting.PostGIS.csproj" IsAspireProjectResource="false" />
-    <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostgreSQL\Aspire.Hosting.PostgreSQL.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostgreSQL.Extensions\Aspire.Hosting.PostgreSQL.Extensions.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\PostGis.ApiService\PostGis.ApiService.csproj" />
   </ItemGroup>
 
