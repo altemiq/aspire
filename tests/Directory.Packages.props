@@ -16,12 +16,13 @@
 
   <ItemGroup Label="Microsoft">
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.6" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.6.0" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.7.1" />
-    <PackageVersion Include="TUnit" Version="0.24.0" />
+    <PackageVersion Include="TUnit" Version="0.25.21" />
   </ItemGroup>
 
 </Project>
