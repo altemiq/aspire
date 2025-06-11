@@ -132,7 +132,7 @@ public static class ContainerRuntime
                 return RunAsync("podman", ["machine", "inspect", "--format", "'{{.ConnectionInfo.PodmanSocket.Path}}'"], cancellationToken);
             }
 
-            static async Task<string?> RunAsync(string fileName,  IEnumerable<string> args, CancellationToken cancellationToken)
+            static async Task<string?> RunAsync(string fileName, IEnumerable<string> args, CancellationToken cancellationToken)
             {
                 var process = new System.Diagnostics.Process
                 {

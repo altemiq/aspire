@@ -101,7 +101,7 @@ public static partial class ContainerResourceExtensions
         IServiceProvider services,
         IDictionary<string, object?> env,
         IEnumerable<object> args,
-        CancellationToken cancellationToken = default) => await containerResource.ExecAsync(services, env, args,  GetLoggerForResource(services, containerResource), cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+        CancellationToken cancellationToken = default) => await containerResource.ExecAsync(services, env, args, GetLoggerForResource(services, containerResource), cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 
     /// <summary>
     /// Executes the arguments against the container.
@@ -456,7 +456,7 @@ public static partial class ContainerResourceExtensions
     /// <param name="services">The services.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><see langword="true"/> if the resource should be built; otherwise <see langword="false"/>.</returns>
-    public static async ValueTask<bool> ShouldBuildAsync(this IResource resource,  IServiceProvider services, CancellationToken cancellationToken = default)
+    public static async ValueTask<bool> ShouldBuildAsync(this IResource resource, IServiceProvider services, CancellationToken cancellationToken = default)
     {
         var imageBuildPolicy = ImageBuildPolicy.Default;
         if (resource.TryGetLastAnnotation<ContainerImageBuildPolicyAnnotation>(out var imageBuildPolicyAnnotation))
@@ -469,8 +469,8 @@ public static partial class ContainerResourceExtensions
         string? tag;
         if (resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImageAnnotation))
         {
-           image = containerImageAnnotation.Image;
-           tag = containerImageAnnotation.Tag;
+            image = containerImageAnnotation.Image;
+            tag = containerImageAnnotation.Tag;
         }
         else
         {
