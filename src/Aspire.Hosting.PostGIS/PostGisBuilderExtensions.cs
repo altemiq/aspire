@@ -84,6 +84,50 @@ public static class PostGisBuilderExtensions
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
+    /// <param name="postgresVersion">The major PostgreSQL version for the resource.</param>
+    /// <param name="postGisVersion">The PostGIS version for the resource.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostGIS resource. If null a default value will be used.</param>
+    /// <param name="password">The administrator password used for the container during local development. If null a random password will be generated.</param>
+    /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<PostGisServerResource> AddPostGis(this IDistributedApplicationBuilder builder, string name, PostgresVersion postgresVersion, PostGisVersion postGisVersion, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null)
+    {
+        return builder.AddPostGis(name, userName, password, port)
+            .WithImageTag(GetTag(postgresVersion, postGisVersion));
+
+        static string GetTag(PostgresVersion postgres, PostGisVersion postGis)
+        {
+            var postgresVersion = postgres switch
+            {
+                PostgresVersion.V13 => "13",
+                PostgresVersion.V14 => "14",
+                PostgresVersion.V15 => "15",
+                PostgresVersion.V16 => "16",
+                PostgresVersion.V17 => "17",
+                _ => throw new ArgumentOutOfRangeException(nameof(postgres), postgres, message: null),
+            };
+
+            var postGisVersion = postGis switch
+            {
+                PostGisVersion.V2_5 => "2.5",
+                PostGisVersion.V3_0 => "3.0",
+                PostGisVersion.V3_1 => "3.1",
+                PostGisVersion.V3_2 => "3.2",
+                PostGisVersion.V3_3 => "3.3",
+                PostGisVersion.V3_4 => "3.4",
+                PostGisVersion.V3_5 => "3.5",
+                _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
+            };
+
+            return $"{postgresVersion}-{postGisVersion}";
+        }
+    }
+
+    /// <summary>
+    /// Adds a PostGIS resource to the application model. A container is used for local development. This version the package defaults to the 17-3.5 tag of the postgis container image.
+    /// </summary>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
+    /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
     /// <param name="userName">The parameter used to provide the username for the PostGIS resource. If null a default value will be used.</param>
     /// <param name="password">The administrator password used for the container during local development. If null a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>

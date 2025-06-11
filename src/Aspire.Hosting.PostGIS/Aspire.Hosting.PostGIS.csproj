@@ -24,4 +24,12 @@
     <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.PostgreSQL.Extensions\Aspire.Hosting.PostgreSQL.Extensions.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Update="Aspire.Hosting.PostgreSQL" Aliases="core" />
+  </ItemGroup>
+
 </Project>

@@ -26,6 +26,35 @@ public static partial class PostgresBuilderExtensions
     /// </summary>
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
+    /// <param name="version">The major PostgreSQL version for the resource.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
+    /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
+    /// <remarks>
+    /// <para>
+    /// This resource includes built-in health checks. When this resource is referenced as a dependency
+    /// using the <see cref="ResourceBuilderExtensions.WaitFor{T}(IResourceBuilder{T}, IResourceBuilder{IResource})" />
+    /// extension method then the dependent resource will wait until the Postgres resource is able to service
+    /// requests.
+    /// </para>
+    /// </remarks>
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres(this IDistributedApplicationBuilder builder, [ResourceName] string name, PostgresVersion version, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) =>
+        version switch
+        {
+            PostgresVersion.V13 => builder.AddPostgres13(name, userName, password, port),
+            PostgresVersion.V14 => builder.AddPostgres14(name, userName, password, port),
+            PostgresVersion.V15 => builder.AddPostgres15(name, userName, password, port),
+            PostgresVersion.V16 => builder.AddPostgres16(name, userName, password, port),
+            PostgresVersion.V17 => builder.AddPostgres17(name, userName, password, port),
+            _ => throw new ArgumentOutOfRangeException(nameof(version), version, message: null),
+        };
+
+    /// <summary>
+    /// Adds a PostgreSQL resource to the application model. A container is used for local development.
+    /// </summary>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
+    /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
     /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
