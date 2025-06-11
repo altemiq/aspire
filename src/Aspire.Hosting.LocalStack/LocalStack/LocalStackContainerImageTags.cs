@@ -24,5 +24,5 @@ internal static class LocalStackContainerImageTags
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "4.0";
+    public const string Tag = "4.5";
 }
