@@ -19,7 +19,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v13.
         /// </summary>
-        public const string Tag = "13.20";
+        public const string Tag = "13.21";
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v14.
         /// </summary>
-        public const string Tag = "14.17";
+        public const string Tag = "14.18";
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v15.
         /// </summary>
-        public const string Tag = "15.12";
+        public const string Tag = "15.13";
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v16.
         /// </summary>
-        public const string Tag = "16.8";
+        public const string Tag = "16.9";
     }
 
     /// <summary>
@@ -63,6 +63,6 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v17.
         /// </summary>
-        public const string Tag = "17.4";
+        public const string Tag = "17.5";
     }
 }

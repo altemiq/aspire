@@ -19,7 +19,7 @@ public static partial class PostgresBuilderExtensions
 {
     private const string DefaultRegistry = "docker.io";
     private const string DefaultImage = "library/postgres";
-    private const string DefaultTag = "17.4";
+    private const string DefaultTag = "17.5";
 
     /// <summary>
     /// Adds a PostgreSQL resource to the application model. A container is used for local development.
