@@ -16,32 +16,30 @@ _ = builder
 
 await builder.Build().RunBuildAsync(new ConsoleLogger(), CancellationToken.None).ConfigureAwait(false);
 
-/// <content>
-/// Program class.
-/// </content>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1205:Partial elements should declare access", Justification = "Valid")]
-static partial class Program
+/// <summary>
+/// The console logger.
+/// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0047:Declare types in namespaces", Justification = "This is only referenced above.")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1649:File name should match first type name", Justification = "Checked")]
+internal sealed class ConsoleLogger : Microsoft.Extensions.Logging.ILogger
 {
-    private sealed class ConsoleLogger : Microsoft.Extensions.Logging.ILogger
+    /// <inheritdoc/>
+    public IDisposable? BeginScope<TState>(TState state)
+        where TState : notnull => default;
+
+    /// <inheritdoc/>
+    public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
+    /// <inheritdoc/>
+    public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        /// <inheritdoc/>
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => default;
-
-        /// <inheritdoc/>
-        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
-
-        /// <inheritdoc/>
-        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        if (logLevel is Microsoft.Extensions.Logging.LogLevel.Error)
         {
-            if (logLevel is Microsoft.Extensions.Logging.LogLevel.Error)
-            {
-                Console.Error.WriteLine(formatter(state, exception));
-            }
-            else
-            {
-                Console.Out.WriteLine(formatter(state, exception));
-            }
+            Console.Error.WriteLine(formatter(state, exception));
+        }
+        else
+        {
+            Console.Out.WriteLine(formatter(state, exception));
         }
     }
 }

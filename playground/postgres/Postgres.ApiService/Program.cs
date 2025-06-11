@@ -103,6 +103,7 @@ static async Task CreateExtensions(WebApplication app, System.Diagnostics.Activi
             command.CommandTimeout = 600;
             await CreateExtension(command, "plrust", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
             await CreateExtension(command, "pg_tle", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+            await CreateExtension(command, "pldotnet", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
             await CreateExtension(command, "uuid_v7", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
             async Task CreateExtension(NpgsqlCommand npgsqlCommand, string name, System.Diagnostics.Activity? activity, CancellationToken cancellationToken)
