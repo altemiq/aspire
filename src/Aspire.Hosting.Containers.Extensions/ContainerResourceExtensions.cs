@@ -464,21 +464,15 @@ public static partial class ContainerResourceExtensions
             imageBuildPolicy = imageBuildPolicyAnnotation.ImageBuildPolicy;
         }
 
-        // get the tag information
-        string image;
-        string? tag;
-        if (resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImageAnnotation))
+        // if we're always building, or publishing
+        if (imageBuildPolicy is not ImageBuildPolicy.Missing || services.GetService<DistributedApplicationExecutionContext>() is { IsPublishMode: true })
         {
-            image = containerImageAnnotation.Image;
-            tag = containerImageAnnotation.Tag;
-        }
-        else
-        {
-            return false;
+            return true;
         }
 
-        // if we're always building or if the container doesn't exist
-        return imageBuildPolicy is not ImageBuildPolicy.Missing || !await ContainerRuntime.ImageExistsAsync(services, image, tag, cancellationToken).ConfigureAwait(false);
+        // if the container doesn't exist
+        return resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImageAnnotation)
+               && !await ContainerRuntime.ImageExistsAsync(services, containerImageAnnotation.Image, containerImageAnnotation.Tag, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
