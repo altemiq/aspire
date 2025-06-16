@@ -14,7 +14,9 @@ _ = builder
     .WithDotnet()
     .WithImageBuildPolicy(ImageBuildPolicy.Default);
 
-await builder.Build().RunBuildAsync(new ConsoleLogger(), CancellationToken.None).ConfigureAwait(false);
+_ = builder.AddContainerBuildEnvironment("container-build");
+
+await builder.Build().RunAsync(CancellationToken.None).ConfigureAwait(false);
 
 /// <summary>
 /// The console logger.
