@@ -265,19 +265,20 @@ public static partial class PostgresBuilderExtensions
             // if we're always pulling or if the container doesn't exist
             if (await builder.Resource.ShouldBuildAsync(evt.Services, cancellationToken).ConfigureAwait(false))
             {
-                // add the docker file
-                var name = "postgres-" + suffix;
-
                 // isolate this into its own context
-                var contextDirectory = Path.Combine(Path.GetTempPath(), name);
                 _ = builder
-                    .WithDockerfile(contextDirectory, Path.Combine(contextDirectory, $"{name}.Dockerfile"))
+                    .WithDockerfile(Path.Combine(Path.GetTempPath(), "postgres-" + suffix))
                     .WithBuildArg("REGISTRY", registry)
                     .WithBuildArg("IMAGE", baseImage)
                     .WithBuildArg("TAG", tag);
 
                 // reset the image/tag
                 SetImageMetadata(builder, image, tag);
+            }
+
+            if (evt.Services.GetService<DistributedApplicationExecutionContext>() is { IsPublishMode: true })
+            {
+                await OutputDockerfileAsync(builder.Resource, materializeBuildArgs: true, cancellationToken).ConfigureAwait(false);
             }
 
             static void SetImageMetadata(IResourceBuilder<ContainerResource> builder, string image, string tag)
@@ -323,173 +324,7 @@ public static partial class PostgresBuilderExtensions
 
         builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(
             builder.Resource,
-            async (evt, cancellationToken) =>
-            {
-                if (evt.Resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuild))
-                {
-                    var tle = false;
-                    if (evt.Resource.TryGetLastAnnotation<TleAnnotation>(out var tleAnnotation))
-                    {
-                        tle = true;
-                        dockerfileBuild.BuildArguments["TLE_BRANCH"] = tleAnnotation.Branch;
-                    }
-
-                    var rust = false;
-                    if (evt.Resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
-                    {
-                        rust = true;
-                        dockerfileBuild.BuildArguments["PL_RUST_BRANCH"] = rustAnnotation.Branch;
-
-                        // downloaded from https://apt.llvm.org/llvm.sh
-                        await WriteManifestResource("llvm.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
-
-                        // downloaded from https://sh.rustup.rs
-                        await WriteManifestResource("rust.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
-
-                        // git patch for versions not compatible with the PL/Rust toolchain
-                        await WriteManifestResource("0001-fix-version.patch", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    var dotnet = false;
-                    if (evt.Resource.TryGetLastAnnotation<DotnetAnnotation>(out var dotnetAnnotation))
-                    {
-                        dotnet = true;
-                        dockerfileBuild.BuildArguments["PL_DOTNET_BRANCH"] = dotnetAnnotation.Branch;
-                    }
-
-                    // write out the docker file
-                    if (Path.GetDirectoryName(dockerfileBuild.DockerfilePath) is { } dockerfileDirectory)
-                    {
-                        Directory.CreateDirectory(dockerfileDirectory);
-                    }
-
-                    await File.WriteAllLinesAsync(
-                        dockerfileBuild.DockerfilePath,
-                        GetContainerfileContents(tle, rust, dotnet),
-                        cancellationToken).ConfigureAwait(false);
-
-                    static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
-                    {
-                        Directory.CreateDirectory(destination);
-
-                        var stream = GetManifestResourceStream(name);
-                        await using (stream.ConfigureAwait(false))
-                        {
-                            // write to a temp file
-                            var outputPath = Path.Combine(destination, name);
-                            if (File.Exists(outputPath))
-                            {
-                                // make sure the files have UNIX line endings
-                                var outputBytes = await ReadAsUnixAsync(stream, cancellationToken).ConfigureAwait(false);
-
-                                // check the contents
-                                if (!Equal(
-                                    await ComputeArrayHashAsync(outputBytes, cancellationToken).ConfigureAwait(false),
-                                    await ComputeFileHashAsync(outputPath, cancellationToken).ConfigureAwait(false)))
-                                {
-                                    await File.WriteAllBytesAsync(outputPath, outputBytes, cancellationToken).ConfigureAwait(false);
-                                }
-
-                                static async Task<byte[]> ReadAsUnixAsync(Stream stream, CancellationToken cancellationToken)
-                                {
-                                    var memoryStream = new MemoryStream();
-                                    await using (memoryStream.ConfigureAwait(false))
-                                    {
-                                        const byte CarriageReturn = 0x0D;
-                                        const byte LineFeed = 0x0A;
-                                        var data = System.Buffers.ArrayPool<byte>.Shared.Rent((int)Math.Min(short.MaxValue, stream.Length));
-                                        var position = 0;
-                                        int count;
-                                        while ((count = await stream.ReadAsync(data.AsMemory(position, data.Length), cancellationToken).ConfigureAwait(false)) is not 0)
-                                        {
-                                            // reset the position
-                                            position = 0;
-                                            int index;
-                                            do
-                                            {
-                                                index = Array.IndexOf(data, CarriageReturn, position, count - position);
-                                                if (index >= 0)
-                                                {
-                                                    if (count >= index && (data[index + 1] is LineFeed))
-                                                    {
-                                                        // next item is a LF, so copy before the CR.
-                                                        await memoryStream.WriteAsync(data.AsMemory(position, index - position), cancellationToken).ConfigureAwait(false);
-                                                    }
-                                                    else
-                                                    {
-                                                        // next item is not a LF, so copy the CR.
-                                                        await memoryStream.WriteAsync(data.AsMemory(position, index - position + 1), cancellationToken).ConfigureAwait(false);
-                                                    }
-
-                                                    position = index + 1;
-                                                }
-                                                else
-                                                {
-                                                    await memoryStream.WriteAsync(data.AsMemory(position, count - position), cancellationToken).ConfigureAwait(false);
-                                                    position = count;
-                                                }
-                                            }
-                                            while (index >= 0);
-
-                                            if (count > position)
-                                            {
-                                                // copy the last bytes to the start of the array
-                                                Array.Copy(data, position, data, 0, count - position);
-                                                position = count - position;
-                                            }
-                                            else
-                                            {
-                                                position = 0;
-                                            }
-                                        }
-
-                                        System.Buffers.ArrayPool<byte>.Shared.Return(data);
-
-                                        return memoryStream.ToArray();
-                                    }
-                                }
-
-                                static bool Equal(byte[] first, byte[] second)
-                                {
-                                    return first.Length == second.Length && first.Zip(second).All(item => item.First == item.Second);
-                                }
-
-                                static async Task<byte[]> ComputeFileHashAsync(string fileName, CancellationToken cancellationToken)
-                                {
-                                    var stream = File.OpenRead(fileName);
-                                    await using (stream.ConfigureAwait(false))
-                                    {
-                                        return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
-                                    }
-                                }
-
-                                static async Task<byte[]> ComputeArrayHashAsync(byte[] data, CancellationToken cancellationToken)
-                                {
-                                    var stream = new MemoryStream(data);
-                                    await using (stream.ConfigureAwait(false))
-                                    {
-                                        return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
-                                    }
-                                }
-
-                                [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "This is a file hash")]
-                                static Task<byte[]> ComputeHashAsync(Stream stream, CancellationToken cancellationToken)
-                                {
-                                    return System.Security.Cryptography.MD5.Create().ComputeHashAsync(stream, cancellationToken);
-                                }
-                            }
-                            else
-                            {
-                                var output = File.OpenWrite(outputPath);
-                                await using (output.ConfigureAwait(false))
-                                {
-                                    await stream.CopyToAsync(output, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+            (evt, cancellationToken) => OutputDockerfileAsync(evt.Resource, materializeBuildArgs: false, cancellationToken));
 
         return builder;
 
@@ -503,6 +338,190 @@ public static partial class PostgresBuilderExtensions
     }
 
     private static Stream GetManifestResourceStream(string name) => typeof(PostgresBuilderExtensions).Assembly.GetManifestResourceStream(typeof(PostgresBuilderExtensions), name) ?? throw new InvalidOperationException();
+
+    private static async Task OutputDockerfileAsync(IResource resource, bool materializeBuildArgs, CancellationToken cancellationToken = default)
+    {
+        if (resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuild))
+        {
+            var tle = false;
+            if (resource.TryGetLastAnnotation<TleAnnotation>(out var tleAnnotation))
+            {
+                tle = true;
+                dockerfileBuild.BuildArguments["TLE_BRANCH"] = tleAnnotation.Branch;
+            }
+
+            var rust = false;
+            if (resource.TryGetLastAnnotation<RustAnnotation>(out var rustAnnotation))
+            {
+                rust = true;
+                dockerfileBuild.BuildArguments["PL_RUST_BRANCH"] = rustAnnotation.Branch;
+
+                // downloaded from https://apt.llvm.org/llvm.sh
+                await WriteManifestResource("llvm.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+
+                // downloaded from https://sh.rustup.rs
+                await WriteManifestResource("rust.sh", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+
+                // git patch for versions not compatible with the PL/Rust toolchain
+                await WriteManifestResource("0001-fix-version.patch", dockerfileBuild.ContextPath, cancellationToken).ConfigureAwait(false);
+            }
+
+            var dotnet = false;
+            if (resource.TryGetLastAnnotation<DotnetAnnotation>(out var dotnetAnnotation))
+            {
+                dotnet = true;
+                dockerfileBuild.BuildArguments["PL_DOTNET_BRANCH"] = dotnetAnnotation.Branch;
+            }
+
+            // write out the docker file
+            if (Path.GetDirectoryName(dockerfileBuild.DockerfilePath) is { } dockerfileDirectory)
+            {
+                Directory.CreateDirectory(dockerfileDirectory);
+            }
+
+            var contents = GetContainerfileContents(tle, rust, dotnet);
+            if (materializeBuildArgs)
+            {
+                var buildArgs = dockerfileBuild.BuildArguments;
+
+                contents = contents
+
+                    // remove any ARGs
+                    .Where(line => !line.StartsWith("ARG ", StringComparison.Ordinal))
+
+                    // replace the ARGs with the value
+                    .Select(line => line.Contains("${", StringComparison.Ordinal)
+                        ? buildArgs.Aggregate(line, (current, buildArg) => current.Replace($"${{{buildArg.Key}}}", buildArg.Value?.ToString(), StringComparison.Ordinal))
+                        : line);
+            }
+
+            await File.WriteAllLinesAsync(
+                dockerfileBuild.DockerfilePath,
+                contents,
+                cancellationToken).ConfigureAwait(false);
+
+            static async Task WriteManifestResource(string name, string destination, CancellationToken cancellationToken)
+            {
+                Directory.CreateDirectory(destination);
+
+                var stream = GetManifestResourceStream(name);
+                await using (stream.ConfigureAwait(false))
+                {
+                    // write to a temp file
+                    var outputPath = Path.Combine(destination, name);
+                    if (File.Exists(outputPath))
+                    {
+                        // make sure the files have UNIX line endings
+                        var outputBytes = await ReadAsUnixAsync(stream, cancellationToken).ConfigureAwait(false);
+
+                        // check the contents
+                        if (!Equal(
+                                await ComputeArrayHashAsync(outputBytes, cancellationToken).ConfigureAwait(false),
+                                await ComputeFileHashAsync(outputPath, cancellationToken).ConfigureAwait(false)))
+                        {
+                            await File.WriteAllBytesAsync(outputPath, outputBytes, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        static async Task<byte[]> ReadAsUnixAsync(Stream stream, CancellationToken cancellationToken)
+                        {
+                            var memoryStream = new MemoryStream();
+                            await using (memoryStream.ConfigureAwait(false))
+                            {
+                                const byte CarriageReturn = 0x0D;
+                                const byte LineFeed = 0x0A;
+                                var data = System.Buffers.ArrayPool<byte>.Shared.Rent((int)Math.Min(short.MaxValue, stream.Length));
+                                var position = 0;
+                                int count;
+                                while ((count = await stream.ReadAsync(data.AsMemory(position, data.Length), cancellationToken).ConfigureAwait(false)) is not 0)
+                                {
+                                    // reset the position
+                                    position = 0;
+                                    int index;
+                                    do
+                                    {
+                                        index = Array.IndexOf(data, CarriageReturn, position, count - position);
+                                        if (index >= 0)
+                                        {
+                                            if (count >= index && (data[index + 1] is LineFeed))
+                                            {
+                                                // next item is a LF, so copy before the CR.
+                                                await memoryStream.WriteAsync(data.AsMemory(position, index - position), cancellationToken).ConfigureAwait(false);
+                                            }
+                                            else
+                                            {
+                                                // next item is not a LF, so copy the CR.
+                                                await memoryStream.WriteAsync(data.AsMemory(position, index - position + 1), cancellationToken).ConfigureAwait(false);
+                                            }
+
+                                            position = index + 1;
+                                        }
+                                        else
+                                        {
+                                            await memoryStream.WriteAsync(data.AsMemory(position, count - position), cancellationToken).ConfigureAwait(false);
+                                            position = count;
+                                        }
+                                    }
+                                    while (index >= 0);
+
+                                    if (count > position)
+                                    {
+                                        // copy the last bytes to the start of the array
+                                        Array.Copy(data, position, data, 0, count - position);
+                                        position = count - position;
+                                    }
+                                    else
+                                    {
+                                        position = 0;
+                                    }
+                                }
+
+                                System.Buffers.ArrayPool<byte>.Shared.Return(data);
+
+                                return memoryStream.ToArray();
+                            }
+                        }
+
+                        static bool Equal(byte[] first, byte[] second)
+                        {
+                            return first.Length == second.Length && first.Zip(second).All(item => item.First == item.Second);
+                        }
+
+                        static async Task<byte[]> ComputeFileHashAsync(string fileName, CancellationToken cancellationToken)
+                        {
+                            var stream = File.OpenRead(fileName);
+                            await using (stream.ConfigureAwait(false))
+                            {
+                                return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+                            }
+                        }
+
+                        static async Task<byte[]> ComputeArrayHashAsync(byte[] data, CancellationToken cancellationToken)
+                        {
+                            var stream = new MemoryStream(data);
+                            await using (stream.ConfigureAwait(false))
+                            {
+                                return await ComputeHashAsync(stream, cancellationToken).ConfigureAwait(false);
+                            }
+                        }
+
+                        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "This is a file hash")]
+                        static Task<byte[]> ComputeHashAsync(Stream stream, CancellationToken cancellationToken)
+                        {
+                            return System.Security.Cryptography.MD5.Create().ComputeHashAsync(stream, cancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        var output = File.OpenWrite(outputPath);
+                        await using (output.ConfigureAwait(false))
+                        {
+                            await stream.CopyToAsync(output, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private static IEnumerable<string> GetContainerfileContents(bool tle, bool rust, bool dotnet)
     {
