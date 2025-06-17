@@ -45,10 +45,16 @@ _ = minio.EnsureBucket(
     Amazon.S3.EventType.ObjectRemovedAll,
     Amazon.S3.EventType.ObjectRestoreAll);
 
-builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
+_ = builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
     .WithReference(minio).WaitFor(minio)
     .WithReference(rabbitmq).WaitFor(rabbitmq)
     .WithReference(profiles)
     .WithReference(config);
+
+_ = builder.AddContainer("minio-container", "docker.io/amazon/aws-cli:latest")
+    .WithReference(minio).WaitFor(minio)
+    .WithReference(profiles)
+    .WithReference(config)
+    .WithArgs("s3", "ls");
 
 await builder.Build().RunAsync().ConfigureAwait(false);
