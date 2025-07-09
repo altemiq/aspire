@@ -5,18 +5,27 @@
     <PackageTags>aspire hosting grpc</PackageTags>
     <Description>gRPC support for .NET Aspire.</Description>
     <PackageIcon>logo.png</PackageIcon>
+    <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Altemiq.Runtime" VersionOverride="1.2.1" />
     <PackageReference Include="Aspire.Hosting" />
-    <PackageReference Include="Grpc.HealthCheck" />
-    <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.2" />
+    
+    <!-- The gRPC reference here should line up with the gRPC references in Aspire.Hosting -->
+    <PackageReference Include="Grpc.HealthCheck" VersionOverride="2.67.0" />
+    
+    <!-- Keep this up to date with https://github.com/fullstorydev/grpcui -->
+    <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.3" />
+    
+    <!-- This should match the latest major version of Microsoft.Extensions.* from Aspire.Hosting -->
     <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="8.0.2" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="$(SharedDir)OverloadResolutionPriorityAttribute.cs" Link="Utils\OverloadResolutionPriorityAttribute.cs" />
+    <!-- polyfills for overload resolution -->
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

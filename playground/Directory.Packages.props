@@ -7,38 +7,47 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(Ver_AspireHosting)" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.3" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.1.5" />
     <PackageVersion Include="Aspire.Npgsql" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="Aspire.RabbitMQ.Client.v7" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0-preview.7" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.0-preview.7" />
+    <PackageVersion Include="Amazon.CDK.Lib" Version="2.183.0" />
+    <PackageVersion Include="Amazon.JSII.Runtime" Version="1.109.0" />
+    <PackageVersion Include="AWSSDK.CloudFormation" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.Lambda" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.SSO" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.0-preview.10" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.0-preview.10" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="1.3.0" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
-    <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.67.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.67.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.69.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.70.0" />
+    <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.70.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.70.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.71.0" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.3" />
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.3.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(Ver_AspireHosting)" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.1" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.11.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.11.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.11.0-beta.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.11.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.2" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.11.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.11.0-beta.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.11.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.1" />
   </ItemGroup>
 
 </Project>

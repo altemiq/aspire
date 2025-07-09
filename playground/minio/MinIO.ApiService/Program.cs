@@ -25,7 +25,7 @@ _ = builder.Services
     .AddAWSService<global::Amazon.S3.IAmazonS3>(builder.Configuration.GetAWSOptions());
 
 builder.AddRabbitMQClient("rabbitmq");
-builder.Services.AddHostedService<Program.RabbitMqListener>();
+_ = builder.Services.AddHostedService<Program.RabbitMqListener>();
 
 var app = builder.Build();
 
@@ -104,7 +104,7 @@ internal partial class Program
     /// The RabbitMQ listener.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
-    public partial class RabbitMqListener(IServiceProvider serviceProvider) : BackgroundService
+    public sealed partial class RabbitMqListener(IServiceProvider serviceProvider) : BackgroundService
     {
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -115,7 +115,7 @@ internal partial class Program
             var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
 
             await channel.ExchangeDeclareAsync(name, ExchangeType.Direct, cancellationToken: stoppingToken).ConfigureAwait(false);
-            await channel.QueueDeclareAsync(name, cancellationToken: stoppingToken).ConfigureAwait(false);
+            _ = await channel.QueueDeclareAsync(name, cancellationToken: stoppingToken).ConfigureAwait(false);
             await channel.QueueBindAsync(name, name, name, cancellationToken: stoppingToken).ConfigureAwait(false);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
@@ -128,7 +128,7 @@ internal partial class Program
             // this consumer tag identifies the subscription when it has to be cancelled
             var consumerTag = await channel.BasicConsumeAsync(name, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
 
-            await stoppingToken;
+            _ = await stoppingToken;
 
             await channel.BasicCancelAsync(consumerTag, noWait: true, CancellationToken.None).ConfigureAwait(false);
         }
