@@ -7,7 +7,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var db1 = builder
-    .AddPostgres("db1").WithImageTag("16")
+    .AddPostgres16("db1")
     .WithDataVolume()
     .WithTle()
     .WithPlRust();

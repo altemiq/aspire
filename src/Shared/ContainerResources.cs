@@ -108,6 +108,45 @@ internal static partial class ContainerResources
     }
 
     /// <summary>
+    /// Tests whether the specified image exists.
+    /// </summary>
+    /// <param name="services">The services.</param>
+    /// <param name="image">The image.</param>
+    /// <param name="tag">The tag.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><see langwor="true"/> if the image with the specified tag exists; otherwise <see langword="false"/>.</returns>
+    public static async Task<bool> ImageExistsAsync(IServiceProvider services, string image, string? tag, CancellationToken cancellationToken = default) => await ImageExistsAsync(await GetContainerRuntimeAsync(services, cancellationToken).ConfigureAwait(continueOnCapturedContext: false), image, tag, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>
+    /// Tests whether the specified image exists.
+    /// </summary>
+    /// <param name="containerRuntime">The container runtime.</param>
+    /// <param name="image">The image.</param>
+    /// <param name="tag">The tag.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><see langwor="true"/> if the image with the specified tag exists; otherwise <see langword="false"/>.</returns>
+    public static async Task<bool> ImageExistsAsync(string containerRuntime, string image, string? tag, CancellationToken cancellationToken = default)
+    {
+        if (System.Diagnostics.Process.Start(
+            new System.Diagnostics.ProcessStartInfo(containerRuntime)
+            {
+                ArgumentList = { "image", "inspect", tag is null ? image : $"{image}:{tag}" },
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+            }) is not { } process)
+        {
+            return false;
+        }
+
+        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+        return process.ExitCode is 0;
+    }
+
+    /// <summary>
     /// Gets the container name.
     /// </summary>
     /// <param name="resource">The container resource.</param>

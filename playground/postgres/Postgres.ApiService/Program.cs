@@ -98,6 +98,7 @@ static async Task CreateExtensions(WebApplication app, System.Diagnostics.Activi
     {
         using var source = activitySource1.StartActivity(System.Diagnostics.ActivityKind.Server);
         var command = connection.CreateCommand();
+        command.CommandTimeout = 600;
         await using (command.ConfigureAwait(false))
         {
             await CreateExtension(command, "plrust", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
