@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// <c>postgres</c> extensions.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static partial class PostgresBuilderExtensions
 {
     /// <summary>

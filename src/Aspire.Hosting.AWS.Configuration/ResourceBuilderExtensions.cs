@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// The resource builder extensions.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static partial class ResourceBuilderExtensions
 {
     private const string DefaultProfileName = "default";
@@ -27,11 +28,11 @@ public static partial class ResourceBuilderExtensions
     {
         var profiles = builder
             .AddResource<AWS.IAWSProfileConfig>(new AWS.AWSProfileConfig { Name = name ?? "aws-config" })
-            .WithInitialState(new CustomResourceSnapshot
+            .WithInitialState(new()
             {
                 ResourceType = "Configuration",
                 Properties = [],
-                State = new ResourceStateSnapshot("Configuring", KnownResourceStates.Starting),
+                State = new("Configuring", KnownResourceStates.Starting),
             });
 
         // add the configuration to the resource
@@ -51,7 +52,7 @@ public static partial class ResourceBuilderExtensions
             RefreshEnvironmentVariables(builder.Configuration);
 
             // set the profiles location for the .NET setup
-            _ = builder.Configuration.AddInMemoryCollection([new KeyValuePair<string, string?>("AWS:ProfilesLocation", fileName)]);
+            _ = builder.Configuration.AddInMemoryCollection([new("AWS:ProfilesLocation", fileName)]);
 
             return Task.CompletedTask;
         });
@@ -151,9 +152,9 @@ public static partial class ResourceBuilderExtensions
                     {
                         LogRegisteringProfile(logger, profile.Name);
                         sharedCredentialsFile.RegisterProfile(
-                            new Amazon.Runtime.CredentialManagement.CredentialProfile(
+                            new(
                                 profile.Name,
-                                new Amazon.Runtime.CredentialManagement.CredentialProfileOptions
+                                new()
                                 {
                                     AccessKey = profile.AccessKeyId.Value,
                                     SecretKey = profile.SecretAccessKey.Value,
@@ -166,10 +167,10 @@ public static partial class ResourceBuilderExtensions
 
                 await rns.PublishUpdateAsync(configuration, s => s with
                 {
-                    State = new ResourceStateSnapshot(KnownResourceStates.Finished, KnownResourceStateStyles.Success),
+                    State = new(KnownResourceStates.Finished, KnownResourceStateStyles.Success),
                     Properties = [
                         .. s.Properties,
-                        new ResourcePropertySnapshot(CustomResourceKnownProperties.Source, fileName),
+                        new(CustomResourceKnownProperties.Source, fileName),
                     ],
                 }).ConfigureAwait(false);
 

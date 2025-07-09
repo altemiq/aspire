@@ -36,7 +36,7 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
 
         if (!response.IsSuccessStatusCode)
         {
-            return new HealthCheckResult(context.Registration.FailureStatus, description: $"Health endpoint is not responding with 200 OK, the current status is {response.StatusCode} and the content {await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)}");
+            return new(context.Registration.FailureStatus, description: $"Health endpoint is not responding with 200 OK, the current status is {response.StatusCode} and the content {await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false)}");
         }
 
         if (this.Services == default)
@@ -49,14 +49,14 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
 
         if (healthCheck is null)
         {
-            return new HealthCheckResult(context.Registration.FailureStatus, description: "Failed to read health status from local stack");
+            return new(context.Registration.FailureStatus, description: "Failed to read health status from local stack");
         }
 
         if (LocalStackServerResource
             .GetServiceNames(this.Services)
             .FirstOrDefault(s => !healthCheck.Services.TryGetValue(s, out var value) || value is not ("available" or "running")) is { } serviceName)
         {
-            return new HealthCheckResult(context.Registration.FailureStatus, description: $"Required service {serviceName} is not available");
+            return new(context.Registration.FailureStatus, description: $"Required service {serviceName} is not available");
         }
 
         return HealthCheckResult.Healthy();

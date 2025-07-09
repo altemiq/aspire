@@ -14,31 +14,31 @@ var meter = new System.Diagnostics.Metrics.Meter(ActivitySourceName);
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
-builder.AddServiceDefaults();
+_ = builder.AddServiceDefaults();
 
-builder.Services
+_ = builder.Services
     .AddOpenTelemetry()
     .WithMetrics(m => m.AddMeter(ActivitySourceName))
     .WithTracing(t => t.AddSource(ActivitySourceName));
 
 // Add services to the container.
-builder.Services.AddProblemDetails();
+_ = builder.Services.AddProblemDetails();
 
 builder.AddNpgsqlDataSource("db1-database");
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseExceptionHandler();
+_ = app.UseExceptionHandler();
 
-app.MapDefaultEndpoints();
+_ = app.MapDefaultEndpoints();
 
-var counter = meter.CreateCounter<int>("mapget.count");
+var counter = meter.CreateCounter<int>("map.get.count");
 
 app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, CancellationToken cancellationToken) =>
 {
     counter.Add(1);
-    using var source = activitySource.StartActivity("GET postgis version", System.Diagnostics.ActivityKind.Server);
+    using var source = activitySource.StartActivity(System.Diagnostics.ActivityKind.Server);
     LogMapGet(logger, dataSource);
 
     _ = source?.AddEvent(new("connection.opening"));

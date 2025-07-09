@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 const string ProfileName = "localstack";
 
 var builder = DistributedApplication.CreateBuilder(args);
-builder.Services.AddHttpClient();
+_ = builder.Services.AddHttpClient();
 
 var region = Amazon.RegionEndpoint.APSoutheast2;
 

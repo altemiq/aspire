@@ -6,18 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.2.0" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="$(Ver_AspireHosting)" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.4" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.5" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.6.3" />
-    <PackageVersion Include="TUnit" Version="0.19.116" />
+    <PackageVersion Include="TUnit" Version="0.19.148" />
   </ItemGroup>
 
 </Project>

@@ -14,11 +14,11 @@ public class MinIOPublicApiTests
     public async Task AddMinIOContainerShouldThrowWhenBuilderIsNull()
     {
         IDistributedApplicationBuilder builder = null!;
-        const string name = "minIO";
+        const string Name = "minIO";
 
         IResourceBuilder<MinIOServerResource> Action()
         {
-            return builder.AddMinIO(name);
+            return builder.AddMinIO(Name);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
@@ -28,7 +28,7 @@ public class MinIOPublicApiTests
     public async Task AddMinIOContainerShouldThrowWhenNameIsNull()
     {
         IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder([]);
-        const string name = null!;
+        string name = null!;
 
         IResourceBuilder<MinIOServerResource> Action()
         {
@@ -55,11 +55,11 @@ public class MinIOPublicApiTests
     public async Task WithDataBindMountShouldThrowWhenBuilderIsNull()
     {
         IResourceBuilder<MinIOServerResource> builder = null!;
-        const string source = "/minIO/data";
+        const string Source = "/minIO/data";
 
         IResourceBuilder<MinIOServerResource> Action()
         {
-            return builder.WithDataBindMount(source);
+            return builder.WithDataBindMount(Source);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
@@ -70,11 +70,11 @@ public class MinIOPublicApiTests
     {
         IDistributedApplicationBuilder builderResource = DistributedApplication.CreateBuilder();
         IResourceBuilder<MinIOServerResource> minIO = builderResource.AddMinIO("minIO");
-        const string source = null!;
+        string? source = null;
 
         IResourceBuilder<MinIOServerResource> Action()
         {
-            return minIO.WithDataBindMount(source);
+            return minIO.WithDataBindMount(source!);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(source));
@@ -84,12 +84,12 @@ public class MinIOPublicApiTests
     public async Task CtorMinIOServerResourceShouldThrowWhenNameIsNull()
     {
         IDistributedApplicationBuilder distributedApplicationBuilder = DistributedApplication.CreateBuilder([]);
-        const string name = null!;
+        string name = null!;
         ParameterResource password = ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(distributedApplicationBuilder, "password", special: false);
 
         MinIOServerResource Action()
         {
-            return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
+            return new(name: name, userName: null, password: password, region: string.Empty);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(name));
@@ -103,7 +103,7 @@ public class MinIOPublicApiTests
 
         MinIOServerResource Action()
         {
-            return new MinIOServerResource(name: name, userName: null, password: password, region: string.Empty);
+            return new(name: name, userName: null, password: password, region: string.Empty);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(password));

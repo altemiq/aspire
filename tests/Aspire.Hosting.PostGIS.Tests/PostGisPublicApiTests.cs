@@ -8,17 +8,17 @@ namespace Aspire.Hosting.PostGIS.Tests;
 
 using TUnit.Assertions.AssertConditions.Throws;
 
-public class PostGISPublicApiTests
+public class PostGisPublicApiTests
 {
     [Test]
-    public async Task AddPostGISContainerShouldThrowWhenBuilderIsNull()
+    public async Task AddPostGisContainerShouldThrowWhenBuilderIsNull()
     {
         IDistributedApplicationBuilder builder = null!;
-        const string name = "postGIS";
+        const string Name = "postGIS";
 
         IResourceBuilder<PostgresServerResource> Action()
         {
-            return builder.AddPostGis(name);
+            return builder.AddPostGis(Name);
         }
 
         _ = await Assert.That(Action)
@@ -27,10 +27,10 @@ public class PostGISPublicApiTests
     }
 
     [Test]
-    public async Task AddPostGISContainerShouldThrowWhenNameIsNull()
+    public async Task AddPostGisContainerShouldThrowWhenNameIsNull()
     {
         IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder([]);
-        const string name = null!;
+        string name = null!;
 
         IResourceBuilder<PostgresServerResource> Action()
         {

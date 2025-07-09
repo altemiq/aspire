@@ -9,6 +9,8 @@ namespace Aspire.Hosting;
 /// <summary>
 /// <c>MapServer</c> extensions.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Public API")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static class MapServerExtensions
 {
     /// <summary>

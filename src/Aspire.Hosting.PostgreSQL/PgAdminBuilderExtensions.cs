@@ -9,6 +9,8 @@ namespace Aspire.Hosting;
 /// <summary>
 /// The <see cref="Postgres.PgAdminContainerResource"/> extensions.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Public API")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static class PgAdminBuilderExtensions
 {
     /// <summary>

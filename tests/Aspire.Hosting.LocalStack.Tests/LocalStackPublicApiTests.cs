@@ -14,11 +14,11 @@ public class LocalStackPublicApiTests
     public async Task AddLocalStackContainerShouldThrowWhenBuilderIsNull()
     {
         IDistributedApplicationBuilder builder = null!;
-        const string name = "localStack";
+        const string Name = "localStack";
 
         IResourceBuilder<LocalStackServerResource> Action()
         {
-            return builder.AddLocalStack(name);
+            return builder.AddLocalStack(Name);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
@@ -28,7 +28,7 @@ public class LocalStackPublicApiTests
     public async Task AddLocalStackContainerShouldThrowWhenNameIsNull()
     {
         IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder([]);
-        const string name = null!;
+        string name = null!;
 
         IResourceBuilder<LocalStackServerResource> Action()
         {
@@ -55,11 +55,11 @@ public class LocalStackPublicApiTests
     public async Task WithDataBindMountShouldThrowWhenBuilderIsNull()
     {
         IResourceBuilder<LocalStackServerResource> builder = null!;
-        const string source = "/localStack/data";
+        const string Source = "/localStack/data";
 
         IResourceBuilder<LocalStackServerResource> Action()
         {
-            return builder.WithDataBindMount(source);
+            return builder.WithDataBindMount(Source);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
@@ -70,7 +70,7 @@ public class LocalStackPublicApiTests
     {
         IDistributedApplicationBuilder builderResource = DistributedApplication.CreateBuilder();
         IResourceBuilder<LocalStackServerResource> localStack = builderResource.AddLocalStack("localStack");
-        const string source = null!;
+        string source = null!;
 
         IResourceBuilder<LocalStackServerResource> Action()
         {
@@ -83,11 +83,11 @@ public class LocalStackPublicApiTests
     [Test]
     public async Task CtorLocalStackServerResourceShouldThrowWhenNameIsNull()
     {
-        const string name = null!;
+        string name = null!;
 
-        static LocalStackServerResource Action()
+        LocalStackServerResource Action()
         {
-            return new LocalStackServerResource(name: name, region: string.Empty);
+            return new(name: name, region: string.Empty);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(name));

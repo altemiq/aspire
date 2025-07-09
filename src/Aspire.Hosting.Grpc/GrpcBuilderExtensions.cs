@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// <see cref="Grpc"/> health checks.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Public API")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static class GrpcBuilderExtensions
 {
     /// <summary>
@@ -37,13 +39,13 @@ public static class GrpcBuilderExtensions
         Uri? uri = null;
         _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, _) =>
         {
-            uri = new Uri(endpoint.Url, UriKind.Absolute);
+            uri = new(endpoint.Url, UriKind.Absolute);
             return Task.CompletedTask;
         });
 
         _ = builder.ApplicationBuilder.Services
             .AddHealthChecks()
-            .Add(new Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckRegistration(
+            .Add(new(
                 healthCheckKey,
                 _ => uri switch
                 {
@@ -294,7 +296,7 @@ public static class GrpcBuilderExtensions
         private readonly global::Grpc.Health.V1.Health.HealthClient client = new(channel);
 
         public async Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext context, CancellationToken cancellationToken = default) =>
-            await this.client.CheckAsync(new global::Grpc.Health.V1.HealthCheckRequest(), cancellationToken: cancellationToken).ConfigureAwait(false) switch
+            await this.client.CheckAsync(new(), cancellationToken: cancellationToken).ConfigureAwait(false) switch
             {
                 { Status: global::Grpc.Health.V1.HealthCheckResponse.Types.ServingStatus.Serving } => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(),
                 { Status: global::Grpc.Health.V1.HealthCheckResponse.Types.ServingStatus.NotServing } => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(),
