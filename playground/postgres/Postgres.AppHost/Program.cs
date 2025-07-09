@@ -8,6 +8,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var db1 = builder
     .AddPostgres16("db1")
+    .WithEnvironment("COLORBT_SHOW_HIDDEN", "1")
+    .WithEnvironment("RUST_BACKTRACE", "full")
+    .WithEnvironment("RUST_LOG", "debug")
     .WithDataVolume()
     .WithTle()
     .WithPlRust();

@@ -98,9 +98,9 @@ static async Task CreateExtensions(WebApplication app, System.Diagnostics.Activi
     {
         using var source = activitySource1.StartActivity(System.Diagnostics.ActivityKind.Server);
         var command = connection.CreateCommand();
-        command.CommandTimeout = 600;
         await using (command.ConfigureAwait(false))
         {
+            command.CommandTimeout = 600;
             await CreateExtension(command, "plrust", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
             await CreateExtension(command, "pg_tle", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
             await CreateExtension(command, "uuid_v7", source, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
