@@ -17,8 +17,8 @@ index 43fb5a0..c8d8c3d 100644
  omnipath = "0.1.6"
  
 +# overrides
-+litemap = { version = "=0.7.4", forced = true }
-+zerofrom = { version = "=0.1.5", forced = true }
++litemap = { version = "=0.7.4" }
++zerofrom = { version = "=0.1.5" }
 +
  [target.'cfg(target_os="linux")'.dependencies]
  memfd = "0.6.4" # for anonymously writing/loading user function .so
@@ -27,15 +27,16 @@ diff --git a/plrust/src/user_crate/crating.rs b/plrust/src/user_crate/crating.rs
 index d48cc9f..387806c 100644
 --- a/plrust/src/user_crate/crating.rs
 +++ b/plrust/src/user_crate/crating.rs
-@@ -250,6 +250,11 @@ pub(crate) fn cargo_toml_template(crate_name: &str, version_feature: &str) -> to
+@@ -250,6 +250,12 @@ pub(crate) fn cargo_toml_template(crate_name: &str, version_feature: &str) -> to
  
          [dependencies]
          pgrx = { version = trusted_pgrx_version, package = "plrust-trusted-pgrx" }
-+        home = { version = "=0.5.9", forced = true }
-+        litemap = { version = "=0.7.4", forced = true }
-+        zerofrom = { version = "=0.1.5", forced = true }
-+        icu_properties = { version = "=1.5.1", forced = true }
-+        zerovec = { version = "=0.11.0", forced = true }
++        home = { version = "=0.5.9" }
++        litemap = { version = "=0.7.4" }
++        zerofrom = { version = "=0.1.5" }
++        icu_properties = { version = "=1.5.1" }
++        zerovec = { version = "=0.11.0" }
++        pest = { version = "=2.8.0" }
  
          /* User deps added here */
  

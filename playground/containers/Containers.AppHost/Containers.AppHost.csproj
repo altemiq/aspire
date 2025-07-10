@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostgreSQL.Extensions\Aspire.Hosting.PostgreSQL.Extensions.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostGIS\Aspire.Hosting.PostGIS.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
 </Project>

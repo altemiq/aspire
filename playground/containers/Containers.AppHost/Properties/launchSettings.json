@@ -23,7 +23,11 @@
         "DOTNET_ENVIRONMENT": "Development",
         "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19203",
         "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "http://localhost:20063"
-      }
+      }      
+    },
+    "publish": {
+      "commandName": "Project",
+      "commandLineArgs": "--operation publish --publisher default --output-path $(Temp)/containers-apphost/"
     }
   }
 }
