@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>$(RootNamespace.Replace('.AWS.Configuration', ''))</RootNamespace>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName.Replace('.AWS.Configuration', ''))</RootNamespace>
     <Description>AWS Configuration support for .NET Aspire.</Description>
     <NoWarn>$(NoWarn);S101</NoWarn>
   </PropertyGroup>

@@ -13,10 +13,10 @@ namespace Aspire.Hosting;
 public static class ZScaler
 {
     /// <summary>
-    /// Detects whether <see cref="ZScaler" /> is running.
+    /// Gets a value indicating whether <see cref="ZScaler" /> is running.
     /// </summary>
     /// <returns><see langword="true" /> if <see cref="ZScaler" /> is running; otherwise <see langword="false" />.</returns>
-    public static bool IsRunning() => OperatingSystem.IsWindows() && System.Diagnostics.Process.GetProcesses().Any(process => process is { ProcessName: "ZSAService" or "ZSATunnel" });
+    public static bool IsRunning => OperatingSystem.IsWindows() && System.Diagnostics.Process.GetProcesses().Any(process => process is { ProcessName: "ZSAService" or "ZSATunnel" });
 
     /// <summary>
     /// Gets the docker file lines to insert the <see cref="ZScaler" /> certificate.

@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>$(Company).$(MSBuildProjectName)</RootNamespace>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
     <AssemblyName>$(Company).$(MSBuildProjectName)</AssemblyName>
     <Description>Extensions for .NET Aspire.</Description>
     <PackageIcon>Icon.png</PackageIcon>

@@ -6,7 +6,6 @@
     <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>cd5248f1-06eb-4ac8-82e6-72597b838631</UserSecretsId>
   </PropertyGroup>
 

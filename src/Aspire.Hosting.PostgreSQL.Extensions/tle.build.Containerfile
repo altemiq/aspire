@@ -1,4 +1,4 @@
-FROM ${REGISTRY}/${IMAGE}:${TAG} as tle-build
+FROM ${REGISTRY}/${IMAGE}:${TAG} AS tle-build
 
 ARG TLE_BRANCH
 

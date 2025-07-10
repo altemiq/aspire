@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName.Replace('.PostGIS', ''))</RootNamespace>
     <PackageTags>aspire hosting postgis</PackageTags>
     <Description>PostGIS support for .NET Aspire.</Description>
   </PropertyGroup>
