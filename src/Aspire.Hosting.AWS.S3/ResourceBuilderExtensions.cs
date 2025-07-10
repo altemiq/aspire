@@ -31,7 +31,7 @@ public static partial class ResourceBuilderExtensions
         IResourceBuilder<TResource> resourceBuilder,
         string endpointName,
         Action<IConfigurationBuilder>? configureConfiguration = default)
-        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resourceBuilder.Resource.Name, () => resourceBuilder.GetEndpoint(endpointName), default, configureConfiguration);
+        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resourceBuilder.Resource, endpointName, default, configureConfiguration);
 
     /// <summary>
     /// Adds amazon S3 to the mix.
@@ -49,7 +49,7 @@ public static partial class ResourceBuilderExtensions
         AWS.IAWSSDKConfig configuration,
         string endpointName,
         Action<IConfigurationBuilder>? configureConfiguration = default)
-        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resourceBuilder.Resource.Name, () => resourceBuilder.GetEndpoint(endpointName), configuration, configureConfiguration);
+        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resourceBuilder.Resource, endpointName, configuration, configureConfiguration);
 
     /// <summary>
     /// Adds amazon S3 to the mix.
@@ -65,7 +65,7 @@ public static partial class ResourceBuilderExtensions
         TResource resource,
         string endpointName,
         Action<IConfigurationBuilder>? configureConfiguration = default)
-        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resource.Name, () => resource.GetEndpoint(endpointName), default, configureConfiguration);
+        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resource, endpointName, default, configureConfiguration);
 
     /// <summary>
     /// Adds amazon S3 to the mix.
@@ -83,7 +83,7 @@ public static partial class ResourceBuilderExtensions
         AWS.IAWSSDKConfig configuration,
         string endpointName,
         Action<IConfigurationBuilder>? configureConfiguration = default)
-        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resource.Name, () => resource.GetEndpoint(endpointName), configuration, configureConfiguration);
+        where TResource : IResourceWithEndpoints => AddAmazonS3(builder, resource, endpointName, configuration, configureConfiguration);
 
     /// <summary>
     /// Gets the queue name.
@@ -290,16 +290,16 @@ public static partial class ResourceBuilderExtensions
 
     private static IDistributedApplicationBuilder AddAmazonS3(
         IDistributedApplicationBuilder builder,
-        string key,
-        Func<EndpointReference> getEndpoint,
+        IResourceWithEndpoints resource,
+        string endpointName,
         AWS.IAWSSDKConfig? configuration = default,
         Action<IConfigurationBuilder>? configureConfiguration = default)
     {
-        _ = builder.Services.AddKeyedAWSService<Amazon.S3.IAmazonS3>(key);
+        _ = builder.Services.AddKeyedAWSService<Amazon.S3.IAmazonS3>(resource.Name);
 
-        _ = builder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) =>
+        _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
         {
-            Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_S3", getEndpoint().Url, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_S3", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
             Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
 
             RefreshEnvironmentVariables(builder.Configuration);

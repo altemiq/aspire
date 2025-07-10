@@ -148,7 +148,7 @@ public static class LocalStackBuilderExtensions
             .WithDockerSock(() => serviceProvider ?? throw new InvalidOperationException())
             .PublishAsContainer();
 
-        AddHealthCheck(resourceBuilder, Uri.UriSchemeHttp, Uri.UriSchemeHttp, services);
+        AddHealthCheck(resourceBuilder, Uri.UriSchemeHttp, () => resourceBuilder.GetEndpoint(Uri.UriSchemeHttp), services);
 
         // get the services from the event.
         builder.Eventing.Subscribe<BeforeStartEvent>((evt, ct) =>
@@ -160,15 +160,25 @@ public static class LocalStackBuilderExtensions
 
         return resourceBuilder;
 
-        static void AddHealthCheck(IResourceBuilder<LocalStackServerResource> builder, string desiredScheme, string endpointName, LocalStackServices.Community services)
+        static void AddHealthCheck(IResourceBuilder<LocalStackServerResource> builder, string scheme, Func<EndpointReference> endpointSelector, LocalStackServices.Community services)
         {
-            var endpoint = builder.Resource.GetEndpoint(endpointName);
+            var endpoint = endpointSelector() ?? throw new DistributedApplicationException($"Could not create health check for resource '{builder.Resource.Name}' as the endpoint selector returned null.");
 
-            _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) => endpoint switch
+            var endpointName = endpoint.EndpointName;
+
+            if (!string.Equals(endpoint.Scheme, scheme, StringComparison.Ordinal))
             {
-                { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
-                { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
-                _ => throw new DistributedApplicationException($"The endpoint '{endpointName}' on resource '{builder.Resource.Name}' was not using the '{desiredScheme}' scheme."),
+                throw new DistributedApplicationException($"The endpoint '{endpointName}' on resource '{builder.Resource.Name}' was not using the '{scheme}' scheme.");
+            }
+
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(builder.Resource, (_, _) =>
+            {
+                if (!endpoint.Exists)
+                {
+                    throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'.");
+                }
+
+                return Task.CompletedTask;
             });
 
             Uri? uri = null;
