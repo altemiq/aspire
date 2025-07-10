@@ -246,49 +246,36 @@ public static partial class ResourceBuilderExtensions
         where T : IResourceWithEnvironment
     {
         // add the configuration to the resource
-        if (configuration.Annotations.OfType<AWSConfigurationFileAnnotation>().FirstOrDefault() is { } fileAnnotation)
-        {
-            if (builder.Resource is ContainerResource container)
-            {
-                // inject the configuration into the container at the appropriate location
-                var containerBuilder = builder as IResourceBuilder<ContainerResource> ?? builder.ApplicationBuilder.CreateResourceBuilder(container);
-                _ = containerBuilder.WithReference(configuration);
-            }
-            else
-            {
-                _ = builder.WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = fileAnnotation.FileName);
-            }
-        }
-
-        return builder;
-    }
-
-    /// <summary>
-    /// Adds the reference to the builder.
-    /// </summary>
-    /// <param name="builder">The builder.</param>
-    /// <param name="configuration">The configuration.</param>
-    /// <returns>The input builder.</returns>
-    public static IResourceBuilder<ContainerResource> WithReference(this IResourceBuilder<ContainerResource> builder, IResourceBuilder<AWS.IAWSProfileConfig> configuration) => builder.WithReference(configuration.Resource);
-
-    /// <summary>
-    /// Adds the reference to the builder.
-    /// </summary>
-    /// <param name="builder">The builder.</param>
-    /// <param name="configuration">The configuration.</param>
-    /// <returns>The input builder.</returns>
-    public static IResourceBuilder<ContainerResource> WithReference(this IResourceBuilder<ContainerResource> builder, AWS.IAWSProfileConfig configuration)
-    {
-        if (configuration.Annotations.OfType<AWSConfigurationFileAnnotation>().FirstOrDefault() is not { } fileAnnotation)
+        if (!configuration.TryGetLastAnnotation<AWSConfigurationFileAnnotation>(out var fileAnnotation))
         {
             return builder;
         }
 
-        const string Path = "/tmp/";
-        var name = $"{builder.Resource.Name}-config";
-        return builder
-            .WithContainerFiles(Path, async (_, cancellationToken) => [new ContainerFile { Name = name, Contents = await File.ReadAllTextAsync(fileAnnotation.FileName, cancellationToken).ConfigureAwait(false) }])
-            .WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = $"{Path}{name}");
+        if (GetContainerBuilder(builder) is { } containerBuilder)
+        {
+            // inject the configuration into the container at an appropriate location
+            const string TempPath = "/tmp/";
+            var name = Path.GetFileName(fileAnnotation.FileName);
+            _ = containerBuilder
+                .WithContainerFiles(TempPath, async (_, cancellationToken) => [new ContainerFile { Name = name, Contents = await File.ReadAllTextAsync(fileAnnotation.FileName, cancellationToken).ConfigureAwait(false) }])
+                .WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = TempPath + name);
+        }
+        else
+        {
+            _ = builder.WithEnvironment(callback => callback.EnvironmentVariables[Amazon.Runtime.CredentialManagement.SharedCredentialsFile.SharedCredentialsFileEnvVar] = fileAnnotation.FileName);
+        }
+
+        return builder;
+
+        static IResourceBuilder<ContainerResource>? GetContainerBuilder(IResourceBuilder<T> builder)
+        {
+            return builder switch
+            {
+                IResourceBuilder<ContainerResource> containerBuilder => containerBuilder,
+                { Resource: ContainerResource container } => builder.ApplicationBuilder.CreateResourceBuilder(container),
+                _ => default,
+            };
+        }
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at '{FileName}'")]

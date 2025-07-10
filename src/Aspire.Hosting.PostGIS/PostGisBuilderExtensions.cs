@@ -145,10 +145,8 @@ public static class PostGisBuilderExtensions
         string? connectionString = null;
 
         builder.Eventing.Subscribe<ConnectionStringAvailableEvent>(postgisServer, async (_, ct) =>
-        {
             connectionString = await postgisServer.GetConnectionStringAsync(ct).ConfigureAwait(false)
-                ?? throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null.");
-        });
+                ?? throw new DistributedApplicationException($"{nameof(ConnectionStringAvailableEvent)} was published for the '{postgisServer.Name}' resource but the connection string was null."));
 
         builder.Eventing.Subscribe<ResourceReadyEvent>(postgisServer, async (@event, ct) =>
         {

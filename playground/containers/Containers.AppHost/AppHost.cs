@@ -10,11 +10,14 @@ _ = builder.AddContainer("mycontainer", "myimage")
     .WithContainerfile("Context");
 
 _ = builder
-    .AddPostgres16("database")
-    .WithDotnet()
+    .AddPostGis("database", PostgresVersion.V16, PostGisVersion.V3_5)
+    .WithTle()
+    .WithRust()
     .WithImageBuildPolicy(ImageBuildPolicy.Default);
 
 _ = builder.AddContainerBuildEnvironment("container-build");
+
+_ = builder.UpdateDockerfileBuildSymLinks();
 
 await builder.Build().RunAsync(CancellationToken.None).ConfigureAwait(false);
 

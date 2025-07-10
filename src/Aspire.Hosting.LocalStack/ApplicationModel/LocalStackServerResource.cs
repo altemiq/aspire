@@ -37,8 +37,7 @@ public sealed class LocalStackServerResource(string name, string region) : Conta
     internal static IEnumerable<string> GetServiceNames(LocalStackServices.Community services)
     {
         var resultValue = (long)services;
-        var type = typeof(LocalStackServices.Community);
-        var fields = type.GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+        var fields = typeof(LocalStackServices.Community).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
         for (var i = fields.Length - 1; i >= 0; i--)
         {
             var field = fields[i];

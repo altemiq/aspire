@@ -11,6 +11,7 @@ namespace Aspire.Hosting;
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "We are not allowed dots in enum names")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "We are not allowed dots in enum names")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
 public enum PostGisVersion
 {
     /// <summary>

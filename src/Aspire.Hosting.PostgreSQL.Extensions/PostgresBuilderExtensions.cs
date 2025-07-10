@@ -151,6 +151,17 @@ public static partial class PostgresBuilderExtensions
     public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres17(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V17.Tag, name, userName, password, port);
 
     /// <summary>
+    /// Adds a pgAdmin 4 administration and development platform for PostgreSQL to the application model.
+    /// </summary>
+    /// <typeparam name="T">The type of PostgreSQL resource.</typeparam>
+    /// <param name="builder">The PostgreSQL server resource builder.</param>
+    /// <param name="configureContainer">Callback to configure PgAdmin container resource.</param>
+    /// <param name="containerName">The name of the container (Optional).</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithPgAdmin<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource>, IResourceBuilder<T>>? configureContainer = null, string? containerName = null)
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => core::Aspire.Hosting.PostgresBuilderExtensions.WithPgAdmin(builder, configureContainer is not null ? pgAdmin => configureContainer(pgAdmin, builder) : default, containerName);
+
+    /// <summary>
     /// Adds <c>tle</c> support for the database.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>

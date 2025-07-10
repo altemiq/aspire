@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 /// <param name="logger">The logger.</param>
 /// <param name="executionContext">The execution context.</param>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "ClassNeverInstantiated.Global", Justification = "Instantiated via DI")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
 internal sealed class ContainerBuildInfrastructure(
     ILogger<ContainerBuildInfrastructure> logger,
     DistributedApplicationExecutionContext executionContext) : Lifecycle.IDistributedApplicationLifecycleHook
