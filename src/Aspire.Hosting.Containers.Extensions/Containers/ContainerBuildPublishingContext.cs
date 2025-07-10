@@ -44,9 +44,7 @@ internal sealed class ContainerBuildPublishingContext(
 
     private async Task BuildCoreAsync(DistributedApplicationModel model, ContainerBuildEnvironmentResource environment)
     {
-        IEnumerable<IResource> resources = model.Resources;
-
-        foreach (var resource in resources)
+        foreach (var resource in model.Resources)
         {
             if (resource.GetDeploymentTargetAnnotation(environment)?.DeploymentTarget is ContainerBuildServiceResource serviceResource)
             {
