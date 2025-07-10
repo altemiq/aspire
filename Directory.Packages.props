@@ -6,7 +6,7 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting" Version="$(Ver_AspireHosting)" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.2.2" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.2.5" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(Ver_AspireHosting)" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(Ver_AspireHosting)" />
   </ItemGroup>

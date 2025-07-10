@@ -10,8 +10,8 @@
   </ItemGroup>
   
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.1" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.1.1" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.4.2" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
