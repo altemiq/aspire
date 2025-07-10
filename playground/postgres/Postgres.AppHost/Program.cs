@@ -4,26 +4,26 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+const string DatabaseServer = "db1";
+
 var builder = DistributedApplication.CreateBuilder(args);
 
-var db1 = builder
-    .AddPostgres16("db1")
+var database = builder
+    .AddPostgres16(DatabaseServer)
     .WithEnvironment("COLORBT_SHOW_HIDDEN", "1")
     .WithEnvironment("RUST_BACKTRACE", "full")
     .WithEnvironment("RUST_LOG", "debug")
     .WithDataVolume()
     .WithTle()
     .WithRust()
-    .WithDotnet();
-
-db1.WithPgAdmin(container =>
-    container
-        .WaitFor(db1)
-        .WithTheme(PgAdminTheme.System)
-        .WithImageTag("9")
-        .WithImagePullPolicy(ImagePullPolicy.Always));
-
-var database = db1.AddDatabase("db1-database")
+    .WithDotnet()
+    .WithPgAdmin((container, database) =>
+        container
+            .WaitFor(database)
+            .WithTheme(PgAdminTheme.System)
+            .WithImageTag("9")
+            .WithImagePullPolicy(ImagePullPolicy.Always))
+    .AddDatabase($"{DatabaseServer}-database")
     .WithTleExtension("uuid_v7");
 
 _ = builder.AddProject<Projects.Postgres_ApiService>("apiservice")
