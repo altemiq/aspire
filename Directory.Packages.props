@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting" Version="$(Ver_AspireHosting)" />
+    <PackageVersion Include="Aspire.Hosting" Version="$(VerAspire_Hosting)" />
     <PackageVersion Include="Aspire.Hosting.AWS" Version="9.2.5" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(Ver_AspireHosting)" />
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(Ver_AspireHosting)" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(VerAspire_Hosting)" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(VerAspire_Hosting)" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">

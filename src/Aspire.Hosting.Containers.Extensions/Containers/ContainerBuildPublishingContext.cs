@@ -9,6 +9,7 @@
 namespace Aspire.Hosting.Containers;
 
 using Microsoft.Extensions.Logging;
+using Publishing;
 
 /// <summary>
 /// Represents a context for building containers for a distributed application.
@@ -44,12 +45,11 @@ internal sealed class ContainerBuildPublishingContext(
 
     private async Task BuildCoreAsync(DistributedApplicationModel model, ContainerBuildEnvironmentResource environment)
     {
-        foreach (var resource in model.Resources)
+        foreach (var serviceResource in model.Resources
+                     .Select(resource => resource.GetDeploymentTargetAnnotation(environment)?.DeploymentTarget)
+                     .OfType<ContainerBuildServiceResource>())
         {
-            if (resource.GetDeploymentTargetAnnotation(environment)?.DeploymentTarget is ContainerBuildServiceResource serviceResource)
-            {
-                await imageBuilder.BuildImageAsync(serviceResource.TargetResource, cancellationToken).ConfigureAwait(false);
-            }
+            await imageBuilder.BuildImageAsync(serviceResource.TargetResource, options: default, cancellationToken).ConfigureAwait(false);
         }
     }
 }
