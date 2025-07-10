@@ -1,4 +1,4 @@
-[![build](https://github.com/altemiq/command-line-api/actions/workflows/build.yml/badge.svg)](https://github.com/altemiq/command-line-api/actions/workflows/build.yml)
+[![build](https://github.com/altemiq/aspire/actions/workflows/build.yml/badge.svg)](https://github.com/altemiq/aspire/actions/workflows/build.yml)
 
 This repository contains the code for the Altemiq.Aspire.Hosting libraries
 
