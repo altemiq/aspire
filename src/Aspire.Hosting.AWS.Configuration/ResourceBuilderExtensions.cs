@@ -157,11 +157,11 @@ public static partial class ResourceBuilderExtensions
     {
         _ = builder.WithAnnotation(new AWSConfigurationFileAnnotation(builder.Resource), ResourceAnnotationMutationBehavior.Replace);
 
-        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, _) => ProcessProfiles(e.Services, builder.Resource));
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeStartEvent>((e, ct) => ProcessProfiles(e.Services, builder.Resource, ct));
 
         return builder;
 
-        async Task ProcessProfiles(IServiceProvider services, T configuration)
+        async Task ProcessProfiles(IServiceProvider services, T configuration, CancellationToken cancellationToken)
         {
             // get the annotation
             if (configuration.TryGetLastAnnotation<AWSConfigurationFileAnnotation>(out var fileAnnotation))
@@ -183,9 +183,11 @@ public static partial class ResourceBuilderExtensions
                                 profile.Name,
                                 new()
                                 {
-                                    AccessKey = profile.AccessKeyId.Value,
-                                    SecretKey = profile.SecretAccessKey.Value,
-                                    Token = profile.SessionToken?.Value,
+                                    AccessKey = await profile.AccessKeyId.GetValueAsync(cancellationToken).ConfigureAwait(false),
+                                    SecretKey = await profile.SecretAccessKey.GetValueAsync(cancellationToken).ConfigureAwait(false),
+                                    Token = profile.SessionToken is { } sessionToken
+                                        ? await sessionToken.GetValueAsync(cancellationToken).ConfigureAwait(false)
+                                        : default,
                                 }));
                     }
 

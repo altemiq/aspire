@@ -25,17 +25,39 @@ public static class GrpcBuilderExtensions
     /// <param name="endpointName">The end point name.</param>
     /// <returns>A resource builder with the health check annotation added.</returns>
     public static IResourceBuilder<T> WithGrpcHealthCheck<T>(this IResourceBuilder<T> builder, string desiredScheme, string endpointName)
+        where T : IResourceWithEndpoints => WithGrpcHealthCheck(builder, desiredScheme, () => builder.GetEndpoint(endpointName));
+
+    /// <summary>
+    /// Adds a gRPC health check to the resource.
+    /// </summary>
+    /// <typeparam name="T">The type of endpoint resource.</typeparam>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="scheme">The desired scheme.</param>
+    /// <param name="endpointSelector">The endpoint selector.</param>
+    /// <returns>A resource builder with the health check annotation added.</returns>
+    public static IResourceBuilder<T> WithGrpcHealthCheck<T>(this IResourceBuilder<T> builder, string scheme, Func<EndpointReference> endpointSelector)
         where T : IResourceWithEndpoints
     {
-        var endpoint = builder.Resource.GetEndpoint(endpointName);
+        var endpoint = endpointSelector() ?? throw new DistributedApplicationException($"Could not create health check for resource '{builder.Resource.Name}' as the endpoint selector returned null.");
 
-        var healthCheckKey = $"{builder.Resource.Name}_check";
-        _ = builder.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) => endpoint switch
+        var endpointName = endpoint.EndpointName;
+
+        if (!string.Equals(endpoint.Scheme, scheme, StringComparison.Ordinal))
         {
-            { Exists: false } => throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."),
-            { Scheme: { } scheme } when string.Equals(scheme, desiredScheme, StringComparison.Ordinal) => Task.CompletedTask,
-            _ => throw new DistributedApplicationException($"The endpoint '{endpointName}' on resource '{builder.Resource.Name}' was not using the '{desiredScheme}' scheme."),
-        });
+            throw new DistributedApplicationException($"The endpoint '{endpointName}' on resource '{builder.Resource.Name}' was not using the '{scheme}' scheme.");
+        }
+
+        _ = builder.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(
+            builder.Resource,
+            (_, _) =>
+            {
+                if (endpoint.Exists)
+                {
+                    return Task.CompletedTask;
+                }
+
+                throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'.");
+            });
 
         Uri? uri = null;
         _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, _) =>
@@ -44,6 +66,7 @@ public static class GrpcBuilderExtensions
             return Task.CompletedTask;
         });
 
+        var healthCheckKey = $"{builder.Resource.Name}_check";
         _ = builder.ApplicationBuilder.Services
             .AddHealthChecks()
             .Add(new(
@@ -174,7 +197,7 @@ public static class GrpcBuilderExtensions
 
         var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
 
-        _ = resource.ApplicationBuilder.Eventing.Subscribe<AfterEndpointsAllocatedEvent>((_, _) =>
+        _ = resource.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource.Resource, (_, _) =>
         {
             SetArguments(builder, resource, endpointType);
             return Task.CompletedTask;

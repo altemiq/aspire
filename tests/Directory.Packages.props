@@ -6,12 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="$(Ver_AspireHosting)" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="$(VerAspire_Hosting)" />
   </ItemGroup>
   
   <ItemGroup Label="AWS">
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.4.2" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.6.2" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">

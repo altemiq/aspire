@@ -175,10 +175,14 @@ public static partial class PostgresBuilderExtensions
             .WithAnnotation(new TleAnnotation(version ?? "v1.5.1"))
             .WithContainerFiles(
                 "/pg_tle/examples",
-                (_, _) =>
+                async (_, ct) =>
                 {
                     var postgresInstance = builder.Resource;
                     var endpoint = postgresInstance.PrimaryEndpoint;
+                    var username = postgresInstance.UserNameParameter is { } parameter
+                        ? await parameter.GetValueAsync(ct).ConfigureAwait(false)
+                        : "postgres";
+                    var targetPoint = endpoint.TargetPort ?? default;
                     IEnumerable<ContainerFileSystemItem> items =
                     [
                         new ContainerFile
@@ -186,13 +190,13 @@ public static partial class PostgresBuilderExtensions
                             Name = "env.ini",
                             Contents = $"""
                                         PGHOST=localhost
-                                        PGPORT={(int)endpoint.TargetPort!}
-                                        PGUSER={postgresInstance.UserNameParameter?.Value ?? "postgres"}
+                                        PGPORT={targetPoint}
+                                        PGUSER={username}
                                         """,
                         },
                     ];
 
-                    return Task.FromResult(items);
+                    return items;
                 });
 
     /// <summary>

@@ -321,7 +321,7 @@ public static class MinIOBuilderExtensions
                     context.EnvironmentVariables["MINIO_REGION"] = region;
                 }
             })
-            .WithEnvironment(context => context.EnvironmentVariables[$"MC_HOST_{Alias}"] = $"{Uri.UriSchemeHttp}://{minIOServer.UserNameReference.ValueExpression}:{minIOServer.PasswordParameter.Value}@localhost:{ApiPort}")
+            .WithEnvironment(SetMcHost)
             .WithArgs("server", DataLocation)
             .WithHttpHealthCheck(path: "minio/health/live", endpointName: ApiEndpointName)
             .PublishAsContainer();
@@ -340,6 +340,11 @@ public static class MinIOBuilderExtensions
                     await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId], logger, ct).ConfigureAwait(false);
                 }
             }
+        }
+
+        async Task SetMcHost(EnvironmentCallbackContext context)
+        {
+            context.EnvironmentVariables[$"MC_HOST_{Alias}"] = $"{Uri.UriSchemeHttp}://{minIOServer.UserNameReference.ValueExpression}:{await minIOServer.PasswordParameter.GetValueAsync(CancellationToken.None).ConfigureAwait(false)}@localhost:{ApiPort}";
         }
     }
 

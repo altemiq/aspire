@@ -6,7 +6,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "",
-      "applicationUrl": "http://[::1]:0",
+      "applicationUrl": "http://*:0",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -16,7 +16,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "",
-      "applicationUrl": "https://[::1]:0;http://[::1]:0",
+      "applicationUrl": "https://*:0;http://*:0",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

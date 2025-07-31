@@ -32,48 +32,43 @@ public sealed class AWSProfile
     public ParameterResource? SessionToken { get; init; }
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj)
-    {
-        if (obj is AWSProfile profile
-            && string.Equals(profile.Name, this.Name, StringComparison.Ordinal)
-            && string.Equals(profile.AccessKeyId.Value, this.AccessKeyId.Value, StringComparison.Ordinal)
-            && string.Equals(profile.SecretAccessKey.Value, this.SecretAccessKey.Value, StringComparison.Ordinal))
-        {
-            return (profile.SessionToken, this.SessionToken) switch
-            {
-                (null, null) => true,
-                (not null, null) or (null, not null) => false,
-                ({ Value: var first }, { Value: var second }) => string.Equals(first, second, StringComparison.Ordinal),
-            };
-        }
-
-        return false;
-    }
+    public override bool Equals(object? obj) =>
+        obj is AWSProfile profile
+        && string.Equals(profile.Name, this.Name, StringComparison.Ordinal)
+        && string.Equals(GetValue(profile.AccessKeyId), GetValue(this.AccessKeyId), StringComparison.Ordinal)
+        && string.Equals(GetValue(profile.SecretAccessKey), GetValue(this.SecretAccessKey), StringComparison.Ordinal)
+        && string.Equals(GetValue(profile.SessionToken), GetValue(this.SessionToken), StringComparison.Ordinal);
 
     /// <inheritdoc/>
     public override int GetHashCode()
     {
         int hash = 17;
         hash = Add(hash, GetHashCodeCore(this.Name));
-        hash = Add(hash, GetHashCodeCore(this.AccessKeyId.Value));
-        hash = Add(hash, GetHashCodeCore(this.SecretAccessKey.Value));
-        if (this.SessionToken is { } sessionToken)
-        {
-            hash = Add(hash, GetHashCodeCore(sessionToken.Value));
-        }
-
+        hash = Add(hash, GetHashCodeCore(GetValue(this.AccessKeyId)));
+        hash = Add(hash, GetHashCodeCore(GetValue(this.SecretAccessKey)));
+        hash = Add(hash, GetHashCodeCore(GetValue(this.SessionToken)));
         return hash;
 
         static int Add(int hash, int hashCode)
         {
+            if (hashCode is 0)
+            {
+                return hash;
+            }
+
             unchecked
             {
                 return (hash * 31) + hashCode;
             }
         }
 
-        static int GetHashCodeCore(string str)
+        static int GetHashCodeCore(string? str)
         {
+            if (str is null)
+            {
+                return default;
+            }
+
             unchecked
             {
                 var hash1 = 5381;
@@ -93,5 +88,21 @@ public sealed class AWSProfile
                 return hash1 + (hash2 * 1566083941);
             }
         }
+    }
+
+    private static string? GetValue(ParameterResource? resource)
+    {
+        if (resource is null)
+        {
+            return null;
+        }
+
+        var valueTask = resource.GetValueAsync(CancellationToken.None);
+        if (valueTask.IsCompletedSuccessfully)
+        {
+            return valueTask.Result;
+        }
+
+        return valueTask.AsTask().GetAwaiter().GetResult();
     }
 }
