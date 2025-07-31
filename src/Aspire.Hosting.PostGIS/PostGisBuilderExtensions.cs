@@ -199,24 +199,19 @@ public static class PostGisBuilderExtensions
 
     private static async Task CreateDatabaseAsync(Npgsql.NpgsqlConnection npgsqlConnection, core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource npgsqlDatabase, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
-        if (GetCreateDatabaseAsyncMethod().Invoke(obj: null, [npgsqlConnection, npgsqlDatabase, serviceProvider, cancellationToken]) is Task task)
+        if (GetCreateDatabaseAsyncMethod(typeof(Npgsql.NpgsqlConnection), typeof(core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource), typeof(IServiceProvider), typeof(CancellationToken)).Invoke(obj: null, [npgsqlConnection, npgsqlDatabase, serviceProvider, cancellationToken]) is Task task)
         {
             await task.ConfigureAwait(false);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
-        static System.Reflection.MethodInfo GetCreateDatabaseAsyncMethod()
+        static System.Reflection.MethodInfo GetCreateDatabaseAsyncMethod(params Type[] types)
         {
             return typeof(core::Aspire.Hosting.PostgresBuilderExtensions)
                .GetMethod(
                    nameof(CreateDatabaseAsync),
                    System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic,
-                   [
-                       typeof(Npgsql.NpgsqlConnection),
-                       typeof(core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource),
-                       typeof(IServiceProvider),
-                       typeof(CancellationToken),
-                   ])
+                   types)
                 ?? throw new TypeLoadException();
         }
     }
