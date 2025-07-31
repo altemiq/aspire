@@ -9,7 +9,6 @@
 namespace Aspire.Hosting.Containers;
 
 using Microsoft.Extensions.Logging;
-using Publishing;
 
 /// <summary>
 /// Represents a context for building containers for a distributed application.
