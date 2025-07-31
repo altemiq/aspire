@@ -14,19 +14,13 @@ dotnet add package Altemiq.Aspire.Hosting.Containers.Extensions
 
 ## Usage examples
 
-Then, in the _AppHost.cs_ file of `AppHost`, adds gRPCui to a reference, either using a container or executable.
+Then, in the _AppHost.cs_ file of `AppHost`, add the container build environment.
 
 ```csharp
-_ = builder.AddProject<Projects.MyService>(Name, Uri.UriSchemeHttp)
-    .WithGrpcHealthCheck(Uri.UriSchemeHttp, Uri.UriSchemeHttp)
-    .WithGrpcUI(
-        (api, grpc) => grpc
-            .WaitFor(api)
-            .WithBasePath("/debug/grpcui"),
-        executableName: $"{Name}-exe")
-    .WithGrpcUI(
-        (api, grpc) => grpc
-            .WaitFor(api)
-            .WithBasePath("/debug/grpcui"),
-        containerName: $"{Name}-container");
+_ = builder.AddContainer("mycontainer", "myimage")
+    .WithContainerfile("Context");
+
+_ = builder.AddContainerBuildEnvironment("container-build");
+
+await builder.Build().RunAsync(CancellationToken.None).ConfigureAwait(false);
 ```

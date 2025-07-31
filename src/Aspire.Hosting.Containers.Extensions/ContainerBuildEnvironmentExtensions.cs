@@ -32,12 +32,14 @@ public static class ContainerBuildEnvironmentExtensions
 
         var resource = new ContainerBuildEnvironmentResource(name);
         builder.Services.TryAddLifecycleHook<ContainerBuildInfrastructure>();
-        return builder.ExecutionContext.IsRunMode
-
+        if (builder.ExecutionContext.IsRunMode)
+        {
             // Return a builder that isn't added to the top-level application builder so it doesn't surface as a resource.
-            ? builder.CreateResourceBuilder(resource)
+            return builder.CreateResourceBuilder(resource);
+        }
 
-            // Add the resource.
-            : builder.AddResource(resource);
+        return builder
+            .SetContainerRuntime()
+            .AddResource(resource);
     }
 }
