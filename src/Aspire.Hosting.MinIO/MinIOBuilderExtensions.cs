@@ -21,6 +21,7 @@ public static class MinIOBuilderExtensions
     private const string PasswordEnvVarName = "MINIO_ROOT_PASSWORD";
     private const string ApiEndpointName = "api";
     private const string DataLocation = "/data";
+    private const string Alias = "aspire";
 
     /// <summary>
     /// Adds Amazon S3 to the host.
@@ -290,7 +291,6 @@ public static class MinIOBuilderExtensions
 
         const int ApiPort = 9000;
         const int ConsolePort = 9001;
-        const string Alias = "aspire";
         const string ConsoleEndpointName = "console";
 
         var passwordParameter = password?.Resource ?? ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder, $"{name}-password");
@@ -326,18 +326,17 @@ public static class MinIOBuilderExtensions
             .WithHttpHealthCheck(path: "minio/health/live", endpointName: ApiEndpointName)
             .PublishAsContainer();
 
-        static async Task AddUsers(ResourceReadyEvent e, CancellationToken ct)
+        static async Task AddUsers(ResourceReadyEvent e, CancellationToken cancellationToken)
         {
             if (e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
             {
-                var rls = e.Services.GetRequiredService<ResourceLoggerService>();
-                var logger = rls.GetLogger(e.Resource);
-                var containerRuntime = await ContainerRuntime.GetNameAsync(e.Services, ct).ConfigureAwait(false);
+                var logger = e.Services.GetRequiredService<ResourceLoggerService>().GetLogger(e.Resource);
+                var containerRuntime = await ContainerRuntime.GetNameAsync(e.Services, cancellationToken).ConfigureAwait(false);
 
                 foreach (var profile in profiles.Select(x => x.Profile))
                 {
-                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "user", "add", Alias, profile.AccessKeyId, profile.SecretAccessKey], logger, ct).ConfigureAwait(false);
-                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId], logger, ct).ConfigureAwait(false);
+                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "user", "add", Alias, profile.AccessKeyId, profile.SecretAccessKey], logger, cancellationToken).ConfigureAwait(false);
+                    await e.Resource.ExecAsync(containerRuntime, ["mc", "admin", "policy", "attach", Alias, "readwrite", "--user", profile.AccessKeyId], logger, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -345,6 +344,63 @@ public static class MinIOBuilderExtensions
         async Task SetMcHost(EnvironmentCallbackContext context)
         {
             context.EnvironmentVariables[$"MC_HOST_{Alias}"] = $"{Uri.UriSchemeHttp}://{minIOServer.UserNameReference.ValueExpression}:{await minIOServer.PasswordParameter.GetValueAsync(CancellationToken.None).ConfigureAwait(false)}@localhost:{ApiPort}";
+        }
+    }
+
+    /// <summary>
+    /// Adds a bind mount to the minio server resource and executes commands for mirroring a mount into a bucket.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="source">The source path to bind to container resource.</param>
+    /// <param name="bucketName">The name of the bucket.</param>
+    /// <param name="isReadOnly">Whether the bind mount is read-only.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<T> WithMirror<T>(this IResourceBuilder<T> builder, string source, string bucketName, bool isReadOnly = true)
+        where T : MinIOServerResource
+    {
+        var target = $"/mnt/{bucketName}";
+        builder.WithBindMount(source, target, isReadOnly);
+
+        // ensure we have a lock annotation
+        if (!builder.Resource.HasAnnotationOfType<BucketMirrorLockAnnotation>())
+        {
+            _ = builder.WithAnnotation(new BucketMirrorLockAnnotation());
+        }
+
+        // check to see if we've already added the with bucket mirror handler
+        if (builder.Resource.TryGetLastAnnotation<BucketMirrorLockAnnotation>(out var lockAnnotation)
+            && Interlocked.Exchange(ref lockAnnotation.Check, 1) is 0)
+        {
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<ResourceReadyEvent>(builder.Resource, Mirror);
+        }
+
+        return builder.WithAnnotation(new BucketMirrorAnnotation { Directory = target, BucketName = bucketName, ReadOnly = isReadOnly });
+
+        static async Task Mirror(ResourceReadyEvent e, CancellationToken cancellationToken)
+        {
+            if (e.Resource.TryGetAnnotationsOfType<BucketMirrorAnnotation>(out var annotations))
+            {
+                var logger = e.Services.GetRequiredService<ResourceLoggerService>().GetLogger(e.Resource);
+                var containerRuntime = await ContainerRuntime.GetNameAsync(e.Services, cancellationToken).ConfigureAwait(false);
+
+                foreach (var annotation in annotations)
+                {
+                    var bucketName = $"{Alias}/{annotation.BucketName}";
+                    _ = await e.Resource.ExecAsync(containerRuntime, ["mc", "mb", "--ignore-existing", bucketName], logger, cancellationToken).ConfigureAwait(false);
+
+                    ICollection<object> arguments = ["mc", "mirror", "--overwrite"];
+                    if (!annotation.ReadOnly)
+                    {
+                        arguments.Add("--remove");
+                    }
+
+                    arguments.Add(annotation.Directory);
+                    arguments.Add(bucketName);
+
+                    _ = await e.Resource.ExecAsync(containerRuntime, arguments, logger, cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
     }
 
@@ -366,5 +422,12 @@ public static class MinIOBuilderExtensions
     private sealed class AWSProfileAnnotation : IResourceAnnotation
     {
         public required AWS.AWSProfile Profile { get; init; }
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "This is for locking")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
+    private sealed class BucketMirrorLockAnnotation : IResourceAnnotation
+    {
+        public int Check;
     }
 }

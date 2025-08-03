@@ -29,23 +29,23 @@ var rabbitmq = builder
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume();
 
+const string BucketName = "aspire";
+const string FilesBucketName = "files";
 var minio = builder
     .AddMinIO("minio", config: config)
     .WithProfile(profiles, ProfileName)
     .WithReference(profiles)
     .WithAmqpReference(rabbitmq)
-    .WithDataVolume();
+    .WithDataVolume()
+    .EnsureBucket(
+        BucketName,
+        BucketProfileName,
+        Amazon.S3.EventType.ObjectCreatedAll,
+        Amazon.S3.EventType.ObjectRemovedAll,
+        Amazon.S3.EventType.ObjectRestoreAll)
+    .WithMirror("files", FilesBucketName);
 
 _ = builder.AddAmazonS3(minio);
-
-const string BucketName = "aspire";
-
-_ = minio.EnsureBucket(
-    BucketName,
-    BucketProfileName,
-    Amazon.S3.EventType.ObjectCreatedAll,
-    Amazon.S3.EventType.ObjectRemovedAll,
-    Amazon.S3.EventType.ObjectRestoreAll);
 
 _ = builder.AddProject<Projects.MinIO_ApiService>("minio-apiservice")
     .WithReference(minio).WaitFor(minio)
@@ -74,45 +74,6 @@ _ = builder
         callback.EnvironmentVariables["AWS_S3_ENDPOINT"] = minio.GetEndpoint("api");
     })
     .WithReference(config)
-    .WithArgs("gdalinfo", $"/vsis3/{BucketName}/{SampleName}");
-
-// add the file to the bucket
-builder.Eventing.Subscribe<ResourceReadyEvent>(minio.Resource, async (evt, cancellationToken) =>
-{
-    var client = evt.Services.GetRequiredKeyedService<Amazon.S3.IAmazonS3>(evt.Resource.Name);
-    if (client.Config is Amazon.Runtime.ClientConfig clientConfig)
-    {
-        // get the profile
-        var chain = new Amazon.Runtime.CredentialManagement.CredentialProfileStoreChain();
-        if (chain.TryGetAWSCredentials(BucketProfileName, out var profileCredentials))
-        {
-            clientConfig.DefaultAWSCredentials = profileCredentials;
-        }
-    }
-
-    if (await KeyExistsAsync(client, BucketName, SampleName, cancellationToken).ConfigureAwait(false))
-    {
-        return;
-    }
-
-    var putRequest = new Amazon.S3.Model.PutObjectRequest { BucketName = BucketName, Key = SampleName, InputStream = File.OpenRead(Path.Combine(builder.AppHostDirectory, SampleName)) };
-
-    _ = await client.PutObjectAsync(putRequest, cancellationToken).ConfigureAwait(false);
-
-    static async Task<bool> KeyExistsAsync(Amazon.S3.IAmazonS3 client, string bucket, string key, CancellationToken cancellationToken)
-    {
-        var request = new Amazon.S3.Model.GetObjectMetadataRequest { BucketName = bucket, Key = key };
-
-        try
-        {
-            await client.GetObjectMetadataAsync(request, cancellationToken).ConfigureAwait(false);
-            return true;
-        }
-        catch (Amazon.S3.AmazonS3Exception)
-        {
-            return false;
-        }
-    }
-});
+    .WithArgs("gdalinfo", $"/vsis3/{FilesBucketName}/{SampleName}");
 
 await builder.Build().RunAsync().ConfigureAwait(false);
