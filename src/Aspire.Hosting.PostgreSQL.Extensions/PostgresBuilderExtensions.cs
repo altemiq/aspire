@@ -173,31 +173,52 @@ public static partial class PostgresBuilderExtensions
         builder
             .SetupContainerfile()
             .WithAnnotation(new TleAnnotation(version ?? "v1.5.1"))
-            .WithContainerFiles(
-                "/pg_tle/examples",
-                async (_, ct) =>
-                {
-                    var postgresInstance = builder.Resource;
-                    var endpoint = postgresInstance.PrimaryEndpoint;
-                    var username = postgresInstance.UserNameParameter is { } parameter
-                        ? await parameter.GetValueAsync(ct).ConfigureAwait(false)
-                        : "postgres";
-                    var targetPoint = endpoint.TargetPort ?? default;
-                    IEnumerable<ContainerFileSystemItem> items =
-                    [
-                        new ContainerFile
-                        {
-                            Name = "env.ini",
-                            Contents = $"""
-                                        PGHOST=localhost
-                                        PGPORT={targetPoint}
-                                        PGUSER={username}
-                                        """,
-                        },
-                    ];
+            .WithTleExamples();
 
-                    return items;
-                });
+    /// <summary>
+    /// Sets up the PG/TLE examples.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <returns>The input builder.</returns>
+    public static IResourceBuilder<T> WithTleExamples<T>(this IResourceBuilder<T> builder)
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource =>
+        builder.WithContainerFiles(
+            "/pg_tle/examples",
+            async (context, ct) =>
+            {
+                if (context.Model is not core::Aspire.Hosting.ApplicationModel.PostgresServerResource postgresInstance)
+                {
+                    return [];
+                }
+
+                return
+                [
+                    new ContainerFile
+                    {
+                        Name = "env.ini",
+                        Contents = $"""
+                                    PGHOST=localhost
+                                    PGPORT={GetTargetPort(postgresInstance.PrimaryEndpoint)}
+                                    PGUSER={await GetValueOrDefault(postgresInstance.UserNameParameter, "postgres", ct).ConfigureAwait(false)}
+                                    """,
+                    },
+                ];
+
+                static string? GetTargetPort(EndpointReference? endpoint)
+                {
+                    return endpoint is { TargetPort: { } p }
+                        ? p.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        : null;
+                }
+
+                async static ValueTask<string> GetValueOrDefault(ParameterResource? parameter, string defaultValue, CancellationToken cancellationToken)
+                {
+                    return parameter is not null && await parameter.GetValueAsync(cancellationToken).ConfigureAwait(false) is { } result
+                        ? result
+                        : defaultValue;
+                }
+            });
 
     /// <summary>
     /// Adds <c>plrust</c> support for the database.
