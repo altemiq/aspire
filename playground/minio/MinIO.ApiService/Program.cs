@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MinIO.ApiService;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using RabbitMQ.Client;
@@ -128,7 +127,7 @@ internal partial class Program
             // this consumer tag identifies the subscription when it has to be cancelled
             var consumerTag = await channel.BasicConsumeAsync(Name, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
 
-            _ = await stoppingToken;
+            await stoppingToken.ConfigureAwait(Altemiq.Threading.CancellationTokenConfigureAwaitOptions.None);
 
             await channel.BasicCancelAsync(consumerTag, noWait: true, CancellationToken.None).ConfigureAwait(false);
         }

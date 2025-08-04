@@ -4,6 +4,10 @@
   <PropertyGroup>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
+  
+  <ItemGroup Label="Altemiq">
+    <PackageVersion Include="Altemiq" Version="2.0.0-beta.1" />
+  </ItemGroup>
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(VerAspire_Hosting)" />

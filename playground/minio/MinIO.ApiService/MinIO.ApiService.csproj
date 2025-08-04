@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Altemiq" />
     <PackageReference Include="Aspire.RabbitMQ.Client.v7" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" />
     <PackageReference Include="AWSSDK.S3" />
