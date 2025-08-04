@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "aspire.cli": {
-      "version": "9.4.0",
+      "version": "9.5.0-preview.1.25401.6",
       "commands": [
         "aspire"
       ],
