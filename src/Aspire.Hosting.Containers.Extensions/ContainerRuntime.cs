@@ -172,7 +172,7 @@ public static class ContainerRuntime
 
         static bool CheckSock([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
         {
-            if (path is null)
+            if (string.IsNullOrEmpty(path))
             {
                 return false;
             }
