@@ -18,12 +18,12 @@
   </ItemGroup>
 
   <PropertyGroup Label="Packaging">
-    <PackageIcon>localstack-dotnet-square.png</PackageIcon>
+    <PackageIcon>28732122.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup Label="Packaging">
-    <None Update="localstack-dotnet-square.png" Pack="true" PackagePath="\" />
+    <None Update="28732122.png" Pack="true" PackagePath="\" />
     <None Update="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
