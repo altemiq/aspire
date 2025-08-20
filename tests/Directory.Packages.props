@@ -21,8 +21,8 @@
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
-    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.7.1" />
-    <PackageVersion Include="TUnit" Version="0.25.21" />
+    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.8.2" />
+    <PackageVersion Include="TUnit" Version="0.56.44" />
   </ItemGroup>
 
 </Project>
