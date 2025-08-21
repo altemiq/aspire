@@ -17,12 +17,12 @@
 
   <ItemGroup Label="AWS">
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2.1" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.6.2" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.6.7" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Google.Protobuf" Version="3.31.1" />
+    <PackageVersion Include="Google.Protobuf" Version="3.32.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0" />
     <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.71.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.71.0" />
@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="9.0.8" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
   </ItemGroup>
   
@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.8.0-preview.1.25401.1" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.8.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(VerAspire_Hosting)" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
