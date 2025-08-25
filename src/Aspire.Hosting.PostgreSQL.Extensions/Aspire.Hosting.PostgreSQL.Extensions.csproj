@@ -32,7 +32,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aspire.Hosting.Containers.Extensions\Aspire.Hosting.Containers.Extensions.csproj" />
-    <ProjectReference Include="..\Aspire.Hosting.ZScaler\Aspire.Hosting.ZScaler.csproj" />
   </ItemGroup>
 
 </Project>

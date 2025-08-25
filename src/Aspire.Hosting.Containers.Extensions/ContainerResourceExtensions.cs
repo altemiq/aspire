@@ -58,6 +58,31 @@ public static partial class ContainerResourceExtensions
         where T : ContainerResource => builder.WithDockerfile(contextPath, containerfilePath ?? "Containerfile", stage);
 
     /// <summary>
+    /// Adds a callback for the container file lines.
+    /// </summary>
+    /// <typeparam name="T">Type parameter specifying any type derived from <see cref="ContainerResource"/>.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="callback">The callback called with the container lines.</param>
+    /// <returns>The <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithContainerfileCallback<T>(this IResourceBuilder<T> builder, Func<IEnumerable<string>, IEnumerable<string>> callback)
+        where T : ContainerResource
+    {
+        if (ShouldAdd(builder.Resource, callback))
+        {
+            // this doesn't already exist
+            builder.WithAnnotation(new ContainerLinesCallbackAnnotation(callback));
+        }
+
+        return builder;
+
+        static bool ShouldAdd(T resource, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] Func<IEnumerable<string>, IEnumerable<string>>? callback)
+        {
+            return callback is not null
+                   && (!resource.TryGetAnnotationsOfType<ContainerLinesCallbackAnnotation>(out var callbackAnnotations) || callbackAnnotations.All(callbackAnnotation => callbackAnnotation.Callback != callback));
+        }
+    }
+
+    /// <summary>
     /// Executes the arguments against the container.
     /// </summary>
     /// <param name="containerResource">The container resource.</param>
