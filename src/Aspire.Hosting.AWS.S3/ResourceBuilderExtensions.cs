@@ -185,14 +185,19 @@ public static partial class ResourceBuilderExtensions
                 var rls = evt.Services.GetRequiredService<ResourceLoggerService>();
                 var logger = rls.GetLogger(evt.Resource);
                 var client = evt.Services.GetRequiredKeyedService<Amazon.S3.IAmazonS3>(evt.Resource.Name);
-                if (profile is not null && client.Config is Amazon.Runtime.ClientConfig config)
+                if (profile is not null)
                 {
                     // get the profile
                     var chain = new Amazon.Runtime.CredentialManagement.CredentialProfileStoreChain();
                     if (chain.TryGetAWSCredentials(profile, out var profileCredentials))
                     {
                         LogChangeProfile(logger, profile);
-                        config.DefaultAWSCredentials = profileCredentials;
+                        var config = client.Config as Amazon.S3.AmazonS3Config;
+                        client.Dispose();
+
+                        client = config is not null
+                            ? new Amazon.S3.AmazonS3Client(profileCredentials, config)
+                            : new(profileCredentials);
                     }
                 }
 
