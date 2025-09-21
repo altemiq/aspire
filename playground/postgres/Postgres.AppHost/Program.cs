@@ -17,6 +17,7 @@ var database = builder
     .WithTle()
     .WithRust()
     .WithDotnet()
+    .WithContainerfileCallback(ProcessContainerfile)
     .WithPgAdmin((container, database) =>
         container
             .WaitFor(database)
@@ -31,3 +32,16 @@ _ = builder.AddProject<Projects.Postgres_ApiService>("apiservice")
     .WaitFor(database);
 
 await builder.Build().RunAsync().ConfigureAwait(false);
+
+static IEnumerable<string> ProcessContainerfile(IEnumerable<string> contents)
+{
+    foreach (var line in contents)
+    {
+        yield return line;
+        if (line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return string.Empty;
+            yield return "# this could add instructions after the FROM statement";
+        }
+    }
+}
