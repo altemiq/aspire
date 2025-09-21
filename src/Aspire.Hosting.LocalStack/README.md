@@ -21,3 +21,5 @@ var localstack = builder
     .AddLocalStack("localstack", regionEndPoint: Amazon.RegionEndpoint.APSoutheast2, services: LocalStackServices.Community.SimpleStorageService)
     .WithDataVolume();
 ```
+
+_*LocalStack logo from [localstack](https://github.com/localstack) github user._
