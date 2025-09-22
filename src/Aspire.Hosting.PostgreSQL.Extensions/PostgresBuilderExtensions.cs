@@ -275,7 +275,7 @@ public static partial class PostgresBuilderExtensions
         // see if this has been set up already
         if (builder.Resource.HasAnnotationOfType<PostgresAnnotation>())
         {
-            // this has already been initialised
+            // this has already been initialized
             return builder;
         }
 
@@ -416,6 +416,11 @@ public static partial class PostgresBuilderExtensions
             }
 
             var contents = GetContainerfileContents(tle, rust, dotnet);
+            if (resource.TryGetAnnotationsOfType<ContainerLinesCallbackAnnotation>(out var callbackAnnotations))
+            {
+                contents = callbackAnnotations.Aggregate(contents, (current, callbackAnnotation) => callbackAnnotation.Callback(current));
+            }
+
             if (materializeBuildArgs)
             {
                 var buildArgs = dockerfileBuild.BuildArguments;
@@ -599,8 +604,6 @@ public static partial class PostgresBuilderExtensions
 
         static IEnumerable<string> GetBuildInstructions(bool tle, bool rust, bool dotnet)
         {
-            var zscaler = ZScaler.IsRunning;
-
             // build the TLE extension
             if (tle)
             {
@@ -608,16 +611,6 @@ public static partial class PostgresBuilderExtensions
                 foreach (var line in GetContainerfileLines($"{nameof(tle)}.build"))
                 {
                     yield return line;
-
-                    if (zscaler && line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // insert ZScaler lines
-                        yield return string.Empty;
-                        foreach (var zscalerLine in ZScaler.GetContainerfileLines())
-                        {
-                            yield return zscalerLine;
-                        }
-                    }
                 }
             }
 
@@ -628,16 +621,6 @@ public static partial class PostgresBuilderExtensions
                 foreach (var line in GetContainerfileLines($"{nameof(rust)}.build"))
                 {
                     yield return line;
-
-                    if (zscaler && line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // insert ZScaler lines
-                        yield return string.Empty;
-                        foreach (var zscalerLine in ZScaler.GetContainerfileLines())
-                        {
-                            yield return zscalerLine;
-                        }
-                    }
                 }
             }
 
@@ -648,16 +631,6 @@ public static partial class PostgresBuilderExtensions
                 foreach (var line in GetContainerfileLines($"{nameof(dotnet)}.build"))
                 {
                     yield return line;
-
-                    if (zscaler && line.StartsWith("FROM", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // insert ZScaler lines
-                        yield return string.Empty;
-                        foreach (var zscalerLine in ZScaler.GetContainerfileLines())
-                        {
-                            yield return zscalerLine;
-                        }
-                    }
                 }
             }
         }
@@ -667,16 +640,6 @@ public static partial class PostgresBuilderExtensions
             // build the actual container
             yield return string.Empty;
             yield return "FROM ${REGISTRY}/${IMAGE}:${TAG}";
-
-            if (ZScaler.IsRunning)
-            {
-                // insert ZScaler lines
-                yield return string.Empty;
-                foreach (var line in ZScaler.GetContainerfileLines())
-                {
-                    yield return line;
-                }
-            }
 
             if (tle)
             {
@@ -785,7 +748,7 @@ public static partial class PostgresBuilderExtensions
     [LoggerMessage(LogLevel.Debug, Message = "Starting process {FileName} {Arguments}")]
     private static partial void LogStartingProcess(ILogger logger, string fileName, string arguments);
 
-    private record PostgresAnnotation : IResourceAnnotation;
+    private abstract record PostgresAnnotation : IResourceAnnotation;
 
     private sealed record TleAnnotation(string Branch) : PostgresAnnotation;
 
