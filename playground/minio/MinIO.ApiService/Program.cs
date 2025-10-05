@@ -97,7 +97,7 @@ await app.RunAsync().ConfigureAwait(false);
 /// <summary>
 /// The program class.
 /// </summary>
-internal partial class Program
+internal sealed partial class Program
 {
     /// <summary>
     /// The RabbitMQ listener.

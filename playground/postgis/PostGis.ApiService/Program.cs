@@ -107,7 +107,7 @@ app.MapGet("/", async (NpgsqlDataSource dataSource, ILogger<Program> logger, Can
                                     value = value[1..];
                                     index = value.IndexOf('"') + 1;
                                     stringBuilder.Append(value[..index]);
-                                    value = value.Length > index ? value[(index + 1)..] : ReadOnlySpan<char>.Empty;
+                                    value = value.Length > index ? value[(index + 1)..] : [];
                                 }
                                 else
                                 {
