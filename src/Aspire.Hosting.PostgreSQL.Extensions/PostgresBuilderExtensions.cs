@@ -47,6 +47,7 @@ public static partial class PostgresBuilderExtensions
             PostgresVersion.V15 => builder.AddPostgres15(name, userName, password, port),
             PostgresVersion.V16 => builder.AddPostgres16(name, userName, password, port),
             PostgresVersion.V17 => builder.AddPostgres17(name, userName, password, port),
+            PostgresVersion.V18 => builder.AddPostgres18(name, userName, password, port),
             _ => throw new ArgumentOutOfRangeException(nameof(version), version, message: null),
         };
 
@@ -149,6 +150,26 @@ public static partial class PostgresBuilderExtensions
     /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V17.Tag" /> tag.
     /// </remarks>
     public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres17(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V17.Tag, name, userName, password, port);
+
+    /// <summary>
+    /// Adds a PostgreSQL resource to the application model. A container is used for local development.
+    /// </summary>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder" />.</param>
+    /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
+    /// <param name="userName">The parameter used to provide the username for the PostgreSQL resource. If <see langword="null" /> a default value will be used.</param>
+    /// <param name="password">The parameter used to provide the administrator password for the PostgreSQL resource. If <see langword="null" /> a random password will be generated.</param>
+    /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}" />.</returns>
+    /// <remarks>
+    /// <para>
+    /// This resource includes built-in health checks. When this resource is referenced as a dependency
+    /// using the <see cref="ResourceBuilderExtensions.WaitFor{T}(IResourceBuilder{T}, IResourceBuilder{IResource})" />
+    /// extension method then the dependent resource will wait until the Postgres resource is able to service
+    /// requests.
+    /// </para>
+    /// This version of the package defaults to the <inheritdoc cref="Postgres.PostgresContainerImageTags.V18.Tag" /> tag.
+    /// </remarks>
+    public static IResourceBuilder<core::Aspire.Hosting.ApplicationModel.PostgresServerResource> AddPostgres18(this IDistributedApplicationBuilder builder, [ResourceName] string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) => AddPostgresWithTag(builder, Postgres.PostgresContainerImageTags.V18.Tag, name, userName, password, port);
 
     /// <summary>
     /// Adds a pgAdmin 4 administration and development platform for PostgreSQL to the application model.

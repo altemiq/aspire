@@ -35,4 +35,9 @@ public enum PostgresVersion
     /// Version 17.
     /// </summary>
     V17,
+
+    /// <summary>
+    /// Version 18.
+    /// </summary>
+    V18,
 }

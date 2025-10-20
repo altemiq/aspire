@@ -104,6 +104,7 @@ public static class PostGisBuilderExtensions
                 PostgresVersion.V15 => "15",
                 PostgresVersion.V16 => "16",
                 PostgresVersion.V17 => "17",
+                PostgresVersion.V18 => "18",
                 _ => throw new ArgumentOutOfRangeException(nameof(postgres), postgres, message: null),
             };
 
