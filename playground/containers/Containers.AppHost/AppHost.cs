@@ -9,11 +9,15 @@ var builder = DistributedApplication.CreateBuilder(args);
 _ = builder.AddContainer("mycontainer", "myimage")
     .WithContainerfile("Context");
 
-_ = builder
+var postgres = builder
     .AddPostGis("database", PostgresVersion.V16, PostGisVersion.V3_5)
     .WithTle()
     .WithRust()
+    .WithTleExamples()
     .WithImageBuildPolicy(ImageBuildPolicy.Default);
+
+postgres.AddDatabase("db1")
+    .WithTleExtension("uuid_v7");
 
 _ = builder.AddContainerBuildEnvironment("container-build");
 

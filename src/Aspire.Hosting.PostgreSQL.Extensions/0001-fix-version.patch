@@ -27,7 +27,7 @@ diff --git a/plrust/src/user_crate/crating.rs b/plrust/src/user_crate/crating.rs
 index d48cc9f..387806c 100644
 --- a/plrust/src/user_crate/crating.rs
 +++ b/plrust/src/user_crate/crating.rs
-@@ -250,6 +250,12 @@ pub(crate) fn cargo_toml_template(crate_name: &str, version_feature: &str) -> to
+@@ -250,6 +250,13 @@ pub(crate) fn cargo_toml_template(crate_name: &str, version_feature: &str) -> to
  
          [dependencies]
          pgrx = { version = trusted_pgrx_version, package = "plrust-trusted-pgrx" }
@@ -37,6 +37,7 @@ index d48cc9f..387806c 100644
 +        icu_properties = { version = "=1.5.1" }
 +        zerovec = { version = "=0.11.0" }
 +        pest = { version = "=2.8.0" }
++        indexmap = { version = "=2.11.4" }
  
          /* User deps added here */
  
