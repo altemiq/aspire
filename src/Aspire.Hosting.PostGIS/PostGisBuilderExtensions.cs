@@ -117,6 +117,7 @@ public static class PostGisBuilderExtensions
                 PostGisVersion.V3_3 => "3.3",
                 PostGisVersion.V3_4 => "3.4",
                 PostGisVersion.V3_5 => "3.5",
+                PostGisVersion.V3_6 => "3.6",
                 _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
             };
 

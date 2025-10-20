@@ -48,4 +48,9 @@ public enum PostGisVersion
     /// Version 3.5.
     /// </summary>
     V3_5,
+
+    /// <summary>
+    /// Version 3.6.
+    /// </summary>
+    V3_6,
 }
