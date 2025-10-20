@@ -193,7 +193,7 @@ public static partial class PostgresBuilderExtensions
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource =>
         builder
             .SetupContainerfile()
-            .WithAnnotation(new TleAnnotation(version ?? "v1.5.1"))
+            .WithAnnotation(new TleAnnotation(version ?? "v1.5.2"))
             .WithTleExamples();
 
     /// <summary>
