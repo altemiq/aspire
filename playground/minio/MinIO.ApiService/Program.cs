@@ -54,7 +54,7 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
             BucketName = BucketName,
             QueueConfigurations =
             [
-                new Amazon.S3.Model.QueueConfiguration
+                new()
                 {
                     Queue = Queue,
                     Events = [

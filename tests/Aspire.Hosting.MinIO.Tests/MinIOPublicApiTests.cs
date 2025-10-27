@@ -6,8 +6,6 @@
 
 namespace Aspire.Hosting.MinIO.Tests;
 
-using TUnit.Assertions.AssertConditions.Throws;
-
 public class MinIOPublicApiTests
 {
     [Test]

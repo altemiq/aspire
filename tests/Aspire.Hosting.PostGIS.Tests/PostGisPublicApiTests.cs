@@ -6,8 +6,6 @@
 
 namespace Aspire.Hosting.PostGIS.Tests;
 
-using TUnit.Assertions.AssertConditions.Throws;
-
 public class PostGisPublicApiTests
 {
     [Test]

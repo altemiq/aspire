@@ -6,8 +6,6 @@
 
 namespace Aspire.Hosting.LocalStack.Tests;
 
-using TUnit.Assertions.AssertConditions.Throws;
-
 public class LocalStackPublicApiTests
 {
     [Test]
