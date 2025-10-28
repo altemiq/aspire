@@ -68,7 +68,25 @@ public static class ContainerRuntime
     /// <param name="serviceProvider">The service provider.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
-    public static async Task<string?> GetSockAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default) => await GetSockAsync(await GetNameAsync(serviceProvider, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+    [Obsolete($"Use {nameof(GetRemoteSockAsync)} instead")]
+    public static Task<string?> GetSockAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default) => GetRemoteSockAsync(serviceProvider, cancellationToken);
+
+    /// <summary>
+    /// Gets the container runtime socket.
+    /// </summary>
+    /// <param name="containerRuntime">The container runtime.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
+    [Obsolete($"Use {nameof(GetRemoteSockAsync)} instead")]
+    public static Task<string?> GetSockAsync(string containerRuntime, CancellationToken cancellationToken = default) => GetRemoteSockAsync(containerRuntime, cancellationToken);
+
+    /// <summary>
+    /// Gets the container runtime socket.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
+    public static async Task<string?> GetRemoteSockAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default) => await GetRemoteSockAsync(await GetNameAsync(serviceProvider, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Gets the container runtime socket.
@@ -77,7 +95,7 @@ public static class ContainerRuntime
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "These are async enumerable")]
-    public static async Task<string?> GetSockAsync(string containerRuntime, CancellationToken cancellationToken = default)
+    public static async Task<string?> GetRemoteSockAsync(string containerRuntime, CancellationToken cancellationToken = default)
     {
         await foreach (var sock in GetCompatibleSocksAsync(containerRuntime, cancellationToken).ConfigureAwait(false))
         {
@@ -223,14 +241,14 @@ public static class ContainerRuntime
                 var dcpDependencyCheckServiceType = typeof(DistributedApplication).Assembly.GetType("Aspire.Hosting.Dcp.IDcpDependencyCheckService") ?? throw new InvalidOperationException();
                 var dcpDependencyCheckService = provider.GetRequiredService(dcpDependencyCheckServiceType);
 
-                if (dcpDependencyCheckServiceType.GetMethod("GetDcpInfoAsync")?.Invoke(dcpDependencyCheckService, [false, cancellationToken]) is Task task)
+                if (dcpDependencyCheckServiceType.GetMethod("GetDcpInfoAsync")?.Invoke(dcpDependencyCheckService, [false, cancellationToken]) is not Task task)
                 {
-                    await task.ConfigureAwait(false);
-
-                    return task.GetType().GetProperty("Result")?.GetValue(task);
+                    return null;
                 }
 
-                return null;
+                await task.ConfigureAwait(false);
+
+                return task.GetType().GetProperty("Result")?.GetValue(task);
             }
         }
     }

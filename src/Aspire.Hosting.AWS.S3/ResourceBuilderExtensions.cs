@@ -138,11 +138,36 @@ public static partial class ResourceBuilderExtensions
     /// <typeparam name="TResource">The type of S3 resource.</typeparam>
     /// <param name="builder">The builder.</param>
     /// <param name="bucketName">The bucket name.</param>
+    /// <param name="configureQueue">The function for configuring the queue.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<TResource> EnsureBucket<TResource>(this IResourceBuilder<TResource> builder, string bucketName, Func<IResource, IServiceProvider, string, string, string?, Task>? configureQueue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+        where TResource : IResource => EnsureBucket(builder, bucketName, GetQueueNameOrNull(builder), configureQueue, eventTypes);
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <typeparam name="TResource">The type of S3 resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
     /// <param name="profile">The profile to use.</param>
     /// <param name="eventTypes">The event types.</param>
     /// <returns>The resource builder.</returns>
     public static IResourceBuilder<TResource> EnsureBucket<TResource>(this IResourceBuilder<TResource> builder, string bucketName, string profile, params IEnumerable<Amazon.S3.EventType> eventTypes)
         where TResource : IResource => EnsureBucket(builder, bucketName, profile, GetQueueNameOrNull(builder), eventTypes);
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <typeparam name="TResource">The type of S3 resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
+    /// <param name="profile">The profile to use.</param>
+    /// <param name="configureQueue">The function for configuring the queue.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<TResource> EnsureBucket<TResource>(this IResourceBuilder<TResource> builder, string bucketName, string profile, Func<IResource, IServiceProvider, string, string, string?, Task>? configureQueue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+        where TResource : IResource => EnsureBucket(builder, bucketName, profile, GetQueueNameOrNull(builder), configureQueue, eventTypes);
 
     /// <summary>
     /// Ensures that the specified bucket exists.
@@ -162,11 +187,38 @@ public static partial class ResourceBuilderExtensions
     /// <typeparam name="TResource">The type of S3 resource.</typeparam>
     /// <param name="builder">The builder.</param>
     /// <param name="bucketName">The bucket name.</param>
+    /// <param name="queue">The optional queue.</param>
+    /// <param name="configureQueue">The function for configuring the queue.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<TResource> EnsureBucket<TResource>(this IResourceBuilder<TResource> builder, string bucketName, IResourceBuilder<ParameterResource>? queue, Func<IResource, IServiceProvider, string, string, string?, Task>? configureQueue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+        where TResource : IResource => EnsureBucket(builder, bucketName, profile: default, queue, configureQueue, eventTypes);
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <typeparam name="TResource">The type of S3 resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
     /// <param name="profile">The profile to use.</param>
     /// <param name="queue">The optional queue.</param>
     /// <param name="eventTypes">The event types.</param>
     /// <returns>The resource builder.</returns>
     public static IResourceBuilder<TResource> EnsureBucket<TResource>(this IResourceBuilder<TResource> builder, string bucketName, string? profile, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+        where TResource : IResource => builder.EnsureBucket(bucketName, profile, queue, configureQueue: null, eventTypes);
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <typeparam name="TResource">The type of S3 resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
+    /// <param name="profile">The profile to use.</param>
+    /// <param name="queue">The optional queue.</param>
+    /// <param name="configureQueue">The function for configuring the queue.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<TResource> EnsureBucket<TResource>(this IResourceBuilder<TResource> builder, string bucketName, string? profile, IResourceBuilder<ParameterResource>? queue, Func<IResource, IServiceProvider, string, string, string?, Task>? configureQueue, params IEnumerable<Amazon.S3.EventType> eventTypes)
         where TResource : IResource
     {
         // ensure we have a lock annotation
@@ -184,22 +236,7 @@ public static partial class ResourceBuilderExtensions
                 // ensure the bucket exists
                 var rls = evt.Services.GetRequiredService<ResourceLoggerService>();
                 var logger = rls.GetLogger(evt.Resource);
-                var client = evt.Services.GetRequiredKeyedService<Amazon.S3.IAmazonS3>(evt.Resource.Name);
-                if (profile is not null)
-                {
-                    // get the profile
-                    var chain = new Amazon.Runtime.CredentialManagement.CredentialProfileStoreChain();
-                    if (chain.TryGetAWSCredentials(profile, out var profileCredentials))
-                    {
-                        LogChangeProfile(logger, profile);
-                        var config = client.Config as Amazon.S3.AmazonS3Config;
-                        client.Dispose();
-
-                        client = config is not null
-                            ? new Amazon.S3.AmazonS3Client(profileCredentials, config)
-                            : new(profileCredentials);
-                    }
-                }
+                var client = evt.Services.GetRequiredKeyedAwsService<Amazon.S3.IAmazonS3>(evt.Resource.Name, profile);
 
                 foreach (var annotation in evt.Resource.Annotations.OfType<BucketAnnotation>())
                 {
@@ -213,7 +250,15 @@ public static partial class ResourceBuilderExtensions
                         LogCreatingBucket(logger, annotationBucketName);
                         try
                         {
-                            await client.EnsureBucketExistsAsync(annotationBucketName).ConfigureAwait(false);
+                            _ = await client
+                                .PutBucketAsync(
+                                    new Amazon.S3.Model.PutBucketRequest
+                                    {
+                                        BucketName = annotationBucketName,
+                                        BucketRegionName = client.Config.AuthenticationRegion,
+                                    },
+                                    cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
@@ -247,7 +292,7 @@ public static partial class ResourceBuilderExtensions
                         BucketName = annotationBucketName,
                         QueueConfigurations =
                         [
-                            new Amazon.S3.Model.QueueConfiguration
+                            new()
                             {
                                 Queue = queueName,
                                 Events = annotationEventTypes,
@@ -264,6 +309,11 @@ public static partial class ResourceBuilderExtensions
                     {
                         LogFailedBucketNotificationCreation(logger, annotationBucketName, queueName, annotationEventTypes, ex);
                         throw;
+                    }
+
+                    if (configureQueue?.Invoke(evt.Resource, evt.Services, annotationBucketName, queueName, profile) is { } task)
+                    {
+                        await task.ConfigureAwait(false);
                     }
                 }
             });
@@ -288,6 +338,22 @@ public static partial class ResourceBuilderExtensions
         return builder.ApplicationBuilder.Resources.OfType<ParameterResource>().FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal)) is { } parameter
             ? builder.ApplicationBuilder.CreateResourceBuilder(parameter)
             : builder.ApplicationBuilder.AddParameter(name, queueName, secret: false);
+    }
+
+    /// <summary>
+    /// Sets the queue name for the resource.
+    /// </summary>
+    /// <typeparam name="TResource">The resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="queueNameGetter">The queue name.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<ParameterResource> WithQueue<TResource>(this IResourceBuilder<TResource> builder, Func<string> queueNameGetter)
+        where TResource : IResource
+    {
+        var name = GetQueueResourceName(builder);
+        return builder.ApplicationBuilder.Resources.OfType<ParameterResource>().FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal)) is { } parameter
+            ? builder.ApplicationBuilder.CreateResourceBuilder(parameter)
+            : builder.ApplicationBuilder.AddParameter(name, queueNameGetter, secret: false);
     }
 
     private static string GetQueueResourceName<TResource>(IResourceBuilder<TResource> builder)

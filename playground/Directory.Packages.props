@@ -17,7 +17,8 @@
 
   <ItemGroup Label="AWS">
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.9" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.8" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.9" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.2" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="2.0.0" />
   </ItemGroup>
 

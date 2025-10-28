@@ -157,6 +157,82 @@ public static class MinIOBuilderExtensions
     }
 
     /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<MinIOServerResource> EnsureBucket(this IResourceBuilder<MinIOServerResource> builder, string bucketName, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    {
+        _ = builder.ApplicationBuilder.AddAmazonS3(builder);
+        if (builder is IResourceBuilder<IResource> resourceBuilder)
+        {
+            resourceBuilder.EnsureBucket(bucketName, eventTypes);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
+    /// <param name="profile">The profile to use.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<MinIOServerResource> EnsureBucket(this IResourceBuilder<MinIOServerResource> builder, string bucketName, string profile, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    {
+        _ = builder.ApplicationBuilder.AddAmazonS3(builder);
+        if (builder is IResourceBuilder<IResource> resourceBuilder)
+        {
+            resourceBuilder.EnsureBucket(bucketName, profile, eventTypes);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
+    /// <param name="queue">The optional queue.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<MinIOServerResource> EnsureBucket(this IResourceBuilder<MinIOServerResource> builder, string bucketName, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    {
+        _ = builder.ApplicationBuilder.AddAmazonS3(builder);
+        if (builder is IResourceBuilder<IResource> resourceBuilder)
+        {
+            resourceBuilder.EnsureBucket(bucketName, queue, eventTypes);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Ensures that the specified bucket exists.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="bucketName">The bucket name.</param>
+    /// <param name="profile">The profile to use.</param>
+    /// <param name="queue">The optional queue.</param>
+    /// <param name="eventTypes">The event types.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<MinIOServerResource> EnsureBucket(this IResourceBuilder<MinIOServerResource> builder, string bucketName, string? profile, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    {
+        _ = builder.ApplicationBuilder.AddAmazonS3(builder);
+        if (builder is IResourceBuilder<IResource> resourceBuilder)
+        {
+            resourceBuilder.EnsureBucket(bucketName, profile, queue, eventTypes);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
     /// Adds a named volume for the data folder to a MinIO container resource.
     /// </summary>
     /// <param name="builder">The resource builder.</param>
@@ -404,8 +480,7 @@ public static class MinIOBuilderExtensions
         }
     }
 
-    private static void UpdateConfiguration<TResource>(TResource resource, IConfigurationBuilder configuration)
-        where TResource : MinIOServerResource
+    private static void UpdateConfiguration(MinIOServerResource resource, IConfigurationBuilder configuration)
     {
         var dictionary = new Dictionary<string, string?>(StringComparer.Ordinal)
         {

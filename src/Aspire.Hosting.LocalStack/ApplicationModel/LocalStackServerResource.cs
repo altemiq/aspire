@@ -11,7 +11,7 @@ namespace Aspire.Hosting.ApplicationModel;
 /// </summary>
 /// <param name="name">The name of the resource.</param>
 /// <param name="region">The region.</param>
-public sealed class LocalStackServerResource(string name, string region) : ContainerResource(name), IResourceWithServiceDiscovery
+public class LocalStackServerResource(string name, string region) : ContainerResource(name), IResourceWithServiceDiscovery
 {
     /// <summary>
     /// Gets the region.

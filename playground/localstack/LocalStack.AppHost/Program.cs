@@ -6,6 +6,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
+const string BucketName = "aspire";
 const string ProfileName = "localstack";
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -22,8 +23,10 @@ var config = builder.AddAWSSDKConfig()
     .WithProfile(ProfileName);
 
 var localstack = builder
-    .AddLocalStack("localstack", regionEndPoint: region, services: LocalStackServices.Community.SimpleStorageService)
-    .WithDataVolume();
+    .AddLocalStack("localstack", regionEndPoint: region, services: LocalStackServices.Community.SimpleStorageService | LocalStackServices.Community.SimpleNotificationService  | LocalStackServices.Community.SimpleQueueService)
+    .WithDataVolume()
+    .WithSqsQueue(ProfileName)
+    .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll);
 
 builder.AddProject<Projects.LocalStack_ApiService>("localstack-apiservice")
     .WithReference(localstack).WaitFor(localstack)
