@@ -43,7 +43,7 @@ var minio = builder
         Amazon.S3.EventType.ObjectCreatedAll,
         Amazon.S3.EventType.ObjectRemovedAll,
         Amazon.S3.EventType.ObjectRestoreAll)
-    .WithMirror("files", FilesBucketName);
+    .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), FilesBucketName);
 
 _ = builder.AddAmazonS3(minio);
 

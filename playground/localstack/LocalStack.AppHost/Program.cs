@@ -7,6 +7,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 const string BucketName = "aspire";
+const string MirrorBucketName = "test-data";
 const string ProfileName = "localstack";
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -23,10 +24,12 @@ var config = builder.AddAWSSDKConfig()
     .WithProfile(ProfileName);
 
 var localstack = builder
-    .AddLocalStack("localstack", regionEndPoint: region, services: LocalStackServices.Community.SimpleStorageService | LocalStackServices.Community.SimpleNotificationService  | LocalStackServices.Community.SimpleQueueService)
+    .AddLocalStack("localstack", regionEndPoint: region, services: LocalStackServices.Community.SimpleStorageService | LocalStackServices.Community.SimpleNotificationService | LocalStackServices.Community.SimpleQueueService)
     .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent)
     .WithSqsQueue(ProfileName)
-    .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll);
+    .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll)
+    .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName);
 
 builder.AddProject<Projects.LocalStack_ApiService>("localstack-apiservice")
     .WithReference(localstack).WaitFor(localstack)

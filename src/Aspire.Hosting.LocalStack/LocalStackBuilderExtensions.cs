@@ -391,6 +391,117 @@ public static partial class LocalStackBuilderExtensions
     }
 
     /// <summary>
+    /// Adds a folder to the LocalStack server resource and executes commands for mirroring into a bucket.
+    /// </summary>
+    /// <typeparam name="T">The type of resource.</typeparam>
+    /// <param name="builder">The builder.</param>
+    /// <param name="source">The source path to bind to container resource.</param>
+    /// <param name="bucketName">The name of the bucket.</param>
+    /// <param name="isReadOnly">Whether the source is read-only.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<T> WithMirror<T>(this IResourceBuilder<T> builder, string source, string bucketName, bool isReadOnly = true)
+        where T : LocalStackServerResource
+    {
+        // ensure we have a lock annotation
+        if (!builder.Resource.HasAnnotationOfType<BucketMirrorLockAnnotation>())
+        {
+            _ = builder.WithAnnotation(new BucketMirrorLockAnnotation());
+        }
+
+        // check to see if we've already added the with bucket mirror handler
+        if (builder.Resource.TryGetLastAnnotation<BucketMirrorLockAnnotation>(out var lockAnnotation)
+            && Interlocked.Exchange(ref lockAnnotation.Check, 1) is 0)
+        {
+            _ = builder.ApplicationBuilder.Eventing.Subscribe<ResourceReadyEvent>(builder.Resource, Mirror);
+        }
+
+        return builder.WithAnnotation(new BucketMirrorAnnotation { Directory = source, BucketName = bucketName, ReadOnly = isReadOnly });
+
+        static async Task Mirror(ResourceReadyEvent e, CancellationToken cancellationToken)
+        {
+            if (e.Resource.TryGetAnnotationsOfType<BucketMirrorAnnotation>(out var annotations))
+            {
+                var logger = e.Services.GetRequiredService<ResourceLoggerService>().GetLogger(e.Resource);
+                foreach (var annotation in annotations)
+                {
+                    var bucketName = annotation.BucketName;
+
+                    var client = e.Services.GetRequiredKeyedAwsService<Amazon.S3.IAmazonS3>(e.Resource.Name);
+                    if (!await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, bucketName).ConfigureAwait(false))
+                    {
+                        LogCreateBucket(logger, bucketName);
+                        await client.PutBucketAsync(new Amazon.S3.Model.PutBucketRequest { BucketName = bucketName, BucketRegionName = client.Config.AuthenticationRegion }, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    var transferUtility = new Amazon.S3.Transfer.TransferUtility(client);
+                    var directory = Path.GetFullPath(annotation.Directory);
+                    var directoryLength = directory.Length + 1;
+
+                    foreach (var filePath in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
+                    {
+                        var key = filePath[directoryLength..].Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        if (await FileNeedsUploadAsync(client, bucketName, key, filePath, cancellationToken).ConfigureAwait(false))
+                        {
+                            LogUploadingFile(logger, key, bucketName);
+                            await transferUtility
+                                .UploadAsync(
+                                    new()
+                                    {
+                                        BucketName = bucketName,
+                                        FilePath = filePath,
+                                        Key = key,
+                                    },
+                                    cancellationToken)
+                                .ConfigureAwait(false);
+                        }
+
+                        static async Task<bool> FileNeedsUploadAsync(Amazon.S3.IAmazonS3 client, string bucketName, string key, string filePath, CancellationToken cancellationToken)
+                        {
+                            try
+                            {
+                                if (await client.GetObjectMetadataAsync(bucketName, key, cancellationToken).ConfigureAwait(false) is { LastModified: { } lastModified })
+                                {
+                                    return File.GetLastWriteTimeUtc(filePath) > lastModified.ToUniversalTime();
+                                }
+
+                                return true;
+                            }
+                            catch (Amazon.S3.AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                            {
+                                // File does not exist in S3
+                                return true;
+                            }
+                        }
+                    }
+
+                    var listResponse = await client.ListObjectsV2Async(new() { BucketName = bucketName }, cancellationToken).ConfigureAwait(false);
+
+                    foreach (var item in listResponse.S3Objects)
+                    {
+                        var localPath = Path.Combine(directory, item.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+                        if (!File.Exists(localPath))
+                        {
+                            LogDeletingFile(logger, item.Key, item.BucketName);
+                            await client.DeleteObjectAsync(item.BucketName, item.Key, cancellationToken).ConfigureAwait(false);
+                        }
+                        else if (!annotation.ReadOnly
+                                 && item is { LastModified: { } lastModified }
+                                 && File.GetLastWriteTimeUtc(localPath) < lastModified.ToUniversalTime())
+                        {
+                            // download this
+                            LogDownloadingFile(logger, item.Key, item.BucketName);
+                            await transferUtility.DownloadAsync(localPath, item.BucketName, item.Key, cancellationToken).ConfigureAwait(false);
+
+                            // ensure we update the last modified time
+                            File.SetLastWriteTimeUtc(localPath, lastModified);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Adds Amazon S3 to the host.
     /// </summary>
     /// <typeparam name="TResource">The type of LocalStack resource.</typeparam>
@@ -452,7 +563,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
     public static IDistributedApplicationBuilder AddAmazonSqs<TResource>(this IDistributedApplicationBuilder builder, TResource resource, AWS.IAWSSDKConfig? configuration = default)
-        where TResource : LocalStackServerResource => AddAmazonSqs(builder, resource,  Uri.UriSchemeHttp, configuration);
+        where TResource : LocalStackServerResource => AddAmazonSqs(builder, resource, Uri.UriSchemeHttp, configuration);
 
     private static IDistributedApplicationBuilder AddAmazonSqs(
         IDistributedApplicationBuilder builder,
@@ -535,4 +646,23 @@ public static partial class LocalStackBuilderExtensions
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Changing AWS profile to {Profile}")]
     private static partial void LogChangeProfile(ILogger logger, string profile);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Creating Bucket {BucketName}")]
+    private static partial void LogCreateBucket(ILogger logger, string bucketName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Transferring {Key} to {BucketName}")]
+    private static partial void LogUploadingFile(ILogger logger, string key, string bucketName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Transferring {Key} from {BucketName}")]
+    private static partial void LogDownloadingFile(ILogger logger, string key, string bucketName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Deleting {Key} from {BucketName}")]
+    private static partial void LogDeletingFile(ILogger logger, string key, string bucketName);
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "This is for locking")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
+    private sealed class BucketMirrorLockAnnotation : IResourceAnnotation
+    {
+        public int Check;
+    }
 }

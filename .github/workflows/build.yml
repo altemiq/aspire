@@ -33,6 +33,9 @@ jobs:
         dotnet-version: |
           8.0.x
           9.0.x
+        source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run local/dotnet-restore@v1
       run: dotnet restore
@@ -69,7 +72,6 @@ jobs:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
       DOTNET_MULTILEVEL_LOOKUP: false
-      Configuration: Release
 
     steps:
     - uses: actions/checkout@v4
@@ -80,12 +82,15 @@ jobs:
     - uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
+        source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run local/dotnet-restore@v1
       run: dotnet restore
 
     - name: Run local/dotnet-build@v1
-      run: dotnet build --no-restore
+      run: dotnet build --configuration Release --no-restore
 
     - name: Run local/get-suffix@v1
       id: suffix
@@ -100,7 +105,13 @@ jobs:
 
     # Pack
     - name: Run local/dotnet-pack@v1
-      run: dotnet pack --output ${{ github.workspace }}/nupkg -property:ComputeSemanticVersion=true -property:SemanticVersionOutputPath=${{ github.workspace }}/versions -property:SemanticVersionIncrement=ReleaseLabel --version-suffix ${{ steps.suffix.outputs.value }}
+      run: >
+        dotnet pack
+        --output ${{ github.workspace }}/nupkg
+        -property:ComputeSemanticVersion=true
+        -property:SemanticVersionOutputPath=${{ github.workspace }}/versions
+        -property:SemanticVersionIncrement=ReleaseLabel
+        --version-suffix ${{ steps.suffix.outputs.value }}
 
     - uses: actions/upload-artifact@v4
       with:
@@ -123,11 +134,6 @@ jobs:
       packages: write
       actions: write
 
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      DOTNET_MULTILEVEL_LOOKUP: false
-
     steps:
     - uses: actions/download-artifact@v4
       with:
@@ -137,7 +143,11 @@ jobs:
     - name: Run local/dotnet-push@v1
       id: push
       working-directory: ${{ github.workspace }}/nupkg
-      run: dotnet nuget push *.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+      run: >
+        dotnet nuget push *.nupkg
+        --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        --api-key ${{ secrets.GITHUB_TOKEN }}
+        --skip-duplicate
       
     # delete-artifact
     - uses: GeekyEggo/delete-artifact@v4
