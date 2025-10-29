@@ -86,11 +86,13 @@ public static partial class ResourceBuilderExtensions
             Environment.SetEnvironmentVariable("AWS_REGION", region, EnvironmentVariableTarget.Process);
         }
 
-        if (dictionary.Count is > 0)
+        if (dictionary.Count is 0)
         {
-            RefreshEnvironmentVariables(builder.Configuration);
-            _ = builder.Configuration.AddInMemoryCollection(dictionary);
+            return builder;
         }
+
+        RefreshEnvironmentVariables(builder.Configuration);
+        _ = builder.Configuration.AddInMemoryCollection(dictionary);
 
         return builder;
     }

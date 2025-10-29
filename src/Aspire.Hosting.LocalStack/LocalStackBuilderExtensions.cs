@@ -572,27 +572,38 @@ public static partial class LocalStackBuilderExtensions
         AWS.IAWSSDKConfig? configuration = default,
         Action<IConfigurationBuilder>? configureConfiguration = default)
     {
-        _ = builder.Services.AddKeyedAWSService<Amazon.SQS.IAmazonSQS>(resource.Name);
-
-        _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
+        // ensure we have a lock annotation
+        if (!resource.HasAnnotationOfType<AddAmazonSqsLockAnnotation>())
         {
-            Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_SQS", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
+            resource.Annotations.Add(new AddAmazonSqsLockAnnotation());
+        }
 
-            RefreshEnvironmentVariables(builder.Configuration);
+        // check to see if we've already added the AddAmazonSqs handler
+        if (resource.TryGetLastAnnotation<AddAmazonSqsLockAnnotation>(out var lockAnnotation)
+            && Interlocked.Exchange(ref lockAnnotation.Check, 1) is 0)
+        {
+            _ = builder.Services.TryAddKeyedAWSService<Amazon.SQS.IAmazonSQS>(resource.Name);
 
-            configureConfiguration?.Invoke(builder.Configuration);
-
-            return Task.CompletedTask;
-
-            static void RefreshEnvironmentVariables(IConfigurationRoot configurationRoot)
+            _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
             {
-                foreach (var provider in configurationRoot.Providers.OfType<Microsoft.Extensions.Configuration.EnvironmentVariables.EnvironmentVariablesConfigurationProvider>())
+                Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_SQS", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
+
+                RefreshEnvironmentVariables(builder.Configuration);
+
+                configureConfiguration?.Invoke(builder.Configuration);
+
+                return Task.CompletedTask;
+
+                static void RefreshEnvironmentVariables(IConfigurationRoot configurationRoot)
                 {
-                    provider.Load();
+                    foreach (var provider in configurationRoot.Providers.OfType<Microsoft.Extensions.Configuration.EnvironmentVariables.EnvironmentVariablesConfigurationProvider>())
+                    {
+                        provider.Load();
+                    }
                 }
-            }
-        });
+            });
+        }
 
         if (configuration is not null)
         {
@@ -662,6 +673,13 @@ public static partial class LocalStackBuilderExtensions
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "This is for locking")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
     private sealed class BucketMirrorLockAnnotation : IResourceAnnotation
+    {
+        public int Check;
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "This is for locking")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
+    private sealed class AddAmazonSqsLockAnnotation : IResourceAnnotation
     {
         public int Check;
     }

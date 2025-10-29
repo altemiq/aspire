@@ -366,27 +366,37 @@ public static partial class ResourceBuilderExtensions
         AWS.IAWSSDKConfig? configuration = default,
         Action<IConfigurationBuilder>? configureConfiguration = default)
     {
-        _ = builder.Services.AddKeyedAWSService<Amazon.S3.IAmazonS3>(resource.Name);
-
-        _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
+        // ensure we have a lock annotation
+        if (!resource.HasAnnotationOfType<AddAmazonS3LockAnnotation>())
         {
-            Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_S3", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
+            resource.Annotations.Add(new AddAmazonS3LockAnnotation());
+        }
 
-            RefreshEnvironmentVariables(builder.Configuration);
-
-            configureConfiguration?.Invoke(builder.Configuration);
-
-            return Task.CompletedTask;
-
-            static void RefreshEnvironmentVariables(IConfigurationRoot configurationRoot)
+        // check to see if we've already added the AddAmazonS3 handler
+        if (resource.TryGetLastAnnotation<AddAmazonS3LockAnnotation>(out var lockAnnotation)
+            && Interlocked.Exchange(ref lockAnnotation.Check, 1) is 0)
+        {
+            _ = builder.Services.TryAddKeyedAWSService<Amazon.S3.IAmazonS3>(resource.Name);
+            _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
             {
-                foreach (var provider in configurationRoot.Providers.OfType<Microsoft.Extensions.Configuration.EnvironmentVariables.EnvironmentVariablesConfigurationProvider>())
+                Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_S3", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
+
+                RefreshEnvironmentVariables(builder.Configuration);
+
+                configureConfiguration?.Invoke(builder.Configuration);
+
+                return Task.CompletedTask;
+
+                static void RefreshEnvironmentVariables(IConfigurationRoot configurationRoot)
                 {
-                    provider.Load();
+                    foreach (var provider in configurationRoot.Providers.OfType<Microsoft.Extensions.Configuration.EnvironmentVariables.EnvironmentVariablesConfigurationProvider>())
+                    {
+                        provider.Load();
+                    }
                 }
-            }
-        });
+            });
+        }
 
         if (configuration is not null)
         {
@@ -425,6 +435,13 @@ public static partial class ResourceBuilderExtensions
     [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "This is for locking")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
     private sealed class EnsureBucketLockAnnotation : IResourceAnnotation
+    {
+        public int Check;
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "This is for locking")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This is required")]
+    private sealed class AddAmazonS3LockAnnotation : IResourceAnnotation
     {
         public int Check;
     }

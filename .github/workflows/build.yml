@@ -98,7 +98,7 @@ jobs:
           suffix=beta;
         fi
 
-        echo "value=$suffix.{{ github.run_number }}.{{ github.run_attempt }}" >> $GITHUB_OUTPUT
+        echo "value=$suffix.${{ github.run_number }}.${{ github.run_attempt }}" >> $GITHUB_OUTPUT
 
     # Pack
     - name: Run local/dotnet-pack@v1
@@ -114,13 +114,6 @@ jobs:
         if-no-files-found: error
         retention-days: 7
         path: ${{ github.workspace }}/nupkg
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Versions
-        if-no-files-found: error
-        retention-days: 7
-        path: ${{ github.workspace }}/versions
 
   push:
     runs-on: ubuntu-latest
