@@ -89,9 +89,6 @@ jobs:
     - name: Run local/dotnet-restore@v1
       run: dotnet restore
 
-    - name: Run local/dotnet-build@v1
-      run: dotnet build --configuration Release --no-restore
-
     - name: Run local/get-suffix@v1
       id: suffix
       run: |
@@ -101,16 +98,14 @@ jobs:
           suffix=beta;
         fi
 
-        echo "value=$suffix" >> $GITHUB_OUTPUT
+        echo "value=$suffix.{{ github.run_number }}.{{ github.run_attempt }}" >> $GITHUB_OUTPUT
 
     # Pack
     - name: Run local/dotnet-pack@v1
       run: >
         dotnet pack
+        --no-restore
         --output ${{ github.workspace }}/nupkg
-        -property:ComputeSemanticVersion=true
-        -property:SemanticVersionOutputPath=${{ github.workspace }}/versions
-        -property:SemanticVersionIncrement=ReleaseLabel
         --version-suffix ${{ steps.suffix.outputs.value }}
 
     - uses: actions/upload-artifact@v4

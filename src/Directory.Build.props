@@ -5,7 +5,7 @@
     <IsPackable>true</IsPackable>
     <Authors>rsking,jposey</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version Condition=" '$(Version)' == '' and '$(ComputeSemanticVersion)' != 'true' ">$(VerAspire_Hosting)</Version>
+    <VersionPrefix>$(VerAspire_Hosting)</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
