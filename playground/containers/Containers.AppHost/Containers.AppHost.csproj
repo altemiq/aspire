@@ -1,5 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Sdk Name="Aspire.AppHost.Sdk" Version="$(VerAspire_Hosting)" />
+<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
   
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,10 +7,6 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>5bef0ff0-85cf-4d5a-b610-61504286a9ab</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostGIS\Aspire.Hosting.PostGIS.csproj" IsAspireProjectResource="false" />

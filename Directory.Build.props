@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <NetCurrent>net8.0</NetCurrent>
-    <NetNext>net9.0</NetNext>
+    <NetNext>net10.0</NetNext>
     <LangVersion>preview</LangVersion>
     <SharedDir>$(MSBuildThisFileDirectory)/src/Shared/</SharedDir>
     <ImplicitUsings>enable</ImplicitUsings>

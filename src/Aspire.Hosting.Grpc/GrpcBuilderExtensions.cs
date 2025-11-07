@@ -197,9 +197,10 @@ public static class GrpcBuilderExtensions
 
         var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
 
-        _ = resource.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource.Resource, (_, _) =>
+        _ = resource.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource.Resource, (evt, cancellationToken) =>
         {
-            SetArguments(builder, resource, endpointType);
+            var context = evt.Services.GetRequiredService<DistributedApplicationExecutionContext>();
+            SetArguments(context, builder, resource, endpointType);
             return Task.CompletedTask;
         });
 
@@ -251,30 +252,35 @@ public static class GrpcBuilderExtensions
             }
         }
 
-        static void SetArguments(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
+        static void SetArguments(DistributedApplicationExecutionContext context, IResourceBuilder<TResource> source, IResourceBuilder<TGrpcResource> grpc, string endpointType)
         {
-            _ = resource.WithArgs(context =>
+            _ = grpc.WithArgs(async ctx =>
             {
-                foreach (var arg in GetArgs(builder, resource, endpointType))
+                await foreach (var arg in GetArgsAsync(context, source, grpc, endpointType, ctx.CancellationToken).ConfigureAwait(false))
                 {
-                    context.Args.Add(arg);
+                    ctx.Args.Add(arg);
                 }
             });
 
-            static IEnumerable<string> GetArgs(IResourceBuilder<TResource> builder, IResourceBuilder<TGrpcResource> resource, string endpointType)
+            static async IAsyncEnumerable<string> GetArgsAsync(
+                DistributedApplicationExecutionContext context,
+                IResourceBuilder<TResource> source,
+                IResourceBuilder<TGrpcResource> grpc,
+                string endpointType,
+                [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
             {
                 const int Timeout = 3600;
 
                 // get the port
-                var endpoint = resource.GetEndpoint(endpointType);
-                var port = endpoint.TargetPort ?? endpoint.Port;
+                var grpcEndpoint = grpc.GetEndpoint(endpointType);
+                var port = grpcEndpoint.TargetPort ?? grpcEndpoint.Port;
 
                 yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"-port={port}");
                 yield return $"-connect-fail-fast={bool.FalseString}";
                 yield return $"-connect-timeout={Timeout}";
                 yield return "-vv";
 
-                if (resource.Resource.TryGetAnnotationsOfType<GrpcImportPathAnnotation>(out var importPathAnnotations))
+                if (grpc.Resource.TryGetAnnotationsOfType<GrpcImportPathAnnotation>(out var importPathAnnotations))
                 {
                     foreach (var importPathAnnotation in importPathAnnotations)
                     {
@@ -282,34 +288,39 @@ public static class GrpcBuilderExtensions
                     }
                 }
 
-                if (resource.Resource.TryGetLastAnnotation<GrpcBasePathAnnotation>(out var basePathAnnotation))
+                if (grpc.Resource.TryGetLastAnnotation<GrpcBasePathAnnotation>(out var basePathAnnotation))
                 {
                     yield return $"-base-path={basePathAnnotation.Path}";
                 }
 
-                endpoint = builder.GetEndpoint(endpointType);
-                if (string.Equals(endpoint.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+                var sourceEndpoint = source.GetEndpoint(endpointType);
+                if (string.Equals(sourceEndpoint.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
                 {
                     yield return $"-plaintext={bool.TrueString}";
                 }
 
-                var host = resource.Resource is ContainerResource containerResource
-                    ? GetHost(endpoint, containerResource)
-                    : endpoint.Host;
+                var host = await GetHostUriAsync(context, sourceEndpoint, grpc.Resource, cancellationToken).ConfigureAwait(false);
 
-                yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{host}:{endpoint.Port}");
-
-                static string GetHost(EndpointReference endpoint, ContainerResource containerResource)
+                yield return host.GetComponents(UriComponents.HostAndPort, UriFormat.UriEscaped);
+                static async ValueTask<Uri> GetHostUriAsync(DistributedApplicationExecutionContext context, EndpointReference endpoint, IResource? containerResource, CancellationToken cancellationToken = default)
                 {
-                    var hostName = containerResource
-                        .GetEndpoints()
-                        .Select(ep => ep.ContainerHost)
-                        .First();
+                    IValueProvider hostUrl = new HostUrl(endpoint.Url);
+                    var valueProviderContext = new ValueProviderContext
+                    {
+                        ExecutionContext = context,
+                        Network = containerResource is ContainerResource
+                            ? KnownNetworkIdentifiers.DefaultAspireContainerNetwork
+                            : default,
+                        Caller = containerResource,
+                    };
 
-                    return endpoint.Host
-                        .Replace("localhost", hostName, StringComparison.OrdinalIgnoreCase)
-                        .Replace("127.0.0.1", hostName, StringComparison.Ordinal)
-                        .Replace("[::1]", hostName, StringComparison.Ordinal);
+                    if (await hostUrl.GetValueAsync(valueProviderContext, cancellationToken).ConfigureAwait(false) is { } value
+                        && Uri.TryCreate(value, UriKind.Absolute, out var uri))
+                    {
+                        return uri;
+                    }
+
+                    return new(endpoint.Url);
                 }
             }
         }

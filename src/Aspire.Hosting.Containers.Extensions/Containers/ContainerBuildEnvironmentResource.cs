@@ -4,8 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-#pragma warning disable ASPIRECOMPUTE001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-#pragma warning disable ASPIREPUBLISHERS001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable ASPIREPIPELINES001, ASPIREPIPELINES003
 
 namespace Aspire.Hosting.Containers;
 
@@ -21,14 +20,28 @@ public sealed class ContainerBuildEnvironmentResource : Resource, IComputeEnviro
     /// </summary>
     /// <param name="name">The resource name.</param>
     public ContainerBuildEnvironmentResource(string name)
-        : base(name) => this.Annotations.Add(new PublishingCallbackAnnotation(this.PublishAsync));
+        : base(name) => this.Annotations.Add(new Pipelines.PipelineStepAnnotation(_ =>
+    {
+        var steps = new List<Pipelines.PipelineStep>();
+
+        var publishStep = new Pipelines.PipelineStep
+        {
+            Name = $"publish-{this.Name}",
+            Action = this.PublishAsync,
+        };
+
+        publishStep.RequiredBy(Pipelines.WellKnownPipelineSteps.Publish);
+        steps.Add(publishStep);
+
+        return steps;
+    }));
 
     /// <summary>
     /// Gets the resource mapping.
     /// </summary>
     internal Dictionary<IResource, ContainerBuildServiceResource> ResourceMapping { get; } = new(new ResourceNameComparer());
 
-    private Task PublishAsync(PublishingContext context)
+    private Task PublishAsync(Pipelines.PipelineStepContext context)
     {
         var imageBuilder = context.Services.GetRequiredService<Publishing.IResourceContainerImageBuilder>();
 

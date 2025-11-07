@@ -32,7 +32,7 @@ jobs:
       with:
         dotnet-version: |
           8.0.x
-          9.0.x
+          10.0.x
         source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +44,6 @@ jobs:
     - name: Run local/dotnet-test@v1
       run: >
         dotnet test
-        --
         --results-directory ${{ github.workspace }}/coverage/results
         --coverage
         --coverage-output-format cobertura
@@ -81,7 +80,7 @@ jobs:
     # Install the .NET workload
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
         source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

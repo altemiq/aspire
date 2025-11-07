@@ -10,6 +10,7 @@ namespace Aspire.Hosting.Containers;
 
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable ASPIREPIPELINES003
 /// <summary>
 /// Represents a context for building containers for a distributed application.
 /// </summary>
@@ -52,3 +53,4 @@ internal sealed class ContainerBuildPublishingContext(
         }
     }
 }
+#pragma warning restore ASPIREPIPELINES003

@@ -31,7 +31,7 @@ public static class ContainerBuildEnvironmentExtensions
         ArgumentException.ThrowIfNullOrEmpty(name);
 
         var resource = new ContainerBuildEnvironmentResource(name);
-        builder.Services.TryAddLifecycleHook<ContainerBuildInfrastructure>();
+        builder.Services.TryAddEventingSubscriber<ContainerBuildInfrastructure>();
         if (builder.ExecutionContext.IsRunMode)
         {
             // Return a builder that isn't added to the top-level application builder so it doesn't surface as a resource.
