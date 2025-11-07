@@ -124,7 +124,7 @@ internal sealed partial class Program
                 await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken).ConfigureAwait(false);
             };
 
-            // this consumer tag identifies the subscription when it has to be cancelled
+            // this consumer tag identifies the subscription when it has to be canceled
             var consumerTag = await channel.BasicConsumeAsync(Name, autoAck: false, consumer, stoppingToken).ConfigureAwait(false);
 
             await stoppingToken.ConfigureAwait(Altemiq.Threading.CancellationTokenConfigureAwaitOptions.None);

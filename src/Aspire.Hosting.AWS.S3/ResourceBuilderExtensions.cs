@@ -379,7 +379,7 @@ public static partial class ResourceBuilderExtensions
             _ = builder.Services.TryAddKeyedAWSService<Amazon.S3.IAmazonS3>(resource.Name);
             _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
             {
-                Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_S3", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable($"{Amazon.Util.EnvironmentVariables.SERVICE_SPECIFIC_ENDPOINT_ENVIRONMENT_VARIABLE_PREFIX}{Amazon.S3.AmazonS3Config.ServiceId}", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
 
                 RefreshEnvironmentVariables(builder.Configuration);

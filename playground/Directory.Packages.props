@@ -6,7 +6,7 @@
   </PropertyGroup>
   
   <ItemGroup Label="Altemiq">
-    <PackageVersion Include="Altemiq" Version="2.0.0-beta.1" />
+    <PackageVersion Include="Altemiq" Version="2.0.0-beta.4" />
   </ItemGroup>
 
   <ItemGroup Label="Aspire">
@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.9" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.9" />
-    <PackageVersion Include="AWSSDK.SQS" Version="4.0.2" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.10" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.11" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.2.1" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="2.0.0" />
   </ItemGroup>
 
@@ -45,7 +45,7 @@
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.12.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.13.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.13.0-beta.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.13.0" />

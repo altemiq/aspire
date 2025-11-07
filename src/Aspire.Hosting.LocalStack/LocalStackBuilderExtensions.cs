@@ -586,7 +586,7 @@ public static partial class LocalStackBuilderExtensions
 
             _ = builder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource, (_, _) =>
             {
-                Environment.SetEnvironmentVariable("AWS_ENDPOINT_URL_SQS", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable($"{Amazon.Util.EnvironmentVariables.SERVICE_SPECIFIC_ENDPOINT_ENVIRONMENT_VARIABLE_PREFIX}{Amazon.SQS.AmazonSQSConfig.ServiceId}", resource.GetEndpoint(endpointName).Url, EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable(Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED, bool.TrueString, EnvironmentVariableTarget.Process);
 
                 RefreshEnvironmentVariables(builder.Configuration);

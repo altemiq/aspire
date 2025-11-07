@@ -84,7 +84,7 @@ public static class MinIOBuilderExtensions
         _ = builder.WithEnvironment(context =>
         {
             // environment config
-            context.EnvironmentVariables["AWS_ENDPOINT_URL_S3"] = source.Resource.GetEndpoint(ApiEndpointName);
+            context.EnvironmentVariables[$"{Amazon.Util.EnvironmentVariables.SERVICE_SPECIFIC_ENDPOINT_ENVIRONMENT_VARIABLE_PREFIX}{Amazon.S3.AmazonS3Config.ServiceId}"] = source.Resource.GetEndpoint(ApiEndpointName);
 
             // only set the access keys if we do not have profiles set
             if (!source.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out _))
