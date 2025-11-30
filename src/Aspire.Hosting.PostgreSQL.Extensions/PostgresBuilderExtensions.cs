@@ -691,7 +691,6 @@ public static partial class PostgresBuilderExtensions
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
     private static IResourceBuilder<T> SetupTleExtensions<T>(this IResourceBuilder<T> builder)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource
     {
