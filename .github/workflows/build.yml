@@ -25,10 +25,9 @@ jobs:
       DOTNET_MULTILEVEL_LOOKUP: false
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
-    # Install .NET
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: |
           8.0.x
@@ -40,7 +39,6 @@ jobs:
     - name: Run local/dotnet-restore@v1
       run: dotnet restore
 
-    # Test
     - name: Run local/dotnet-test@v1
       run: >
         dotnet test
@@ -59,7 +57,7 @@ jobs:
       shell: pwsh
       run: Get-Content '${{ github.workspace }}/coverage/reports/SummaryGithub.md' >> $env:GITHUB_STEP_SUMMARY
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: coverage_${{ matrix.os }}
         path: ${{ github.workspace }}/coverage/reports
@@ -73,12 +71,11 @@ jobs:
       DOTNET_MULTILEVEL_LOOKUP: false
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0 # get all history here, for semantic versioning
 
-    # Install the .NET workload
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 10.0.x
         source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
@@ -99,7 +96,6 @@ jobs:
 
         echo "value=$suffix.${{ github.run_number }}.${{ github.run_attempt }}" >> $GITHUB_OUTPUT
 
-    # Pack
     - name: Run local/dotnet-pack@v1
       run: >
         dotnet pack
@@ -107,7 +103,7 @@ jobs:
         --output ${{ github.workspace }}/nupkg
         --version-suffix ${{ steps.suffix.outputs.value }}
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: NuPkg
         if-no-files-found: error
@@ -122,7 +118,7 @@ jobs:
       actions: write
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v6
       with:
         name: NuPkg
         path: ${{ github.workspace }}/nupkg
@@ -136,8 +132,7 @@ jobs:
         --api-key ${{ secrets.GITHUB_TOKEN }}
         --skip-duplicate
       
-    # delete-artifact
-    - uses: GeekyEggo/delete-artifact@v4
+    - uses: GeekyEggo/delete-artifact@v5
       if: ${{ steps.push.conclusion == 'success' }}
       with:
         name: NuPkg

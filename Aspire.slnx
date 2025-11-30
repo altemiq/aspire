@@ -1,0 +1,77 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/build.yml" />
+  </Folder>
+  <Folder Name="/Hosting/">
+    <File Path="src/Directory.Build.props" />
+    <File Path="src/Directory.Build.targets" />
+    <File Path="src/Directory.Packages.props" />
+    <Project Path="src/Aspire.Hosting.AWS.Configuration/Aspire.Hosting.AWS.Configuration.csproj" />
+    <Project Path="src/Aspire.Hosting.AWS.S3/Aspire.Hosting.AWS.S3.csproj" />
+    <Project Path="src/Aspire.Hosting.Containers.Extensions/Aspire.Hosting.Containers.Extensions.csproj" />
+    <Project Path="src/Aspire.Hosting.Grpc/Aspire.Hosting.Grpc.csproj" />
+    <Project Path="src/Aspire.Hosting.LocalStack/Aspire.Hosting.LocalStack.csproj" />
+    <Project Path="src/Aspire.Hosting.MapServer/Aspire.Hosting.MapServer.csproj" />
+    <Project Path="src/Aspire.Hosting.MinIO/Aspire.Hosting.MinIO.csproj" />
+    <Project Path="src/Aspire.Hosting.PostGIS/Aspire.Hosting.PostGIS.csproj" />
+    <Project Path="src/Aspire.Hosting.PostgreSQL.Extensions/Aspire.Hosting.PostgreSQL.Extensions.csproj" />
+  </Folder>
+  <Folder Name="/playground/">
+    <File Path="playground/.editorconfig" />
+    <File Path="playground/Directory.Build.props" />
+    <File Path="playground/Directory.Build.targets" />
+    <File Path="playground/Directory.Packages.props" />
+    <Project Path="playground/Playground.ServiceDefaults/Playground.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/playground/containers/">
+    <Project Path="playground/containers/Containers.AppHost/Containers.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/playground/grpc/">
+    <Project Path="playground/grpc/Grpc.ApiService/Grpc.ApiService.csproj" />
+    <Project Path="playground/grpc/Grpc.AppHost/Grpc.AppHost.csproj" />
+    <Project Path="playground/grpc/Grpc.WellKnown/Grpc.WellKnown.csproj" />
+  </Folder>
+  <Folder Name="/playground/localstack/">
+    <Project Path="playground/localstack/LocalStack.ApiService/LocalStack.ApiService.csproj" />
+    <Project Path="playground/localstack/LocalStack.AppHost/LocalStack.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/playground/minio/">
+    <Project Path="playground/minio/MinIO.ApiService/MinIO.ApiService.csproj" />
+    <Project Path="playground/minio/MinIO.AppHost/MinIO.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/playground/postgis/">
+    <Project Path="playground/postgis/PostGis.ApiService/PostGis.ApiService.csproj" />
+    <Project Path="playground/postgis/PostGis.AppHost/PostGis.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/playground/postgres/">
+    <Project Path="playground/postgres/Postgres.ApiService/Postgres.ApiService.csproj" />
+    <Project Path="playground/postgres/Postgres.AppHost/Postgres.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE.md" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="Versions.props" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <File Path="tests/Directory.Build.targets" />
+    <File Path="tests/Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/tests/Hosting/">
+    <Project Path="tests/Aspire.Hosting.LocalStack.Tests/Aspire.Hosting.LocalStack.Tests.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="tests/Aspire.Hosting.MinIO.Tests/Aspire.Hosting.MinIO.Tests.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="tests/Aspire.Hosting.PostGIS.Tests/Aspire.Hosting.PostGIS.Tests.csproj">
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+  </Folder>
+</Solution>
