@@ -4,19 +4,18 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-#pragma warning disable ASPIREPUBLISHERS001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable ASPIRECONTAINERRUNTIME001, ASPIREPIPELINES003
 
 namespace Aspire.Hosting.Containers;
 
 using Microsoft.Extensions.Logging;
 
-#pragma warning disable ASPIREPIPELINES003
 /// <summary>
 /// Represents a context for building containers for a distributed application.
 /// </summary>
 internal sealed class ContainerBuildPublishingContext(
     DistributedApplicationExecutionContext executionContext,
-    Publishing.IResourceContainerImageBuilder imageBuilder,
+    Publishing.IContainerRuntime imageBuilder,
     ILogger logger,
     CancellationToken cancellationToken = default)
 {
@@ -45,12 +44,25 @@ internal sealed class ContainerBuildPublishingContext(
 
     private async Task BuildCoreAsync(DistributedApplicationModel model, ContainerBuildEnvironmentResource environment)
     {
-        foreach (var serviceResource in model.Resources
+        foreach (var targetResource in model.Resources
                      .Select(resource => resource.GetDeploymentTargetAnnotation(environment)?.DeploymentTarget)
-                     .OfType<ContainerBuildServiceResource>())
+                     .OfType<ContainerBuildServiceResource>()
+                     .Select(serviceResource => serviceResource.TargetResource))
         {
-            await imageBuilder.BuildImageAsync(serviceResource.TargetResource, options: default, cancellationToken).ConfigureAwait(false);
+            if (!targetResource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerBuildAnnotation))
+            {
+                continue;
+            }
+
+            var options = new Publishing.ContainerImageBuildOptions();
+            await imageBuilder.BuildImageAsync(
+                dockerBuildAnnotation.ContextPath,
+                dockerBuildAnnotation.DockerfilePath,
+                options,
+                dockerBuildAnnotation.BuildArguments.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString(), StringComparer.Ordinal),
+                dockerBuildAnnotation.BuildSecrets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString(), StringComparer.Ordinal),
+                dockerBuildAnnotation.Stage,
+                cancellationToken).ConfigureAwait(false);
         }
     }
 }
-#pragma warning restore ASPIREPIPELINES003

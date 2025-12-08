@@ -384,11 +384,6 @@ public static partial class ContainerResourceExtensions
 
             containerRuntime ??= await ContainerRuntime.GetNameAsync(application.Services, cancellationToken).ConfigureAwait(false);
 
-            if (resource is IResourceWithEnvironment env)
-            {
-                _ = await env.GetEnvironmentVariableValuesAsync().ConfigureAwait(false);
-            }
-
             // get the docker information
             if (!resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuildAnnotation))
             {

@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-#pragma warning disable ASPIREPIPELINES001, ASPIREPIPELINES003
+#pragma warning disable ASPIRECONTAINERRUNTIME001, ASPIREPIPELINES001
 
 namespace Aspire.Hosting.Containers;
 
@@ -43,7 +43,7 @@ public sealed class ContainerBuildEnvironmentResource : Resource, IComputeEnviro
 
     private Task PublishAsync(Pipelines.PipelineStepContext context)
     {
-        var imageBuilder = context.Services.GetRequiredService<Publishing.IResourceContainerImageBuilder>();
+        var imageBuilder = context.Services.GetRequiredService<Publishing.IContainerRuntime>();
 
         var dockerComposePublishingContext = new ContainerBuildPublishingContext(
             context.ExecutionContext,

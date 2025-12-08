@@ -68,24 +68,6 @@ public static class ContainerRuntime
     /// <param name="serviceProvider">The service provider.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
-    [Obsolete($"Use {nameof(GetRemoteSockAsync)} instead")]
-    public static Task<string?> GetSockAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default) => GetRemoteSockAsync(serviceProvider, cancellationToken);
-
-    /// <summary>
-    /// Gets the container runtime socket.
-    /// </summary>
-    /// <param name="containerRuntime">The container runtime.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
-    [Obsolete($"Use {nameof(GetRemoteSockAsync)} instead")]
-    public static Task<string?> GetSockAsync(string containerRuntime, CancellationToken cancellationToken = default) => GetRemoteSockAsync(containerRuntime, cancellationToken);
-
-    /// <summary>
-    /// Gets the container runtime socket.
-    /// </summary>
-    /// <param name="serviceProvider">The service provider.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The container runtime socket if found; otherwise <see langword="null"/>.</returns>
     public static async Task<string?> GetRemoteSockAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken = default) => await GetRemoteSockAsync(await GetNameAsync(serviceProvider, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
 
     /// <summary>
