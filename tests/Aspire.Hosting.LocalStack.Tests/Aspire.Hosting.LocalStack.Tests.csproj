@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\playground\localstack\LocalStack.AppHost\LocalStack.AppHost.csproj" />
     <ProjectReference Include="..\..\src\Aspire.Hosting.LocalStack\Aspire.Hosting.LocalStack.csproj" />
   </ItemGroup>
 

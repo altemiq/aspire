@@ -67,4 +67,28 @@ _ = app.MapGet("/", async (Amazon.SQS.IAmazonSQS sqs, Amazon.S3.IAmazonS3 s3, Ca
     throw new InvalidOperationException("Failed to receive SQS messages");
 });
 
+_ = app.MapGet("buckets", async (Amazon.S3.IAmazonS3 s3, CancellationToken cancellationToken) =>
+{
+    var response = await s3.ListBucketsAsync(cancellationToken).ConfigureAwait(false);
+
+    if (response.Buckets is { Count: > 0 } buckets)
+    {
+        return string.Join(Environment.NewLine, buckets.Select(x => x.BucketName));
+    }
+
+    return "Failed to find any buckets";
+});
+
+_ = app.MapGet("/test-data", async (Amazon.S3.IAmazonS3 s3, CancellationToken cancellationToken) =>
+{
+    var response = await s3.ListObjectsV2Async(new() { BucketName = "test-data", Prefix = "bad.txt" }, cancellationToken).ConfigureAwait(false);
+
+    if (response.S3Objects is { Count: > 0 } objects)
+    {
+        return string.Join(Environment.NewLine, objects.Select(x => x.Key));
+    }
+
+    return "Failed to find anything in test-data";
+});
+
 await app.RunAsync().ConfigureAwait(false);
