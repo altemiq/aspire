@@ -1,5 +1,6 @@
 namespace Aspire.Hosting.LocalStack.Tests;
 
+[LinuxDocker]
 public class IntegrationTests
 {
     [ClassDataSource<Data.S3ClientDataClass>]
