@@ -10,6 +10,7 @@
     <Project Path="src/Aspire.Hosting.AWS.Configuration/Aspire.Hosting.AWS.Configuration.csproj" />
     <Project Path="src/Aspire.Hosting.AWS.S3/Aspire.Hosting.AWS.S3.csproj" />
     <Project Path="src/Aspire.Hosting.Containers.Extensions/Aspire.Hosting.Containers.Extensions.csproj" />
+    <Project Path="src/Aspire.Hosting.Garage/Aspire.Hosting.Garage.csproj" />
     <Project Path="src/Aspire.Hosting.Grpc/Aspire.Hosting.Grpc.csproj" />
     <Project Path="src/Aspire.Hosting.LocalStack/Aspire.Hosting.LocalStack.csproj" />
     <Project Path="src/Aspire.Hosting.MapServer/Aspire.Hosting.MapServer.csproj" />
@@ -26,6 +27,10 @@
   </Folder>
   <Folder Name="/playground/containers/">
     <Project Path="playground/containers/Containers.AppHost/Containers.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/playground/garage/">
+    <Project Path="playground/garage/Garage.ApiService/Garage.ApiService.csproj" />
+    <Project Path="playground/garage/Garage.AppHost/Garage.AppHost.csproj" />
   </Folder>
   <Folder Name="/playground/grpc/">
     <Project Path="playground/grpc/Grpc.ApiService/Grpc.ApiService.csproj" />

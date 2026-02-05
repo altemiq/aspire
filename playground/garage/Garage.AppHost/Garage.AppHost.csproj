@@ -1,0 +1,16 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.1.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>fbcb94ef-edd1-47fe-a043-d80b920970e9</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.Garage\Aspire.Hosting.Garage.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\Garage.ApiService\Garage.ApiService.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="Program.cs" company="Altemiq">
+// <copyright file="AppHost.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------

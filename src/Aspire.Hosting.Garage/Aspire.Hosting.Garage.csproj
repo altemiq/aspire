@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName.Replace('.Garage', ''))</RootNamespace>
+    <PackageTags>aspire hosting minio</PackageTags>
+    <Description>Garage support for .NET Aspire.</Description>
+    <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Tomlyn" VersionOverride="0.20.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.AWS.S3\Aspire.Hosting.AWS.S3.csproj" />
+    <ProjectReference Include="..\Aspire.Hosting.Containers.Extensions\Aspire.Hosting.Containers.Extensions.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>garage-logo.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Packaging">
+    <None Update="garage-logo.png" Pack="true" PackagePath="\" />
+    <None Update="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
