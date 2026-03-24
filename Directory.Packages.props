@@ -6,13 +6,13 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting" Version="$(VerAspire_Hosting)" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="9.3.0" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="13.0.0" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(VerAspire_Hosting)" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(VerAspire_Hosting)" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
-    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.186" />
+    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.217" />
   </ItemGroup>
 
 </Project>

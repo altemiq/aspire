@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 _ = builder.AddContainer("mycontainer", "myimage")
@@ -18,8 +20,6 @@ var postgres = builder
 
 postgres.AddDatabase("db1")
     .WithTleExtension("uuid_v7");
-
-_ = builder.AddContainerBuildEnvironment("container-build");
 
 _ = builder.UpdateDockerfileBuildSymLinks();
 
