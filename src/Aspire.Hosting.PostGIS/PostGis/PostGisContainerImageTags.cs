@@ -24,10 +24,10 @@ internal static class PostGisContainerImageTags
     /// <summary>
     /// The PostGIS tag.
     /// </summary>
-    public const string PostGisTag = "3.5";
+    public const string PostGisTag = "3.6";
 
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = $"17-{PostGisTag}";
+    public const string Tag = $"18-{PostGisTag}";
 }
