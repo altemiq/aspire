@@ -25,14 +25,22 @@ public static class PostGisBuilderExtensions
     /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     public static IResourceBuilder<T> WithPostGis<T>(this IResourceBuilder<T> builder)
+        where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource => builder.WithPostGis((PostGisVersion)(-1));
+
+    /// <summary>
+    /// Configures the Postgres container resource to enable the PostGIS extension.
+    /// </summary>
+    /// <typeparam name="T">The type of postgres container.</typeparam>
+    /// <param name="builder">The <see cref="IDistributedApplicationBuilder"/>.</param>
+    /// <param name="version">The version of PostGIS to insert.</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<T> WithPostGis<T>(this IResourceBuilder<T> builder, PostGisVersion version)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource
     {
-        var tag = PostGis.PostGisContainerImageTags.Tag;
-        if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImage)
-            && containerImage is { Tag: { } containerImageTag })
-        {
-            tag = GetTag(containerImageTag, System.Globalization.CultureInfo.InvariantCulture);
-        }
+        var tag = builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImage)
+            && containerImage is { Tag: { } containerImageTag }
+            ? GetTagCore(containerImageTag, version, System.Globalization.CultureInfo.InvariantCulture)
+            : GetTag(PostgresVersion.V18, version);
 
         _ = builder
             .WithImage(PostGis.PostGisContainerImageTags.Image, tag)
@@ -40,7 +48,7 @@ public static class PostGisBuilderExtensions
 
         return builder;
 
-        static string GetTag(string tag, IFormatProvider? formatProvider)
+        static string GetTagCore(string tag, PostGisVersion postGisVersion, IFormatProvider? formatProvider)
         {
             if (tag is "latest")
             {
@@ -54,14 +62,25 @@ public static class PostGisBuilderExtensions
             string suffix;
             if (double.TryParse(tagSpan[ranges[0]], formatProvider, out var version))
             {
-                prefix = $"{double.Truncate(version).ToString(formatProvider)}-{PostGis.PostGisContainerImageTags.PostGisTag}";
+                var postgresVersion = (int)double.Truncate(version) switch
+                {
+                    13 => PostgresVersion.V13,
+                    14 => PostgresVersion.V14,
+                    15 => PostgresVersion.V15,
+                    16 => PostgresVersion.V16,
+                    17 => PostgresVersion.V17,
+                    18 => PostgresVersion.V18,
+                    _ => throw new ArgumentOutOfRangeException(nameof(tag)),
+                };
+
+                prefix = GetTag(postgresVersion, postGisVersion);
                 suffix = values is 1
                     ? string.Empty
                     : GetSuffix(tagSpan[ranges[1]]);
             }
             else
             {
-                prefix = PostGis.PostGisContainerImageTags.Tag;
+                prefix = GetTag(PostgresVersion.V18, postGisVersion);
                 suffix = GetSuffix(tagSpan);
             }
 
@@ -90,40 +109,9 @@ public static class PostGisBuilderExtensions
     /// <param name="password">The administrator password used for the container during local development. If null a random password will be generated.</param>
     /// <param name="port">The host port used when launching the container. If null a random port will be assigned.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<PostGisServerResource> AddPostGis(this IDistributedApplicationBuilder builder, string name, PostgresVersion postgresVersion, PostGisVersion postGisVersion, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null)
-    {
-        return builder.AddPostGis(name, userName, password, port)
+    public static IResourceBuilder<PostGisServerResource> AddPostGis(this IDistributedApplicationBuilder builder, string name, PostgresVersion postgresVersion, PostGisVersion postGisVersion, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? port = null) =>
+        builder.AddPostGis(name, userName, password, port)
             .WithImageTag(GetTag(postgresVersion, postGisVersion));
-
-        static string GetTag(PostgresVersion postgres, PostGisVersion postGis)
-        {
-            var postgresVersion = postgres switch
-            {
-                PostgresVersion.V13 => "13",
-                PostgresVersion.V14 => "14",
-                PostgresVersion.V15 => "15",
-                PostgresVersion.V16 => "16",
-                PostgresVersion.V17 => "17",
-                PostgresVersion.V18 => "18",
-                _ => throw new ArgumentOutOfRangeException(nameof(postgres), postgres, message: null),
-            };
-
-            var postGisVersion = postGis switch
-            {
-                PostGisVersion.V2_5 => "2.5",
-                PostGisVersion.V3_0 => "3.0",
-                PostGisVersion.V3_1 => "3.1",
-                PostGisVersion.V3_2 => "3.2",
-                PostGisVersion.V3_3 => "3.3",
-                PostGisVersion.V3_4 => "3.4",
-                PostGisVersion.V3_5 => "3.5",
-                PostGisVersion.V3_6 => "3.6",
-                _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
-            };
-
-            return $"{postgresVersion}-{postGisVersion}";
-        }
-    }
 
     /// <summary>
     /// Adds a PostGIS resource to the application model. A container is used for local development. This version the package defaults to the 17-3.5 tag of the postgis container image.
@@ -197,6 +185,46 @@ public static class PostGisBuilderExtensions
                           context.EnvironmentVariables[PasswordEnvVarName] = postgisServer.PasswordParameter;
                       })
                       .WithHealthCheck(healthCheckKey);
+    }
+
+    private static string GetTag(PostgresVersion postgres, PostGisVersion postGis)
+    {
+        var postgresVersion = postgres switch
+        {
+            PostgresVersion.V13 => "13",
+            PostgresVersion.V14 => "14",
+            PostgresVersion.V15 => "15",
+            PostgresVersion.V16 => "16",
+            PostgresVersion.V17 => "17",
+            PostgresVersion.V18 => "18",
+            _ => throw new ArgumentOutOfRangeException(nameof(postgres), postgres, message: null),
+        };
+
+        if (!Enum.IsDefined(postGis))
+        {
+            // determine this from the best version that the postgres can handle
+            postGis = postgres switch
+            {
+                PostgresVersion.V13 or PostgresVersion.V14 or PostgresVersion.V15 or PostgresVersion.V16 => PostGisVersion.V3_5,
+                PostgresVersion.V17 or PostgresVersion.V18 => PostGisVersion.V3_6,
+                _ => throw new ArgumentOutOfRangeException(nameof(postgres), postgres, message: null),
+            };
+        }
+
+        var postGisVersion = postGis switch
+            {
+                PostGisVersion.V2_5 => "2.5",
+                PostGisVersion.V3_0 => "3.0",
+                PostGisVersion.V3_1 => "3.1",
+                PostGisVersion.V3_2 => "3.2",
+                PostGisVersion.V3_3 => "3.3",
+                PostGisVersion.V3_4 => "3.4",
+                PostGisVersion.V3_5 => "3.5",
+                PostGisVersion.V3_6 => "3.6",
+                _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
+            };
+
+        return $"{postgresVersion}-{postGisVersion}";
     }
 
     private static async Task CreateDatabaseAsync(Npgsql.NpgsqlConnection npgsqlConnection, core::Aspire.Hosting.ApplicationModel.PostgresDatabaseResource npgsqlDatabase, IServiceProvider serviceProvider, CancellationToken cancellationToken)
