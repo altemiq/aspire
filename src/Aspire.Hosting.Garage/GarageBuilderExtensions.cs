@@ -8,7 +8,6 @@ namespace Aspire.Hosting;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Tomlyn;
 
 /// <summary>
 /// Extensions for <c>Garage</c>.
@@ -34,31 +33,31 @@ public static partial class GarageBuilderExtensions
     private const string DataLocation = "/tmp/data";
 
     private const string DefaultGarageToml = $"""
-                                             metadata_dir = "{MetadataLocation}"
-                                             data_dir = "{DataLocation}"
-                                             db_engine = "sqlite"
+                                              metadata_dir = "{MetadataLocation}"
+                                              data_dir = "{DataLocation}"
+                                              db_engine = "sqlite"
 
-                                             replication_factor = 1
+                                              replication_factor = 1
 
-                                             rpc_bind_addr = "[::]:*"
-                                             rpc_public_addr = "127.0.0.1:*"
+                                              rpc_bind_addr = "[::]:*"
+                                              rpc_public_addr = "127.0.0.1:*"
 
-                                             [s3_api]
-                                             s3_region = "garage"
-                                             api_bind_addr = "[::]:*"
-                                             root_domain = ".s3.garage.localhost"
+                                              [s3_api]
+                                              s3_region = "garage"
+                                              api_bind_addr = "[::]:*"
+                                              root_domain = ".s3.garage.localhost"
 
-                                             [s3_web]
-                                             bind_addr = "[::]:*"
-                                             root_domain = ".web.garage.localhost"
-                                             index = "index.html"
+                                              [s3_web]
+                                              bind_addr = "[::]:*"
+                                              root_domain = ".web.garage.localhost"
+                                              index = "index.html"
 
-                                             [k2v_api]
-                                             api_bind_addr = "[::]:*"
+                                              [k2v_api]
+                                              api_bind_addr = "[::]:*"
 
-                                             [admin]
-                                             api_bind_addr = "[::]:*"
-                                             """;
+                                              [admin]
+                                              api_bind_addr = "[::]:*"
+                                              """;
 
     /// <summary>
     /// Adds a WebUI administration and development platform for Garage to the application model.
@@ -264,11 +263,11 @@ public static partial class GarageBuilderExtensions
         if (builder.Resource.TryGetLastAnnotation<EnsureBucketLockAnnotation>(out var lockAnnotation)
             && Interlocked.Exchange(ref lockAnnotation.Check, 1) is 0)
         {
-            _ = builder.ApplicationBuilder.Eventing.Subscribe<ResourceReadyEvent>(builder.Resource, static async (evt, cancellationToken) =>
+            _ = builder.OnResourceReady(static async (resource, evt, cancellationToken) =>
             {
                 // ensure the bucket exists
                 var rls = evt.Services.GetRequiredService<ResourceLoggerService>();
-                var logger = rls.GetLogger(evt.Resource);
+                var logger = rls.GetLogger(resource);
                 var containerRuntime = await ContainerRuntime.GetNameAsync(evt.Services, cancellationToken).ConfigureAwait(false);
 
                 foreach (var annotation in evt.Resource.Annotations.OfType<BucketAnnotation>())
@@ -365,7 +364,7 @@ public static partial class GarageBuilderExtensions
 
         var garageServer = new GarageServerResource(name, userName?.Resource, passwordParameter, region);
 
-        _ = builder.Eventing.Subscribe<ResourceReadyEvent>(garageServer, Setup);
+        Lifecycle.EventingSubscriberServiceCollectionExtensions.TryAddEventingSubscriber<GarageEventSubscriber>(builder.Services);
 
         return builder.AddResource(garageServer)
             .WithImage(Garage.GarageContainerImageTags.Image, Garage.GarageContainerImageTags.Tag)
@@ -376,7 +375,7 @@ public static partial class GarageBuilderExtensions
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var toml = Toml.ToModel(DefaultGarageToml);
+                    var toml = Tomlyn.TomlSerializer.Deserialize<Tomlyn.Model.TomlTable>(DefaultGarageToml)!;
 
                     toml["rpc_bind_addr"] = $"[::]:{RpcPort}";
                     toml["rpc_public_addr"] = $"127.0.0.1:{RpcPort}";
@@ -412,7 +411,7 @@ public static partial class GarageBuilderExtensions
                         adminTable["metrics_token"] = serverPassword;
                     }
 
-                    var file = new ContainerFile { Name = "garage.toml", Contents = Toml.FromModel(toml), };
+                    var file = new ContainerFile { Name = "garage.toml", Contents = Tomlyn.TomlSerializer.Serialize(toml) };
                     return [file];
                 })
             .WithHttpEndpoint(targetPort: S3ApiPort, name: S3ApiEndpoint)
@@ -425,57 +424,8 @@ public static partial class GarageBuilderExtensions
             .WithUrlForEndpoint(AdminEndpoint, callback => callback.DisplayText = AdminEndpoint)
             .WithHttpEndpoint(targetPort: K2VPort, name: K2VEndpoint)
             .WithUrlForEndpoint(K2VEndpoint, callback => callback.DisplayText = K2VEndpoint)
+            .WithHttpHealthCheck(path: "health", endpointName: AdminEndpoint)
             .PublishAsContainer();
-
-        static async Task Setup(ResourceReadyEvent e, CancellationToken cancellationToken)
-        {
-            await SetupLayout(e, cancellationToken).ConfigureAwait(false);
-            await AddUsers(e, cancellationToken).ConfigureAwait(false);
-
-            static async Task SetupLayout(ResourceReadyEvent e, CancellationToken cancellationToken)
-            {
-                var logger = e.Services.GetRequiredService<ResourceLoggerService>().GetLogger(e.Resource);
-                var containerRuntime = await ContainerRuntime.GetNameAsync(e.Services, cancellationToken).ConfigureAwait(false);
-
-                // get the node id
-                var echoLogger = new EchoLogger(logger);
-                await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "node", "id", "--quiet"], echoLogger, cancellationToken).ConfigureAwait(false);
-                var nodeId = GetNodeId(echoLogger);
-
-                await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "layout", "assign", "--zone", "aspire", "--capacity", "1GB", nodeId], logger, cancellationToken).ConfigureAwait(false);
-                await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "layout", "apply", "--version", "1"], logger, cancellationToken).ConfigureAwait(false);
-
-                static string GetNodeId(EchoLogger echoLogger)
-                {
-                    var split = echoLogger.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-                    echoLogger.Reset();
-                    var nodeString = split[^1];
-                    var position = nodeString.IndexOf('@', StringComparison.Ordinal);
-                    return nodeString[..position];
-                }
-            }
-
-            static async Task AddUsers(ResourceReadyEvent e, CancellationToken cancellationToken)
-            {
-                var logger = e.Services.GetRequiredService<ResourceLoggerService>().GetLogger(e.Resource);
-                var containerRuntime = await ContainerRuntime.GetNameAsync(e.Services, cancellationToken).ConfigureAwait(false);
-                if (e.Resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
-                {
-                    // create the profiles
-                    foreach (var profile in profiles.Select(x => x.Profile))
-                    {
-                        await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "import", "-n", profile.Name, "--yes", profile.AccessKeyId, profile.SecretAccessKey], logger, cancellationToken).ConfigureAwait(false);
-                        await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "allow", "--create-bucket", profile.Name], logger, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                else
-                {
-                    // create a key
-                    await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "create", "default-key"], logger, cancellationToken).ConfigureAwait(false);
-                    await e.Resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "allow", "--create-bucket", "default-key"], logger, cancellationToken).ConfigureAwait(false);
-                }
-            }
-        }
     }
 
     private static string GetHexString(string name, int length) => GetHexString(new Random(StringComparer.Ordinal.GetHashCode(name)), length);
@@ -554,6 +504,115 @@ public static partial class GarageBuilderExtensions
 
         public override void WriteToManifest(Publishing.ManifestPublishingContext context)
         {
+        }
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "This is used through DI")]
+    private sealed class GarageEventSubscriber(
+        IServiceProvider services,
+        ResourceNotificationService resourceNotificationService,
+        ResourceLoggerService resourceLoggerService) : Lifecycle.IDistributedApplicationEventingSubscriber, IAsyncDisposable
+    {
+        private readonly CancellationTokenSource shutdownCts = new();
+        private Task? setupGarage;
+
+        public Task SubscribeAsync(Eventing.IDistributedApplicationEventing eventing, DistributedApplicationExecutionContext executionContext, CancellationToken cancellationToken)
+        {
+            eventing.Subscribe<BeforeStartEvent>((_, _) =>
+            {
+                this.setupGarage = Temp(resourceNotificationService, resourceLoggerService, services, this.shutdownCts.Token);
+                return Task.CompletedTask;
+            });
+
+            return Task.CompletedTask;
+
+            static async Task Temp(ResourceNotificationService resourceNotificationService, ResourceLoggerService loggerService, IServiceProvider services, CancellationToken cancellationToken)
+            {
+                Dictionary<IResource, string?> states = new();
+                await foreach (var notification in resourceNotificationService.WatchAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (notification.Resource is not GarageServerResource garage)
+                    {
+                        continue;
+                    }
+
+                    states.TryAdd(notification.Resource, notification.Snapshot.State?.Text);
+
+                    if (string.Equals(notification.Snapshot.State?.Text, KnownResourceStates.Running, StringComparison.Ordinal)
+                        && !string.Equals(states[notification.Resource], KnownResourceStates.Running, StringComparison.Ordinal))
+                    {
+                        // we're transitioning from something else to running
+                        await Setup(garage, loggerService, services, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    states[notification.Resource] = notification.Snapshot.State?.Text;
+                }
+            }
+
+            static async Task Setup(IResource resource, ResourceLoggerService loggerService, IServiceProvider services, CancellationToken cancellationToken)
+            {
+                var logger = loggerService.GetLogger(resource);
+                var containerRuntime = await ContainerRuntime.GetNameAsync(services, cancellationToken).ConfigureAwait(false);
+                await SetupLayout(resource, logger, containerRuntime, cancellationToken).ConfigureAwait(false);
+                await AddUsers(resource, logger, containerRuntime, cancellationToken).ConfigureAwait(false);
+
+                static async Task SetupLayout(IResource resource, ILogger logger, string containerRuntime, CancellationToken cancellationToken)
+                {
+                    // get the node id
+                    var echoLogger = new EchoLogger(logger);
+                    await resource.ExecAsync(containerRuntime, [GarageExecutable, "node", "id", "--quiet"], echoLogger, cancellationToken).ConfigureAwait(false);
+                    var nodeId = GetNodeId(echoLogger);
+
+                    await resource.ExecAsync(containerRuntime, [GarageExecutable, "layout", "assign", "--zone", "aspire", "--capacity", "1GB", nodeId], logger, cancellationToken).ConfigureAwait(false);
+                    await resource.ExecAsync(containerRuntime, [GarageExecutable, "layout", "apply", "--version", "1"], logger, cancellationToken).ConfigureAwait(false);
+
+                    static string GetNodeId(EchoLogger echoLogger)
+                    {
+                        var split = echoLogger.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                        echoLogger.Reset();
+                        var nodeString = split[^1];
+                        var position = nodeString.IndexOf('@', StringComparison.Ordinal);
+                        return nodeString[..position];
+                    }
+                }
+
+                static async Task AddUsers(IResource resource, ILogger logger, string containerRuntime, CancellationToken cancellationToken)
+                {
+                    if (resource.TryGetAnnotationsOfType<AWSProfileAnnotation>(out var profiles))
+                    {
+                        // create the profiles
+                        foreach (var profile in profiles.Select(x => x.Profile))
+                        {
+                            await resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "import", "-n", profile.Name, "--yes", profile.AccessKeyId, profile.SecretAccessKey], logger, cancellationToken).ConfigureAwait(false);
+                            await resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "allow", "--create-bucket", profile.Name], logger, cancellationToken).ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        // create a key
+                        await resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "create", "default-key"], logger, cancellationToken).ConfigureAwait(false);
+                        await resource.ExecAsync(containerRuntime, [GarageExecutable, "key", "allow", "--create-bucket", "default-key"], logger, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await this.shutdownCts.CancelAsync().ConfigureAwait(false);
+            if (this.setupGarage is { } task)
+            {
+                try
+                {
+                    await task.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // we have asked to be canceled
+                }
+            }
+
+            this.shutdownCts.Dispose();
         }
     }
 }
