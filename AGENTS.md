@@ -20,7 +20,7 @@ dotnet clean
 
 ## Version Management
 
-- Aspire version is centrally managed in `Versions.props` (currently 13.3.0)
+- Aspire version is centrally managed in `Versions.props` (currently 13.3.1)
 - Package versions are centrally managed in `Directory.Packages.props` files
 - Different package groups (Aspire, AWS, Microsoft, etc.) have separate versioning
 
