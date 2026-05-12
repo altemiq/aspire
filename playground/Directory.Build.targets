@@ -10,4 +10,20 @@
     </Content>
   </ItemGroup>
 
+  <!-- This package should replace the "Microsoft.Extensions.Logging.Abstractions" source generator. -->
+  <Target Name="_My_Microsoft_Extensions_Logging_AbstractionsRemoveAnalyzers"
+          Condition="'$(DisableMicrosoftExtensionsLoggingSourceGenerator)' == 'true'"
+          AfterTargets="ResolveTargetingPackAssets">
+    <ItemGroup>
+      <_My_Microsoft_Extensions_Logging_AbstractionsAnalyzer
+        Include="@(Analyzer)"
+        Condition="'%(Analyzer.AssemblyName)' == 'Microsoft.Extensions.Logging.Generators'" />
+    </ItemGroup>
+
+    <!-- Remove Microsoft.Extensions.Logging.Abstractions Analyzer -->
+    <ItemGroup>
+      <Analyzer Remove="@(_My_Microsoft_Extensions_Logging_AbstractionsAnalyzer)" />
+    </ItemGroup>
+  </Target>
+
 </Project>

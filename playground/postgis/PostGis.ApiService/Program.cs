@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 const string ActivitySourceName = "PostGis.ApiService";
