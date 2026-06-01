@@ -13,13 +13,13 @@
     <PackageReference Include="Aspire.Hosting" />
     
     <!-- The gRPC reference here should line up with the gRPC references in Aspire.Hosting -->
-    <PackageReference Include="Grpc.HealthCheck" VersionOverride="2.76.0" />
+    <PackageReference Include="Grpc.HealthCheck" VersionOverride="2.80.0" />
     
     <!-- Keep this up to date with https://github.com/fullstorydev/grpcui -->
     <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.3" />
     
     <!-- This should match the latest major version of Microsoft.Extensions.* from Aspire.Hosting -->
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="10.0.8" />
 
     <!-- polyfills for overload resolution -->
     <PackageReference Include="PolySharp">
