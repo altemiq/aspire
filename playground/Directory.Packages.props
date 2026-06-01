@@ -22,12 +22,12 @@
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
-    <PackageVersion Include="Google.Protobuf" Version="3.34.1" />
+    <PackageVersion Include="Google.Protobuf" Version="3.35.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.80.0" />
     <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.80.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.80.0" />
     <PackageVersion Include="Grpc.HealthChecks" Version="2.80.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.80.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.81.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
