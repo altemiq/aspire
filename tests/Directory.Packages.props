@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="TUnit" Version="1.44.0" />
+    <PackageVersion Include="TUnit" Version="1.48.6" />
   </ItemGroup>
 
 </Project>
