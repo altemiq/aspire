@@ -15,6 +15,7 @@
     <Project Path="src/Aspire.Hosting.LocalStack/Aspire.Hosting.LocalStack.csproj" />
     <Project Path="src/Aspire.Hosting.MapServer/Aspire.Hosting.MapServer.csproj" />
     <Project Path="src/Aspire.Hosting.MinIO/Aspire.Hosting.MinIO.csproj" />
+    <Project Path="src/Aspire.Hosting.MiniStack/Aspire.Hosting.MiniStack.csproj" />
     <Project Path="src/Aspire.Hosting.PostGIS/Aspire.Hosting.PostGIS.csproj" />
     <Project Path="src/Aspire.Hosting.PostgreSQL.Extensions/Aspire.Hosting.PostgreSQL.Extensions.csproj" />
   </Folder>
@@ -44,6 +45,10 @@
   <Folder Name="/playground/minio/">
     <Project Path="playground/minio/MinIO.ApiService/MinIO.ApiService.csproj" />
     <Project Path="playground/minio/MinIO.AppHost/MinIO.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/playground/ministack/">
+    <Project Path="playground/ministack/MiniStack.ApiService/MiniStack.ApiService.csproj" />
+    <Project Path="playground/ministack/MiniStack.AppHost/MiniStack.AppHost.csproj" />
   </Folder>
   <Folder Name="/playground/postgis/">
     <Project Path="playground/postgis/PostGis.ApiService/PostGis.ApiService.csproj" />
@@ -75,6 +80,7 @@
     <Project Path="tests/Aspire.Hosting.MinIO.Tests/Aspire.Hosting.MinIO.Tests.csproj">
       <Build Solution="Release|*" Project="false" />
     </Project>
+    <Project Path="tests/Aspire.Hosting.MiniStack.Tests/Aspire.Hosting.MiniStack.Tests.csproj" />
     <Project Path="tests/Aspire.Hosting.PostGIS.Tests/Aspire.Hosting.PostGIS.Tests.csproj">
       <Build Solution="Release|*" Project="false" />
     </Project>

@@ -1,29 +1,29 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="LocalStackHealthCheck.cs" company="Altemiq">
+// <copyright file="MiniStackHealthCheck.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace Aspire.Hosting.LocalStack;
+namespace Aspire.Hosting.MiniStack;
 
 using System.Net.Http.Json;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 /// <summary>
-/// The <see cref="LocalStack"/> <see cref="IHealthCheck"/>.
+/// The <see cref="MiniStack"/> <see cref="IHealthCheck"/>.
 /// </summary>
 /// <param name="httpClientFactory">The <see cref="HttpClient"/> factory.</param>
-internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) : IHealthCheck
+internal sealed class MiniStackHealthCheck(Func<HttpClient> httpClientFactory) : IHealthCheck
 {
     /// <summary>
-    /// Gets the endpoint.
+    /// Gets the Endpoint.
     /// </summary>
     public required EndpointReference Endpoint { get; init; }
 
     /// <summary>
     /// Gets the services.
     /// </summary>
-    public required LocalStackServices.Community Services { get; init; }
+    public required MiniStackServices? Services { get; init; }
 
     /// <inheritdoc/>
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
@@ -33,7 +33,7 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
             return HealthCheckResult.Unhealthy();
         }
 
-        var builder = new UriBuilder(this.Endpoint.Url) { Path = "_localstack/health" };
+        var builder = new UriBuilder(this.Endpoint.Url) { Path = "_ministack/health" };
 
         var httpClient = httpClientFactory();
 
@@ -50,14 +50,14 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
             return HealthCheckResult.Healthy();
         }
 
-        var healthCheck = await response.Content.ReadFromJsonAsync<LocalStackHealthResponse>(cancellationToken).ConfigureAwait(false);
+        var healthCheck = await response.Content.ReadFromJsonAsync<MiniStackHealthResponse>(cancellationToken).ConfigureAwait(false);
 
         if (healthCheck is null)
         {
             return new(context.Registration.FailureStatus, description: "Failed to read health status from local stack");
         }
 
-        if (LocalStackServerResource
+        if (MiniStackServerResource
             .GetServiceNames(this.Services)
             .FirstOrDefault(s => !healthCheck.Services.TryGetValue(s, out var value) || value is not ("available" or "running")) is { } serviceName)
         {
@@ -67,7 +67,7 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
         return HealthCheckResult.Healthy();
     }
 
-    private sealed class LocalStackHealthResponse
+    private sealed class MiniStackHealthResponse
     {
         [System.Text.Json.Serialization.JsonPropertyName("edition")]
         public string? Edition { get; init; }

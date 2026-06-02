@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
+    <RootNamespace>$(MSBuildProjectName.Replace('.MiniStack', ''))</RootNamespace>
+    <PackageTags>aspire hosting miniStack</PackageTags>
+    <Description>MiniStack support for .NET Aspire.</Description>
+    <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.OverloadResolutionPriorityAttribute</PolySharpIncludeGeneratedTypes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AWS" />
+    <PackageReference Include="AWSSDK.SQS" VersionOverride="4.0.0" />
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup Label="Packaging">
+    <PackageIcon>ministack_symbol.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Packaging">
+    <None Update="ministack_symbol.png" Pack="true" PackagePath="\" />
+    <None Update="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aspire.Hosting.AWS.S3\Aspire.Hosting.AWS.S3.csproj" />
+    <ProjectReference Include="..\Aspire.Hosting.Containers.Extensions\Aspire.Hosting.Containers.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,7 +1,7 @@
 [assembly: Retry(3)]
 [assembly: System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 
-namespace Aspire.Hosting.LocalStack.Tests;
+namespace Aspire.Hosting.MiniStack.Tests;
 
 public class GlobalHooks
 {
@@ -40,7 +40,7 @@ public class GlobalHooks
         if (LinuxDocker)
         {
             // Arrange
-            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.LocalStack_AppHost>();
+            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.MiniStack_AppHost>();
             appHost.Services.ConfigureHttpClientDefaults(clientBuilder => { clientBuilder.AddStandardResilienceHandler(); });
 
             App = await appHost.BuildAsync();

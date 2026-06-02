@@ -212,17 +212,17 @@ public static class PostGisBuilderExtensions
         }
 
         var postGisVersion = postGis switch
-            {
-                PostGisVersion.V2_5 => "2.5",
-                PostGisVersion.V3_0 => "3.0",
-                PostGisVersion.V3_1 => "3.1",
-                PostGisVersion.V3_2 => "3.2",
-                PostGisVersion.V3_3 => "3.3",
-                PostGisVersion.V3_4 => "3.4",
-                PostGisVersion.V3_5 => "3.5",
-                PostGisVersion.V3_6 => "3.6",
-                _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
-            };
+        {
+            PostGisVersion.V2_5 => "2.5",
+            PostGisVersion.V3_0 => "3.0",
+            PostGisVersion.V3_1 => "3.1",
+            PostGisVersion.V3_2 => "3.2",
+            PostGisVersion.V3_3 => "3.3",
+            PostGisVersion.V3_4 => "3.4",
+            PostGisVersion.V3_5 => "3.5",
+            PostGisVersion.V3_6 => "3.6",
+            _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
+        };
 
         return $"{postgresVersion}-{postGisVersion}";
     }

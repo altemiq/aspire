@@ -1,0 +1,17 @@
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.4.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>25a438d6-7633-4809-84b0-6885e91a2498</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.AWS.Configuration\Aspire.Hosting.AWS.Configuration.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.MiniStack\Aspire.Hosting.MiniStack.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\MiniStack.ApiService\MiniStack.ApiService.csproj" />
+  </ItemGroup>
+
+</Project>

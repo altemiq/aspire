@@ -528,7 +528,7 @@ public static partial class GarageBuilderExtensions
 
             static async Task Temp(ResourceNotificationService resourceNotificationService, ResourceLoggerService loggerService, IServiceProvider services, CancellationToken cancellationToken)
             {
-                Dictionary<IResource, string?> states = new();
+                Dictionary<IResource, string?> states = [];
                 await foreach (var notification in resourceNotificationService.WatchAsync(cancellationToken).ConfigureAwait(false))
                 {
                     if (notification.Resource is not GarageServerResource garage)

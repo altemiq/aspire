@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------
-// <copyright file="LocalStackBuilderExtensions.cs" company="Altemiq">
+// <copyright file="MiniStackBuilderExtensions.cs" company="Altemiq">
 // Copyright (c) Altemiq. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -12,44 +12,43 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Provides extensions for <c>localstack</c>.
+/// Provides extensions for <c>ministack</c>.
 /// </summary>
-public static partial class LocalStackBuilderExtensions
+public static partial class MiniStackBuilderExtensions
 {
-    private const string LocalStackConfigSection = "LocalStack";
-    private const string DataLocation = "/var/lib/localstack/state";
+    private const string DataLocation = "/var/lib/miniStack/state";
 
     /// <summary>
-    /// Adds a named volume for the data folder to a LocalStack container resource.
+    /// Adds a named volume for the data folder to a MiniStack container resource.
     /// </summary>
     /// <param name="builder">The resource builder.</param>
     /// <param name="name">The name of the volume. Defaults to an auto-generated name based on the application and resource names.</param>
     /// <param name="isReadOnly">A flag that indicates if this is a read-only volume.</param>
     /// <returns>The <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<LocalStackServerResource> WithDataVolume(this IResourceBuilder<LocalStackServerResource> builder, string? name = null, bool isReadOnly = false)
+    public static IResourceBuilder<MiniStackServerResource> WithDataVolume(this IResourceBuilder<MiniStackServerResource> builder, string? name = null, bool isReadOnly = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
             .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "state"), DataLocation, isReadOnly)
-            .WithEnvironment("LOCALSTACK_PERSISTENCE", "1");
+            .WithEnvironment("MINISTACK_PERSISTENCE", "1");
     }
 
     /// <summary>
-    /// Adds a bind mount for the data folder to a LocalStack container resource.
+    /// Adds a bind mount for the data folder to a MiniStack container resource.
     /// </summary>
     /// <param name="builder">The resource builder.</param>
     /// <param name="source">The source directory on the host to mount into the container.</param>
     /// <param name="isReadOnly">A flag that indicates if this is a read-only mount.</param>
     /// <returns>The <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<LocalStackServerResource> WithDataBindMount(this IResourceBuilder<LocalStackServerResource> builder, string source, bool isReadOnly = false)
+    public static IResourceBuilder<MiniStackServerResource> WithDataBindMount(this IResourceBuilder<MiniStackServerResource> builder, string source, bool isReadOnly = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(source);
 
         return builder
             .WithBindMount(source, DataLocation, isReadOnly)
-            .WithEnvironment("LOCALSTACK_PERSISTENCE", "1");
+            .WithEnvironment("PERSIST_STATE", "1");
     }
 
     /// <summary>
@@ -61,7 +60,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="source">The resource from which to extract service discovery information.</param>
     /// <param name="endpointName">The endpoint name.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<LocalStackServerResource> source, string? endpointName = default)
+    public static IResourceBuilder<TDestination> WithReference<TDestination>(this IResourceBuilder<TDestination> builder, IResourceBuilder<MiniStackServerResource> source, string? endpointName = default)
         where TDestination : IResourceWithEnvironment
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -74,31 +73,27 @@ public static partial class LocalStackBuilderExtensions
 
         _ = builder.WithEnvironment(context =>
         {
+            // set the end point
+            context.EnvironmentVariables[Amazon.Util.EnvironmentVariables.GLOBAL_ENDPOINT_ENVIRONMENT_VARIABLE] = GetEndpoint(source.Resource, endpointName);
+
             // disable the AWS EC2 credentials lookup, as we are local
             context.EnvironmentVariables[Amazon.Util.EC2InstanceMetadata.AWS_EC2_METADATA_DISABLED] = bool.TrueString;
 
-            context.EnvironmentVariables[$"{LocalStackConfigSection}__UseLocalStack"] = bool.TrueString;
-
-            // config
-            if (GetEndpoint(source.Resource, endpointName) is { } endpointReference)
+            // .NET AWS SDK config
+            context.EnvironmentVariables[$"AWS__{nameof(Amazon.S3.AmazonS3Config.ForcePathStyle)}"] = bool.TrueString;
+            if (source.Resource.Region is { } region)
             {
-                context.EnvironmentVariables[$"{LocalStackConfigSection}__Config__LocalStackHost"] = new ParameterResource("localstackhost", _ => endpointReference.Host);
-                context.EnvironmentVariables[$"{LocalStackConfigSection}__Config__EdgePort"] = new ParameterResource("endport", _ => endpointReference.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                if (string.Equals(endpointReference.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal))
-                {
-                    context.EnvironmentVariables[$"{LocalStackConfigSection}__Config__UseSsl"] = bool.TrueString;
-                }
+                context.EnvironmentVariables[$"AWS__{nameof(Amazon.S3.AmazonS3Config.AuthenticationRegion)}"] = region;
             }
 
-            // session
-            context.EnvironmentVariables[$"{LocalStackConfigSection}__Session__RegionName"] = source.Resource.Region;
+            context.EnvironmentVariables[$"AWS__{nameof(Amazon.S3.AmazonS3Config.UseAccelerateEndpoint)}"] = bool.FalseString;
         });
 
         return builder;
 
-        static EndpointReference? GetEndpoint(IResourceWithEndpoints resource, string? endpointName)
+        static EndpointReference GetEndpoint(IResourceWithEndpoints resource, string? endpointName)
         {
-            return endpointName is null ? resource.GetEndpoints().FirstOrDefault() : resource.GetEndpoint(endpointName);
+            return endpointName is null ? resource.GetEndpoints().First() : resource.GetEndpoint(endpointName);
         }
     }
 
@@ -112,7 +107,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="services">The requested services.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-    public static IResourceBuilder<LocalStackServerResource> AddLocalStack(this IDistributedApplicationBuilder builder, string name, int? port = null, Amazon.RegionEndpoint? regionEndPoint = null, LocalStackServices.Community services = default) => AddLocalStack(builder, name, port, regionEndPoint?.SystemName, services);
+    public static IResourceBuilder<MiniStackServerResource> AddMiniStack(this IDistributedApplicationBuilder builder, string name, int? port = null, Amazon.RegionEndpoint? regionEndPoint = null, MiniStackServices? services = default) => AddMiniStack(builder, name, port, regionEndPoint?.SystemName, services);
 
     /// <summary>
     /// Adds a Local-Stack container to the application.
@@ -123,31 +118,31 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="region">The region.</param>
     /// <param name="services">The requested services.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<LocalStackServerResource> AddLocalStack(this IDistributedApplicationBuilder builder, string name, int? port = null, string? region = null, LocalStackServices.Community services = default)
+    public static IResourceBuilder<MiniStackServerResource> AddMiniStack(this IDistributedApplicationBuilder builder, string name, int? port = null, string? region = null, MiniStackServices? services = default)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(name);
 
-        var localStack = new LocalStackServerResource(name, region ?? "us-east-1") { Services = services };
+        var miniStack = new MiniStackServerResource(name, region ?? "us-east-1") { Services = services };
 
         IServiceProvider? serviceProvider = default;
 
-        var resourceBuilder = builder.AddResource(localStack)
-            .WithImage(LocalStack.LocalStackContainerImageTags.Image, LocalStack.LocalStackContainerImageTags.Tag)
-            .WithImageRegistry(LocalStack.LocalStackContainerImageTags.Registry)
+        var resourceBuilder = builder.AddResource(miniStack)
+            .WithImage(MiniStack.MiniStackContainerImageTags.Image, MiniStack.MiniStackContainerImageTags.Tag)
+            .WithImageRegistry(MiniStack.MiniStackContainerImageTags.Registry)
             .WithHttpEndpoint(port, targetPort: 4566)
             .WithEnvironment(context =>
             {
                 if (context.ExecutionContext.IsRunMode)
                 {
-                    context.EnvironmentVariables["LOCALSTACK_DEBUG"] = "1";
+                    context.EnvironmentVariables["LOG_LEVEL"] = "DEBUG";
                 }
             })
             .WithEnvironment(context =>
             {
-                if (localStack.Services != default)
+                if (miniStack.Services != default)
                 {
-                    context.EnvironmentVariables["LOCALSTACK_SERVICES"] = string.Join(',', localStack.GetServiceNames());
+                    context.EnvironmentVariables["SERVICES"] = string.Join(',', miniStack.GetServiceNames());
                 }
             })
             .WithDockerSock(() => serviceProvider ?? throw new InvalidOperationException())
@@ -165,7 +160,7 @@ public static partial class LocalStackBuilderExtensions
 
         return resourceBuilder;
 
-        static void AddHealthCheck(IResourceBuilder<LocalStackServerResource> builder, string scheme, Func<EndpointReference> endpointSelector, LocalStackServices.Community services)
+        static void AddHealthCheck(IResourceBuilder<MiniStackServerResource> builder, string scheme, Func<EndpointReference> endpointSelector, MiniStackServices? services)
         {
             var endpoint = endpointSelector() ?? throw new DistributedApplicationException($"Could not create health check for resource '{builder.Resource.Name}' as the endpoint selector returned null.");
 
@@ -180,7 +175,7 @@ public static partial class LocalStackBuilderExtensions
 
             _ = builder.ApplicationBuilder.Services.AddLogging(configure =>
             {
-                // The LocalStackHealthCheck makes use of http client factory.
+                // The MiniStackHealthCheck makes use of http client factory.
                 _ = configure.AddFilter("System.Net.Http.HttpClient." + healthCheckKey + ".LogicalHandler", LogLevel.None);
                 _ = configure.AddFilter("System.Net.Http.HttpClient." + healthCheckKey + ".ClientHandler", LogLevel.None);
             });
@@ -191,7 +186,7 @@ public static partial class LocalStackBuilderExtensions
                 .AddHealthChecks()
                 .Add(new(
                     healthCheckKey,
-                    serviceProvider => new LocalStack.LocalStackHealthCheck(() => serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(healthCheckKey)) { Endpoint = endpoint, Services = services },
+                    serviceProvider => new MiniStack.MiniStackHealthCheck(() => serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(healthCheckKey)) { Endpoint = endpoint, Services = services },
                     failureStatus: null,
                     tags: null));
 
@@ -202,12 +197,12 @@ public static partial class LocalStackBuilderExtensions
     /// <summary>
     /// Adds the SQS queue to the resource.
     /// </summary>
-    /// <typeparam name="TResource">The type of LocalStack resource.</typeparam>
+    /// <typeparam name="TResource">The type of MiniStack resource.</typeparam>
     /// <param name="builder">The input builder.</param>
     /// <param name="profile">The optional profile.</param>
     /// <returns>The builder for chaining.</returns>
     public static IResourceBuilder<TResource> WithSqsQueue<TResource>(this IResourceBuilder<TResource> builder, string? profile = default)
-        where TResource : LocalStackServerResource
+        where TResource : MiniStackServerResource
     {
         string? queueName = default;
 
@@ -300,7 +295,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="bucketName">The bucket name.</param>
     /// <param name="eventTypes">The event types.</param>
     /// <returns>The resource builder.</returns>
-    public static IResourceBuilder<LocalStackServerResource> EnsureBucket(this IResourceBuilder<LocalStackServerResource> builder, string bucketName, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    public static IResourceBuilder<MiniStackServerResource> EnsureBucket(this IResourceBuilder<MiniStackServerResource> builder, string bucketName, params IEnumerable<Amazon.S3.EventType> eventTypes)
     {
         _ = builder.ApplicationBuilder.AddAmazonS3(builder);
         if (builder is IResourceBuilder<IResource> resourceBuilder)
@@ -319,7 +314,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="profile">The profile to use.</param>
     /// <param name="eventTypes">The event types.</param>
     /// <returns>The resource builder.</returns>
-    public static IResourceBuilder<LocalStackServerResource> EnsureBucket(this IResourceBuilder<LocalStackServerResource> builder, string bucketName, string profile, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    public static IResourceBuilder<MiniStackServerResource> EnsureBucket(this IResourceBuilder<MiniStackServerResource> builder, string bucketName, string profile, params IEnumerable<Amazon.S3.EventType> eventTypes)
     {
         _ = builder.ApplicationBuilder.AddAmazonS3(builder);
         if (builder is IResourceBuilder<IResource> resourceBuilder)
@@ -338,7 +333,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="queue">The optional queue.</param>
     /// <param name="eventTypes">The event types.</param>
     /// <returns>The resource builder.</returns>
-    public static IResourceBuilder<LocalStackServerResource> EnsureBucket(this IResourceBuilder<LocalStackServerResource> builder, string bucketName, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    public static IResourceBuilder<MiniStackServerResource> EnsureBucket(this IResourceBuilder<MiniStackServerResource> builder, string bucketName, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
     {
         _ = builder.ApplicationBuilder.AddAmazonS3(builder);
         if (builder is IResourceBuilder<IResource> resourceBuilder)
@@ -358,7 +353,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="queue">The optional queue.</param>
     /// <param name="eventTypes">The event types.</param>
     /// <returns>The resource builder.</returns>
-    public static IResourceBuilder<LocalStackServerResource> EnsureBucket(this IResourceBuilder<LocalStackServerResource> builder, string bucketName, string? profile, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
+    public static IResourceBuilder<MiniStackServerResource> EnsureBucket(this IResourceBuilder<MiniStackServerResource> builder, string bucketName, string? profile, IResourceBuilder<ParameterResource>? queue, params IEnumerable<Amazon.S3.EventType> eventTypes)
     {
         _ = builder.ApplicationBuilder.AddAmazonS3(builder);
         if (builder is IResourceBuilder<IResource> resourceBuilder)
@@ -370,7 +365,7 @@ public static partial class LocalStackBuilderExtensions
     }
 
     /// <summary>
-    /// Adds a folder to the LocalStack server resource and executes commands for mirroring into a bucket.
+    /// Adds a folder to the MiniStack server resource and executes commands for mirroring into a bucket.
     /// </summary>
     /// <typeparam name="T">The type of resource.</typeparam>
     /// <param name="builder">The builder.</param>
@@ -379,7 +374,7 @@ public static partial class LocalStackBuilderExtensions
     /// <param name="isReadOnly">Whether the source is read-only.</param>
     /// <returns>The resource builder.</returns>
     public static IResourceBuilder<T> WithMirror<T>(this IResourceBuilder<T> builder, string source, string bucketName, bool isReadOnly = true)
-        where T : LocalStackServerResource
+        where T : MiniStackServerResource
     {
         // ensure we have a lock annotation
         if (!builder.Resource.HasAnnotationOfType<BucketMirrorLockAnnotation>())
@@ -483,13 +478,13 @@ public static partial class LocalStackBuilderExtensions
     /// <summary>
     /// Adds Amazon S3 to the host.
     /// </summary>
-    /// <typeparam name="TResource">The type of LocalStack resource.</typeparam>
+    /// <typeparam name="TResource">The type of MiniStack resource.</typeparam>
     /// <param name="builder">The input builder.</param>
-    /// <param name="resourceBuilder">The LocalStack resource builder.</param>
+    /// <param name="resourceBuilder">The MiniStack resource builder.</param>
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
     public static IDistributedApplicationBuilder AddAmazonS3<TResource>(this IDistributedApplicationBuilder builder, IResourceBuilder<TResource> resourceBuilder, AWS.IAWSSDKConfig? configuration = default)
-        where TResource : LocalStackServerResource
+        where TResource : MiniStackServerResource
     {
         return configuration is null
             ? builder.AddAmazonS3(resourceBuilder, Uri.UriSchemeHttp, UpdateConfigurationCore)
@@ -504,13 +499,13 @@ public static partial class LocalStackBuilderExtensions
     /// <summary>
     /// Adds Amazon S3 to the host.
     /// </summary>
-    /// <typeparam name="TResource">The type of LocalStack resource.</typeparam>
+    /// <typeparam name="TResource">The type of MiniStack resource.</typeparam>
     /// <param name="builder">The input builder.</param>
-    /// <param name="resource">The LocalStack resource.</param>
+    /// <param name="resource">The MiniStack resource.</param>
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
     public static IDistributedApplicationBuilder AddAmazonS3<TResource>(this IDistributedApplicationBuilder builder, TResource resource, AWS.IAWSSDKConfig? configuration = default)
-        where TResource : LocalStackServerResource
+        where TResource : MiniStackServerResource
     {
         return configuration is null
             ? builder.AddAmazonS3(resource, Uri.UriSchemeHttp, UpdateConfigurationCore)
@@ -525,24 +520,24 @@ public static partial class LocalStackBuilderExtensions
     /// <summary>
     /// Adds Amazon SQS to the host.
     /// </summary>
-    /// <typeparam name="TResource">The type of LocalStack resource.</typeparam>
+    /// <typeparam name="TResource">The type of MiniStack resource.</typeparam>
     /// <param name="builder">The input builder.</param>
-    /// <param name="resourceBuilder">The LocalStack resource builder.</param>
+    /// <param name="resourceBuilder">The MiniStack resource builder.</param>
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
     public static IDistributedApplicationBuilder AddAmazonSqs<TResource>(this IDistributedApplicationBuilder builder, IResourceBuilder<TResource> resourceBuilder, AWS.IAWSSDKConfig? configuration = default)
-        where TResource : LocalStackServerResource => AddAmazonSqs(builder, resourceBuilder.Resource, Uri.UriSchemeHttp, configuration);
+        where TResource : MiniStackServerResource => AddAmazonSqs(builder, resourceBuilder.Resource, Uri.UriSchemeHttp, configuration);
 
     /// <summary>
     /// Adds Amazon SQS to the host.
     /// </summary>
-    /// <typeparam name="TResource">The type of LocalStack resource.</typeparam>
+    /// <typeparam name="TResource">The type of MiniStack resource.</typeparam>
     /// <param name="builder">The input builder.</param>
-    /// <param name="resource">The LocalStack resource.</param>
+    /// <param name="resource">The MiniStack resource.</param>
     /// <param name="configuration">The AWS configuration.</param>
     /// <returns>The builder for chaining.</returns>
     public static IDistributedApplicationBuilder AddAmazonSqs<TResource>(this IDistributedApplicationBuilder builder, TResource resource, AWS.IAWSSDKConfig? configuration = default)
-        where TResource : LocalStackServerResource => AddAmazonSqs(builder, resource, Uri.UriSchemeHttp, configuration);
+        where TResource : MiniStackServerResource => AddAmazonSqs(builder, resource, Uri.UriSchemeHttp, configuration);
 
     private static IDistributedApplicationBuilder AddAmazonSqs(
         IDistributedApplicationBuilder builder,
@@ -602,7 +597,7 @@ public static partial class LocalStackBuilderExtensions
         await sqs.AuthorizeS3ToSendMessageAsync(response.QueueUrl, bucketName).ConfigureAwait(false);
     }
 
-    private static void UpdateConfiguration(LocalStackServerResource resource, IConfigurationBuilder configuration)
+    private static void UpdateConfiguration(MiniStackServerResource resource, IConfigurationBuilder configuration)
     {
         if (configuration.Properties.ContainsKey($"AWS:{nameof(Amazon.S3.AmazonS3Config.ForcePathStyle)}"))
         {
