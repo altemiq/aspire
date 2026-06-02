@@ -321,13 +321,11 @@ public static partial class GarageBuilderExtensions
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
     /// <param name="userName">The parameter used to provide the username for the Garage resource. If <see langword="null"/> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the Garage resource. If <see langword="null"/> a random password will be generated.</param>
-    /// <param name="apiPort">The API port.</param>
-    /// <param name="consolePort">The console port.</param>
     /// <param name="config">The AWS config.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-    public static IResourceBuilder<GarageServerResource> AddGarage(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? apiPort = null, int? consolePort = null, AWS.IAWSSDKConfig? config = null) =>
-        builder.AddGarage(name, userName, password, apiPort, consolePort, config?.Region);
+    public static IResourceBuilder<GarageServerResource> AddGarage(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, AWS.IAWSSDKConfig? config = null) =>
+        builder.AddGarage(name, userName, password, config?.Region);
 
     /// <summary>
     /// Adds a Garage container to the application.
@@ -336,13 +334,11 @@ public static partial class GarageBuilderExtensions
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
     /// <param name="userName">The parameter used to provide the username for the Garage resource. If <see langword="null"/> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the Garage resource. If <see langword="null"/> a random password will be generated.</param>
-    /// <param name="apiPort">The API port.</param>
-    /// <param name="consolePort">The console port.</param>
     /// <param name="regionEndPoint">The region end point.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-    public static IResourceBuilder<GarageServerResource> AddGarage(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? apiPort = null, int? consolePort = null, Amazon.RegionEndpoint? regionEndPoint = null) =>
-        builder.AddGarage(name, userName, password, apiPort, consolePort, regionEndPoint?.SystemName);
+    public static IResourceBuilder<GarageServerResource> AddGarage(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, Amazon.RegionEndpoint? regionEndPoint = null) =>
+        builder.AddGarage(name, userName, password, regionEndPoint?.SystemName);
 
     /// <summary>
     /// Adds a Garage container to the application.
@@ -351,11 +347,9 @@ public static partial class GarageBuilderExtensions
     /// <param name="name">The name of the resource. This name will be used as the connection string name when referenced in a dependency.</param>
     /// <param name="userName">The parameter used to provide the username for the Garage resource. If <see langword="null"/> a default value will be used.</param>
     /// <param name="password">The parameter used to provide the administrator password for the Garage resource. If <see langword="null"/> a random password will be generated.</param>
-    /// <param name="apiPort">The API port.</param>
-    /// <param name="consolePort">The console port.</param>
     /// <param name="region">The region.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
-    public static IResourceBuilder<GarageServerResource> AddGarage(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, int? apiPort = null, int? consolePort = null, string? region = default)
+    public static IResourceBuilder<GarageServerResource> AddGarage(this IDistributedApplicationBuilder builder, string name, IResourceBuilder<ParameterResource>? userName = null, IResourceBuilder<ParameterResource>? password = null, string? region = default)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(name);

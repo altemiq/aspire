@@ -43,7 +43,7 @@ public class MiniStackPublicApiTests
 
         IResourceBuilder<MiniStackServerResource> Action()
         {
-            return builder.WithDataVolume();
+            return builder.WithStateVolume();
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
@@ -57,7 +57,7 @@ public class MiniStackPublicApiTests
 
         IResourceBuilder<MiniStackServerResource> Action()
         {
-            return builder.WithDataBindMount(Source);
+            return builder.WithStateBindMount(Source);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(builder));
@@ -72,7 +72,7 @@ public class MiniStackPublicApiTests
 
         IResourceBuilder<MiniStackServerResource> Action()
         {
-            return miniStack.WithDataBindMount(source);
+            return miniStack.WithStateBindMount(source);
         }
 
         _ = await Assert.That(Action).Throws<ArgumentNullException>().WithParameterName(nameof(source));

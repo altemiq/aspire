@@ -16,7 +16,41 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public static partial class MiniStackBuilderExtensions
 {
-    private const string DataLocation = "/var/lib/miniStack/state";
+    private const string StateLocation = "/tmp/ministack-state";
+    private const string DataLocation = "/tmp/ministack-data";
+
+    /// <summary>
+    /// Adds a named volume for the state folder to a MiniStack container resource.
+    /// </summary>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="name">The name of the volume. Defaults to an auto-generated name based on the application and resource names.</param>
+    /// <param name="isReadOnly">A flag that indicates if this is a read-only volume.</param>
+    /// <returns>The <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MiniStackServerResource> WithStateVolume(this IResourceBuilder<MiniStackServerResource> builder, string? name = null, bool isReadOnly = false)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        return builder
+            .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "state"), StateLocation, isReadOnly)
+            .WithEnvironment("PERSIST_STATE", "1");
+    }
+
+    /// <summary>
+    /// Adds a bind mount for the state folder to a MiniStack container resource.
+    /// </summary>
+    /// <param name="builder">The resource builder.</param>
+    /// <param name="source">The source directory on the host to mount into the container.</param>
+    /// <param name="isReadOnly">A flag that indicates if this is a read-only mount.</param>
+    /// <returns>The <see cref="IResourceBuilder{T}"/>.</returns>
+    public static IResourceBuilder<MiniStackServerResource> WithStateBindMount(this IResourceBuilder<MiniStackServerResource> builder, string source, bool isReadOnly = false)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(source);
+
+        return builder
+            .WithBindMount(source, StateLocation, isReadOnly)
+            .WithEnvironment("PERSIST_STATE", "1");
+    }
 
     /// <summary>
     /// Adds a named volume for the data folder to a MiniStack container resource.
@@ -30,8 +64,9 @@ public static partial class MiniStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
-            .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "state"), DataLocation, isReadOnly)
-            .WithEnvironment("MINISTACK_PERSISTENCE", "1");
+            .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "data"), StateLocation, isReadOnly)
+            .WithEnvironment("PERSIST_STATE", "1")
+            .WithEnvironment("S3_PERSIST", "1");
     }
 
     /// <summary>
@@ -48,7 +83,8 @@ public static partial class MiniStackBuilderExtensions
 
         return builder
             .WithBindMount(source, DataLocation, isReadOnly)
-            .WithEnvironment("PERSIST_STATE", "1");
+            .WithEnvironment("PERSIST_STATE", "1")
+            .WithEnvironment("S3_PERSIST", "1");
     }
 
     /// <summary>
@@ -143,6 +179,11 @@ public static partial class MiniStackBuilderExtensions
                 if (miniStack.Services != default)
                 {
                     context.EnvironmentVariables["SERVICES"] = string.Join(',', miniStack.GetServiceNames());
+                }
+
+                if (region is not null)
+                {
+                    context.EnvironmentVariables["MINISTACK_REGION"] = region;
                 }
             })
             .WithDockerSock(() => serviceProvider ?? throw new InvalidOperationException())
@@ -473,6 +514,52 @@ public static partial class MiniStackBuilderExtensions
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Adds a StackPort container for MiniStack to the application model.
+    /// </summary>
+    /// <remarks>
+    /// This version of the package defaults to the <inheritdoc cref="MiniStack.MiniStackContainerImageTags.StackPortTag"/> tag of the <inheritdoc cref="MiniStack.MiniStackContainerImageTags.StackPortImage"/> container image.
+    /// </remarks>
+    /// <typeparam name="T">The MiniStack server resource type.</typeparam>
+    /// <param name="builder">The MiniStack server resource builder.</param>
+    /// <param name="configureContainer">Callback to configure StackPort container resource.</param>
+    /// <param name="containerName">The name of the container (Optional).</param>
+    /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
+    /// <ats-returns>The resource builder.</ats-returns>
+    public static IResourceBuilder<T> WithStackPort<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<MiniStack.StackPortContainerResource>>? configureContainer = null, string? containerName = null)
+        where T : MiniStackServerResource
+    {
+        if (builder.ApplicationBuilder.Resources.OfType<MiniStack.StackPortContainerResource>().SingleOrDefault() is { } existingStackPortResource)
+        {
+            var builderForExistingResource = builder.ApplicationBuilder.CreateResourceBuilder(existingStackPortResource);
+            configureContainer?.Invoke(builderForExistingResource);
+            return builder;
+        }
+
+        containerName ??= "stackport";
+
+        var stackPortContainer = new MiniStack.StackPortContainerResource(containerName);
+        var stackPortContainerBuilder = builder.ApplicationBuilder.AddResource(stackPortContainer)
+            .WithImage(MiniStack.MiniStackContainerImageTags.StackPortImage, MiniStack.MiniStackContainerImageTags.StackPortTag)
+            .WithImageRegistry(MiniStack.MiniStackContainerImageTags.StackPortRegistry)
+            .WithEnvironment(ctx =>
+            {
+                ctx.EnvironmentVariables["AWS_ENDPOINT_URL"] = builder.Resource.GetEndpoint(Uri.UriSchemeHttp);
+                ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region;
+                ctx.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
+                ctx.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
+            })
+            .WithHttpEndpoint(targetPort: 8080)
+            .WithHttpHealthCheck(path: "/api/health")
+            .ExcludeFromManifest();
+
+        configureContainer?.Invoke(stackPortContainerBuilder);
+
+        stackPortContainerBuilder.WithRelationship(builder.Resource, "StackPort");
+
+        return builder;
     }
 
     /// <summary>

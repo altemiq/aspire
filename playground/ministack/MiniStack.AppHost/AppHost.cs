@@ -25,11 +25,12 @@ var config = builder.AddAWSSDKConfig()
 
 var ministack = builder
     .AddMiniStack("ministack", regionEndPoint: region, services: MiniStackServices.SimpleStorageService | MiniStackServices.SimpleNotificationService | MiniStackServices.SimpleQueueService)
-    .WithDataVolume()
-    .WithLifetime(ContainerLifetime.Persistent)
+    .WithStateVolume()
+    .WithDataBindMount(Path.Combine(builder.AppHostDirectory, "data"))
     .WithSqsQueue(ProfileName)
     .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll)
-    .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName);
+    .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName)
+    .WithStackPort();
 
 builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
     .WithUrls(callback =>

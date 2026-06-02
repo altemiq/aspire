@@ -79,7 +79,7 @@ _ = app.MapGet("buckets", async (Amazon.S3.IAmazonS3 s3, CancellationToken cance
 
 _ = app.MapGet("/test-data", async (Amazon.S3.IAmazonS3 s3, CancellationToken cancellationToken) =>
 {
-    var response = await s3.ListObjectsV2Async(new() { BucketName = "test-data", Prefix = "bad.txt" }, cancellationToken).ConfigureAwait(false);
+    var response = await s3.ListObjectsV2Async(new() { BucketName = "test-data" }, cancellationToken).ConfigureAwait(false);
 
     if (response.S3Objects is { Count: > 0 } objects)
     {

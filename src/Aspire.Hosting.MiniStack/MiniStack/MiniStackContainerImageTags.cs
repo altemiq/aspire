@@ -25,4 +25,19 @@ internal static class MiniStackContainerImageTags
     /// The tag.
     /// </summary>
     public const string Tag = "1.3";
+
+    /// <summary>
+    /// The StackPort registry.
+    /// </summary>
+    public const string StackPortRegistry = "docker.io";
+
+    /// <summary>
+    /// The StackPort image.
+    /// </summary>
+    public const string StackPortImage = "davireis/stackport";
+
+    /// <summary>
+    /// The StackPort tag.
+    /// </summary>
+    public const string StackPortTag = "0.3.4";
 }
