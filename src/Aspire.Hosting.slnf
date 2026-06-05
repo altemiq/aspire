@@ -1,0 +1,18 @@
+{
+  "solution": {
+    "path": "..\\Aspire.slnx",
+    "projects": [
+      "src\\Aspire.Hosting.AWS.Configuration\\Aspire.Hosting.AWS.Configuration.csproj",
+      "src\\Aspire.Hosting.AWS.S3\\Aspire.Hosting.AWS.S3.csproj",
+      "src\\Aspire.Hosting.Containers.Extensions\\Aspire.Hosting.Containers.Extensions.csproj",
+      "src\\Aspire.Hosting.Garage\\Aspire.Hosting.Garage.csproj",
+      "src\\Aspire.Hosting.Grpc\\Aspire.Hosting.Grpc.csproj",
+      "src\\Aspire.Hosting.LocalStack\\Aspire.Hosting.LocalStack.csproj",
+      "src\\Aspire.Hosting.MapServer\\Aspire.Hosting.MapServer.csproj",
+      "src\\Aspire.Hosting.MinIO\\Aspire.Hosting.MinIO.csproj",
+      "src\\Aspire.Hosting.MiniStack\\Aspire.Hosting.MiniStack.csproj",
+      "src\\Aspire.Hosting.PostGIS\\Aspire.Hosting.PostGIS.csproj",
+      "src\\Aspire.Hosting.PostgreSQL.Extensions\\Aspire.Hosting.PostgreSQL.Extensions.csproj"
+    ]
+  }
+}

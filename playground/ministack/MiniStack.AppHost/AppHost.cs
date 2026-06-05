@@ -17,11 +17,15 @@ var region = Amazon.RegionEndpoint.APSoutheast2;
 
 var profiles = builder.AddAWSProfileConfig()
     .AsConfigurationFile()
-    .WithProfile(ProfileName);
+    .WithProfile(
+        ProfileName,
+        builder.AddParameter("aws-access-key", new GenerateParameterDefault { Lower = false, Upper = false, Special = false, MinLength = 12 }, persist: true));
 
 var config = builder.AddAWSSDKConfig()
     .WithRegion(region)
     .WithProfile(ProfileName);
+
+builder.SetAWSConfig(config);
 
 var ministack = builder
     .AddMiniStack("ministack", regionEndPoint: region, services: MiniStackServices.SimpleStorageService | MiniStackServices.SimpleNotificationService | MiniStackServices.SimpleQueueService)
@@ -30,7 +34,7 @@ var ministack = builder
     .WithSqsQueue(ProfileName)
     .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll)
     .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName)
-    .WithStackPort();
+    .WithStackPort(profile: profiles.Resource.Profiles.Single());
 
 builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
     .WithUrls(callback =>
