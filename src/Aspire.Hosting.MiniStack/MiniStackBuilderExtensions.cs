@@ -514,6 +514,12 @@ public static partial class MiniStackBuilderExtensions
 
                     var listResponse = await client.ListObjectsV2Async(new() { BucketName = bucketName }, cancellationToken).ConfigureAwait(false);
 
+                    if (listResponse.S3Objects is null or { Count: 0 })
+                    {
+                        // there are no objects in the bucket, so nothing to check
+                        continue;
+                    }
+
                     foreach (var item in listResponse.S3Objects)
                     {
                         var localPath = Path.Combine(directory, item.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
@@ -523,8 +529,8 @@ public static partial class MiniStackBuilderExtensions
                             await client.DeleteObjectAsync(item.BucketName, item.Key, cancellationToken).ConfigureAwait(false);
                         }
                         else if (!annotation.ReadOnly
-                                 && item is { LastModified: { } lastModified }
-                                 && File.GetLastWriteTimeUtc(localPath) < lastModified.ToUniversalTime())
+                            && item is { LastModified: { } lastModified }
+                            && File.GetLastWriteTimeUtc(localPath) < lastModified.ToUniversalTime())
                         {
                             // download this
                             LogDownloadingFile(logger, item.Key, item.BucketName);

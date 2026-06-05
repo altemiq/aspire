@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 const string BucketName = "aspire";
 const string MirrorBucketName = "test-data";
 const string MissingFolderBucketName = "missing-folder";
+const string EmptyFolderBucketName = "empty-folder";
 const string ProfileName = "ministack";
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -28,6 +29,10 @@ var config = builder.AddAWSSDKConfig()
 
 builder.SetAWSConfig(config);
 
+// create an empty folder
+var emptyFolder = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
+Directory.CreateDirectory(emptyFolder);
+
 var ministack = builder
     .AddMiniStack("ministack", regionEndPoint: region, services: MiniStackServices.SimpleStorageService | MiniStackServices.SimpleNotificationService | MiniStackServices.SimpleQueueService)
     .WithStateVolume()
@@ -37,6 +42,7 @@ var ministack = builder
     .EnsureBucket(MissingFolderBucketName, ProfileName)
     .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName)
     .WithMirror(Path.Combine(builder.AppHostDirectory, MissingFolderBucketName), MissingFolderBucketName)
+    .WithMirror(emptyFolder, EmptyFolderBucketName)
     .WithStackPort(profile: profiles.Resource.Profiles.Single());
 
 builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)

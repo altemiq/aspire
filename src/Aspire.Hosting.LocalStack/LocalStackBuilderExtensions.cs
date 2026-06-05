@@ -471,6 +471,12 @@ public static partial class LocalStackBuilderExtensions
 
                     var listResponse = await client.ListObjectsV2Async(new() { BucketName = bucketName }, cancellationToken).ConfigureAwait(false);
 
+                    if (listResponse.S3Objects is null or { Count: 0 })
+                    {
+                        // there are no objects in the bucket, so nothing to check
+                        continue;
+                    }
+
                     foreach (var item in listResponse.S3Objects)
                     {
                         var localPath = Path.Combine(directory, item.Key.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
