@@ -199,6 +199,8 @@ public static partial class MiniStackBuilderExtensions
             return Task.CompletedTask;
         });
 
+        AddResetCommand(resourceBuilder);
+
         return resourceBuilder;
 
         static void AddHealthCheck(IResourceBuilder<MiniStackServerResource> builder, string scheme, Func<EndpointReference> endpointSelector, MiniStackServices? services)
@@ -233,6 +235,11 @@ public static partial class MiniStackBuilderExtensions
 
             _ = builder.WithHealthCheck(healthCheckKey);
         }
+
+        static void AddResetCommand(IResourceBuilder<MiniStackServerResource> builder)
+        {
+            builder.WithHttpCommand("/_ministack/reset", "Reset", commandOptions: new HttpCommandOptions { IconName = "ArrowReset", IconVariant = IconVariant.Filled });
+    }
     }
 
     /// <summary>
