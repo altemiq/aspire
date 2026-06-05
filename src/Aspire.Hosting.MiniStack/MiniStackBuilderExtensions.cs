@@ -239,7 +239,7 @@ public static partial class MiniStackBuilderExtensions
         static void AddResetCommand(IResourceBuilder<MiniStackServerResource> builder)
         {
             builder.WithHttpCommand("/_ministack/reset", "Reset", commandOptions: new HttpCommandOptions { IconName = "ArrowReset", IconVariant = IconVariant.Filled });
-    }
+        }
     }
 
     /// <summary>
@@ -533,9 +533,10 @@ public static partial class MiniStackBuilderExtensions
     /// <param name="builder">The MiniStack server resource builder.</param>
     /// <param name="configureContainer">Callback to configure StackPort container resource.</param>
     /// <param name="containerName">The name of the container (Optional).</param>
+    /// <param name="profile">The optional AWS profile to use for credentials.</param>
     /// <returns>A reference to the <see cref="IResourceBuilder{T}"/>.</returns>
     /// <ats-returns>The resource builder.</ats-returns>
-    public static IResourceBuilder<T> WithStackPort<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<MiniStack.StackPortContainerResource>>? configureContainer = null, string? containerName = null)
+    public static IResourceBuilder<T> WithStackPort<T>(this IResourceBuilder<T> builder, Action<IResourceBuilder<MiniStack.StackPortContainerResource>>? configureContainer = null, string? containerName = null, Aspire.Hosting.AWS.AWSProfile? profile = default)
         where T : MiniStackServerResource
     {
         if (builder.ApplicationBuilder.Resources.OfType<MiniStack.StackPortContainerResource>().SingleOrDefault() is { } existingStackPortResource)
@@ -553,10 +554,14 @@ public static partial class MiniStackBuilderExtensions
             .WithImageRegistry(MiniStack.MiniStackContainerImageTags.StackPortRegistry)
             .WithEnvironment(ctx =>
             {
-                ctx.EnvironmentVariables["AWS_ENDPOINT_URL"] = builder.Resource.GetEndpoint(Uri.UriSchemeHttp);
-                ctx.EnvironmentVariables["AWS_REGION"] = builder.Resource.Region;
-                ctx.EnvironmentVariables["AWS_ACCESS_KEY_ID"] = "ministack";
-                ctx.EnvironmentVariables["AWS_SECRET_ACCESS_KEY"] = "ministack";
+                ctx.EnvironmentVariables[Amazon.Util.EnvironmentVariables.GLOBAL_ENDPOINT_ENVIRONMENT_VARIABLE] = builder.Resource.GetEndpoint(Uri.UriSchemeHttp);
+                ctx.EnvironmentVariables[Amazon.Runtime.EnvironmentVariableAWSRegion.ENVIRONMENT_VARIABLE_REGION] = builder.Resource.Region;
+                ctx.EnvironmentVariables[Amazon.Runtime.EnvironmentVariablesAWSCredentials.ENVIRONMENT_VARIABLE_ACCESSKEY] = profile?.AccessKeyId ?? (object)"ministack";
+                ctx.EnvironmentVariables[Amazon.Runtime.EnvironmentVariablesAWSCredentials.ENVIRONMENT_VARIABLE_SECRETKEY] = profile?.SecretAccessKey ?? (object)"ministack";
+                if (profile?.SessionToken is { } sessionToken)
+                {
+                    ctx.EnvironmentVariables[Amazon.Runtime.EnvironmentVariablesAWSCredentials.ENVIRONMENT_VARIABLE_SESSION_TOKEN] = sessionToken;
+                }
             })
             .WithHttpEndpoint(targetPort: 8080)
             .WithHttpHealthCheck(path: "/api/health")
@@ -564,7 +569,8 @@ public static partial class MiniStackBuilderExtensions
 
         configureContainer?.Invoke(stackPortContainerBuilder);
 
-        stackPortContainerBuilder.WithRelationship(builder.Resource, "StackPort");
+        stackPortContainerBuilder.WaitFor(builder);
+        stackPortContainerBuilder.WithRelationship(builder.Resource, "Manager");
 
         return builder;
     }
