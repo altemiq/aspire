@@ -401,11 +401,27 @@ public static partial class LocalStackBuilderExtensions
             if (e.Resource.TryGetAnnotationsOfType<BucketMirrorAnnotation>(out var annotations))
             {
                 var logger = e.Services.GetRequiredService<ResourceLoggerService>().GetLogger(e.Resource);
+                Amazon.S3.IAmazonS3? client = default;
                 foreach (var annotation in annotations)
                 {
                     var bucketName = annotation.BucketName;
 
-                    var client = e.Services.GetRequiredKeyedAwsService<Amazon.S3.IAmazonS3>(e.Resource.Name);
+                    client ??= e.Services.GetRequiredKeyedAwsService<Amazon.S3.IAmazonS3>(e.Resource.Name);
+
+                    // see if the directory exists
+                    if (!Directory.Exists(annotation.Directory))
+                    {
+                        LogDirectoryNotFound(logger, annotation.Directory);
+
+                        if (await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, bucketName).ConfigureAwait(false))
+                        {
+                            LogDeletingBucket(logger, bucketName);
+                            await client.DeleteBucketAsync(new Amazon.S3.Model.DeleteBucketRequest { BucketName = bucketName, BucketRegion = Amazon.S3.S3Region.FindValue(client.Config.AuthenticationRegion) }, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        continue;
+                    }
+
                     if (!await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, bucketName).ConfigureAwait(false))
                     {
                         LogCreateBucket(logger, bucketName);
@@ -639,6 +655,12 @@ public static partial class LocalStackBuilderExtensions
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Creating Bucket {BucketName}")]
     private static partial void LogCreateBucket(ILogger logger, string bucketName);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Deleting Bucket {BucketName}")]
+    private static partial void LogDeletingBucket(ILogger logger, string bucketName);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Directory not found: {Directory}")]
+    private static partial void LogDirectoryNotFound(ILogger logger, string directory);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Transferring {Key} to {BucketName}")]
     private static partial void LogUploadingFile(ILogger logger, string key, string bucketName);

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 const string BucketName = "aspire";
 const string MirrorBucketName = "test-data";
+const string MissingFolderBucketName = "missing-folder";
 const string ProfileName = "ministack";
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -33,7 +34,9 @@ var ministack = builder
     .WithDataBindMount(Path.Combine(builder.AppHostDirectory, "data"))
     .WithSqsQueue(ProfileName)
     .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll)
+    .EnsureBucket(MissingFolderBucketName, ProfileName)
     .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName)
+    .WithMirror(Path.Combine(builder.AppHostDirectory, MissingFolderBucketName), MissingFolderBucketName)
     .WithStackPort(profile: profiles.Resource.Profiles.Single());
 
 builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
