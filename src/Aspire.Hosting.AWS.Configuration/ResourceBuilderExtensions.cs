@@ -115,37 +115,17 @@ public static partial class ResourceBuilderExtensions
         IResourceBuilder<ParameterResource>? secretToken = null)
         where T : AWS.IAWSProfileConfig
     {
-        var accessKeyIdParameter = accessKeyId?.Resource ?? RemoveSecret(ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder.ApplicationBuilder, $"{name}-access-key-id"));
-        var secretAccessKeyParameter = secretAccessKey?.Resource ?? ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder.ApplicationBuilder, $"{name}-secret-access-key");
-        builder.Resource.Profiles.Add(new() { Name = name, AccessKeyId = accessKeyIdParameter, SecretAccessKey = secretAccessKeyParameter, SessionToken = secretToken?.Resource });
+        accessKeyId ??= builder.ApplicationBuilder.AddParameter(
+            $"{name}-access-key-id",
+            new GenerateParameterDefault { MinLength = 12, Numeric = true, Special = false, Lower = false, Upper = false },
+            persist: true);
+        secretAccessKey ??= builder.ApplicationBuilder.AddParameter(
+            $"{name}-secret-access-key",
+            new GenerateParameterDefault(),
+            secret: true,
+            persist: true);
+        builder.Resource.Profiles.Add(new() { Name = name, AccessKeyId = accessKeyId.Resource, SecretAccessKey = secretAccessKey.Resource, SessionToken = secretToken?.Resource });
         return builder;
-
-        static ParameterResource RemoveSecret(ParameterResource parameterResource)
-        {
-            if (GetBackingField(parameterResource.GetType().GetProperty(nameof(parameterResource.Secret))) is { } fieldInfo)
-            {
-                fieldInfo.SetValue(parameterResource, value: false);
-            }
-
-            return parameterResource;
-
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields", Justification = "Checked")]
-            static System.Reflection.FieldInfo? GetBackingField(System.Reflection.PropertyInfo? pi)
-            {
-                if (pi?.CanRead is not true || pi.GetGetMethod(nonPublic: true)?.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), inherit: true) is not true)
-                {
-                    return null;
-                }
-
-                if (pi.DeclaringType?.GetField($"<{pi.Name}>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) is { } backingField
-                    && backingField.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), inherit: true))
-                {
-                    return backingField;
-                }
-
-                return null;
-            }
-        }
     }
 
     /// <summary>
