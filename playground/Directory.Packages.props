@@ -15,9 +15,9 @@
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.2" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.23.6" />
-    <PackageVersion Include="AWSSDK.SQS" Version="4.0.2.33" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.5" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.24.2" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.3.2" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="2.0.0" />
   </ItemGroup>
 
@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.9" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
   </ItemGroup>
   
@@ -44,8 +44,8 @@
   </ItemGroup>
 
   <ItemGroup Label="ServiceDefaults">
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.7.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />

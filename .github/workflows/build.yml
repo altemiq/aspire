@@ -12,17 +12,18 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_MULTILEVEL_LOOKUP: false
+  _AspireUseSdkPickBestRid: false
+
 jobs:
   run-tests:
     strategy:
       matrix: 
         os: [ windows-latest, ubuntu-latest ]
     runs-on: ${{ matrix.os }}
-
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      DOTNET_MULTILEVEL_LOOKUP: false
 
     steps:
     - uses: actions/checkout@v6
@@ -64,11 +65,6 @@ jobs:
 
   create-nuget:
     runs-on: ubuntu-latest
-    
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      DOTNET_MULTILEVEL_LOOKUP: false
 
     steps:
     - uses: actions/checkout@v6

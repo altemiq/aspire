@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">
-    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.289" />
+    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.293" />
   </ItemGroup>
 
 </Project>
