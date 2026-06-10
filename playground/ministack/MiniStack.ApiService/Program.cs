@@ -47,19 +47,33 @@ _ = app.MapGet("/", async (Amazon.SQS.IAmazonSQS sqs, Amazon.S3.IAmazonS3 s3, Ca
     }
 
     var getQueueUrlResponse = await sqs.GetQueueUrlAsync(QueueName, cancellationToken).ConfigureAwait(false);
-    var messages = await sqs
-        .ReceiveMessageAsync(
-            new Amazon.SQS.Model.ReceiveMessageRequest()
-            {
-                QueueUrl = getQueueUrlResponse.QueueUrl,
-                WaitTimeSeconds = 20,
-            },
-            cancellationToken)
-        .ConfigureAwait(false);
-
-    if (messages.Messages is { Count: not 0 })
+    var messageQueue = new Queue<string>();
+    while (true)
     {
-        return string.Join(Environment.NewLine, messages.Messages.Select(x => x.Body));
+        var messages = await sqs
+           .ReceiveMessageAsync(
+               new Amazon.SQS.Model.ReceiveMessageRequest()
+               {
+                   QueueUrl = getQueueUrlResponse.QueueUrl,
+                   WaitTimeSeconds = 5,
+               },
+               cancellationToken)
+           .ConfigureAwait(false);
+
+        if (messages.Messages is null or { Count: 0 })
+        {
+            break;
+        }
+
+        foreach (var message in messages.Messages)
+        {
+            messageQueue.Enqueue(message.Body);
+        }
+    }
+
+    if (messageQueue.Count > 0)
+    {
+        return string.Join(Environment.NewLine, messageQueue);
     }
 
     throw new InvalidOperationException("Failed to receive SQS messages");

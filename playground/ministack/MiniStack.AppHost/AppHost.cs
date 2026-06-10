@@ -21,7 +21,7 @@ var profiles = builder.AddAWSProfileConfig()
     .AsConfigurationFile()
     .WithProfile(
         ProfileName,
-        builder.AddParameter("aws-access-key", new GenerateParameterDefault { Lower = false, Upper = false, Special = false, MinLength = 12 }, persist: true));
+        builder.AddParameter($"{ProfileName}-access-key-id", new StaticParameterDefault("000000000000")));
 
 var config = builder.AddAWSSDKConfig()
     .WithRegion(region)
@@ -74,3 +74,20 @@ builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts =
     .WithReference(config);
 
 await builder.Build().RunAsync().ConfigureAwait(false);
+
+#pragma warning disable MA0047, RCS1110, SA1400, SA1649
+
+/// <summary>
+/// The static parameter default value provider.
+/// </summary>
+/// <param name="value">The value.</param>
+sealed class StaticParameterDefault(string value) : ParameterDefault
+{
+    /// <inheritdoc/>
+    public override string GetDefaultValue() => value;
+
+    /// <inheritdoc/>
+    public override void WriteToManifest(Aspire.Hosting.Publishing.ManifestPublishingContext context)
+    {
+    }
+}
