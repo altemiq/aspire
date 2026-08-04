@@ -36,9 +36,8 @@ _ = app.MapGet("/", async (Amazon.SQS.IAmazonSQS sqs, Amazon.S3.IAmazonS3 s3, Ca
     const string BucketName = "aspire";
     const string QueueName = "localstack-queue";
 
-    var random = new Random();
     var bytes = new byte[1024];
-    random.NextBytes(bytes);
+    System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
 
     var stream = new MemoryStream(bytes);
     await using (stream.ConfigureAwait(false))

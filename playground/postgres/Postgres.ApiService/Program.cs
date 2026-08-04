@@ -111,7 +111,8 @@ static async Task CreateExtensions(WebApplication app, System.Diagnostics.Activi
                 using (activity?.AddEvent(new($"extensions.setup.{name}")))
                 {
                     // check to see if this exists as an extension
-                    npgsqlCommand.CommandText = $"CREATE EXTENSION IF NOT EXISTS {name}";
+                    npgsqlCommand.CommandText = $"CREATE EXTENSION IF NOT EXISTS ${nameof(name)}";
+                    npgsqlCommand.Parameters.AddWithValue(nameof(name), name);
                     await npgsqlCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 }
             }

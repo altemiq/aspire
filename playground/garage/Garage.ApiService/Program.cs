@@ -32,9 +32,8 @@ _ = app.MapGet("/", async (Amazon.S3.IAmazonS3 s3, CancellationToken cancellatio
 {
     const string BucketName = "aspire";
 
-    var random = new Random();
     var bytes = new byte[1024];
-    random.NextBytes(bytes);
+    System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
 
     var stream = new MemoryStream(bytes);
     await using (stream.ConfigureAwait(false))

@@ -68,9 +68,8 @@ _ = app.MapGet("/", static async (Amazon.S3.IAmazonS3 client, CancellationToken 
         _ = await client.PutBucketNotificationAsync(putBucketNotificationRequest, cancellationToken).ConfigureAwait(false);
     }
 
-    var random = new Random();
     var bytes = new byte[1024];
-    random.NextBytes(bytes);
+    System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
 
     var stream = new MemoryStream(bytes);
     await using (stream.ConfigureAwait(false))
