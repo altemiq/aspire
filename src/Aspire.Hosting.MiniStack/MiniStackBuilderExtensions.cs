@@ -16,8 +16,10 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public static partial class MiniStackBuilderExtensions
 {
+#pragma warning disable S5443 // Temporary files should not be created in publicly writable directories
     private const string StateLocation = "/tmp/ministack-state";
     private const string DataLocation = "/tmp/ministack-data";
+#pragma warning restore S5443 // Temporary files should not be created in publicly writable directories
 
     /// <summary>
     /// Adds a named volume for the state folder to a MiniStack container resource.

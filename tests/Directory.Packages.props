@@ -10,13 +10,14 @@
   </ItemGroup>
   
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.2" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.23.6" />
+    <PackageVersion Include="Amazon.CDK.Lib" Version="2.263.0" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.100.7" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.101.6" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">

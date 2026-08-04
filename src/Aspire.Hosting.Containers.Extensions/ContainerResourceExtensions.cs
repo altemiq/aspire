@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "MemberCanBePrivate.Global", Justification = "Public API")]
 public static partial class ContainerResourceExtensions
 {
-    private static readonly Dictionary<string, object?> EmptyDictionary = [];
+    private static readonly Dictionary<string, object?> EmptyDictionary = [with(global::System.StringComparer.Ordinal)];
 
     /// <summary>
     /// Causes .NET Aspire to build the specified container image from a Containerfile.

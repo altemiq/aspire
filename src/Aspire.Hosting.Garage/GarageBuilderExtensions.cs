@@ -29,8 +29,11 @@ public static partial class GarageBuilderExtensions
     private const string K2VEndpoint = "k2v";
 
     private const string GarageExecutable = "/garage";
+
+#pragma warning disable S5443 // Temporary files should not be created in publicly writable directories
     private const string MetadataLocation = "/tmp/meta";
     private const string DataLocation = "/tmp/data";
+#pragma warning restore S5443 // Temporary files should not be created in publicly writable directories
 
     private const string DefaultGarageToml = $"""
                                               metadata_dir = "{MetadataLocation}"
@@ -422,8 +425,10 @@ public static partial class GarageBuilderExtensions
             .PublishAsContainer();
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Vulnerability", "S2245:Pseudorandom number generators (PRNGs) should not be used in security contexts", Justification = "Checked")]
     private static string GetHexString(string name, int length) => GetHexString(new Random(StringComparer.Ordinal.GetHashCode(name)), length);
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Vulnerability", "S2245:Pseudorandom number generators (PRNGs) should not be used in security contexts", Justification = "Checked")]
     private static string GetHexString(int length) => GetHexString(new Random(), length);
 
     private static string GetHexString(Random random, int length)

@@ -73,7 +73,7 @@ internal sealed class LocalStackHealthCheck(Func<HttpClient> httpClientFactory) 
         public string? Edition { get; init; }
 
         [System.Text.Json.Serialization.JsonPropertyName("services")]
-        public Dictionary<string, string> Services { get; init; } = [];
+        public Dictionary<string, string> Services { get; init; } = [with(global::System.StringComparer.Ordinal)];
 
         [System.Text.Json.Serialization.JsonPropertyName("version")]
         public string? Version { get; init; }

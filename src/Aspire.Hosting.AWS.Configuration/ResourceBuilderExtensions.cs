@@ -237,8 +237,10 @@ public static partial class ResourceBuilderExtensions
 
         if (GetContainerBuilder(builder) is { } containerBuilder)
         {
+#pragma warning disable S5443 // Temporary files should not be created in publicly writable directories
             // inject the configuration into the container at an appropriate location
             const string TempPath = "/tmp/";
+#pragma warning restore S5443 // Temporary files should not be created in publicly writable directories
             var name = Path.GetFileName(fileAnnotation.FileName);
             _ = containerBuilder
                 .WithContainerFiles(TempPath, async (_, cancellationToken) => [new ContainerFile { Name = name, Contents = await File.ReadAllTextAsync(fileAnnotation.FileName, cancellationToken).ConfigureAwait(false) }])

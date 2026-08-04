@@ -318,8 +318,9 @@ public static partial class PostgresBuilderExtensions
                         var lines = await GetDockerfileLines(builder.Resource, materializeBuildArgs: true, factory.CancellationToken).ConfigureAwait(false);
                         return string.Join('\n', lines);
                     })
-                .OnBeforeResourceStarted((resource, callback, cancellationToken) =>
+                .OnBeforeResourceStarted((resource, _, cancellationToken) =>
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (resource.TryGetLastAnnotation<DockerfileBuildAnnotation>(out var dockerfileBuild))
                     {
                         var (image, registry, tag) = GetImageMetadata(resource);
@@ -390,6 +391,7 @@ public static partial class PostgresBuilderExtensions
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA5350:Do Not Use Weak Cryptographic Algorithms", Justification = "This is not required to be secure")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Vulnerability", "S4790:Weak hashing algorithms should not be used", Justification = "As per CA5350")]
     private static string GenerateImageSuffix<T>(IResourceBuilder<T> builder)
         where T : IResource
     {
@@ -545,6 +547,7 @@ public static partial class PostgresBuilderExtensions
                     }
 
                     [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "This is a file hash")]
+                    [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Vulnerability", "S4790:Weak hashing algorithms should not be used", Justification = "As per CA5351")]
                     static Task<byte[]> ComputeHashAsync(Stream stream, CancellationToken cancellationToken)
                     {
                         return System.Security.Cryptography.MD5.Create().ComputeHashAsync(stream, cancellationToken);
