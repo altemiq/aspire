@@ -16,7 +16,7 @@
     <PackageReference Include="Grpc.HealthCheck" VersionOverride="2.80.0" />
     
     <!-- Keep this up to date with https://github.com/fullstorydev/grpcui -->
-    <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.4.3" />
+    <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.5.2" />
     
     <!-- This should match the latest major version of Microsoft.Extensions.* from Aspire.Hosting -->
     <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="10.0.8" />
