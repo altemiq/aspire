@@ -21,10 +21,12 @@ db1.WithPgAdmin(container =>
 
         if (Environment.GetEnvironmentVariable("OLLAMA_HOST") is { } ollamaHost)
         {
+            var url = $"{Uri.UriSchemeHttp}{Uri.SchemeDelimiter}{ollamaHost}:11434/";
             container
                 .WithConfiguration("LLM_ENABLED", value: true)
                 .WithConfiguration("DEFAULT_LLM_PROVIDER", "ollama")
-                .WithConfiguration("OLLAMA_API_URL", $"{Uri.UriSchemeHttp}://{ollamaHost}:11434");
+                .WithConfiguration("OLLAMA_API_URL", url)
+                .WithConfiguration("ALLOWED_LLM_API_URLS", [url]);
         }
         else
         {

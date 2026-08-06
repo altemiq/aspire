@@ -65,6 +65,15 @@ public static class PgAdminBuilderExtensions
     /// Adds the configuration to the container.
     /// </summary>
     /// <param name="builder">The builder.</param>
+    /// <param name="key">The configuration key.</param>
+    /// <param name="values">The configuration values.</param>
+    /// <returns>The input builder.</returns>
+    public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithConfiguration(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, string key, IEnumerable<object?> values) => builder.WithConfiguration(new Dictionary<string, object?>(StringComparer.Ordinal) { { key, values } });
+
+    /// <summary>
+    /// Adds the configuration to the container.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
     /// <param name="configuration">The configuration.</param>
     /// <returns>The input builder.</returns>
     public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithConfiguration(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, IDictionary<string, object?> configuration)
