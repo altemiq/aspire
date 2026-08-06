@@ -66,7 +66,7 @@ public static partial class MiniStackBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
-            .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "data"), StateLocation, isReadOnly)
+            .WithVolume(name ?? VolumeNameGenerator.Generate(builder, "data"), DataLocation, isReadOnly)
             .WithEnvironment("PERSIST_STATE", "1")
             .WithEnvironment("S3_PERSIST", "1");
     }
