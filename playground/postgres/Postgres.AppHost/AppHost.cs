@@ -22,6 +22,7 @@ var database = builder
             .WaitFor(database)
             .WithTheme(PgAdminTheme.System)
             .WithImageTag("9")
+            .WithConfiguration("UPGRADE_CHECK_ENABLED", value: false)
             .WithImagePullPolicy(ImagePullPolicy.Always))
     .AddDatabase($"{DatabaseServer}-database")
     .WithTleExtension("uuid_v7");

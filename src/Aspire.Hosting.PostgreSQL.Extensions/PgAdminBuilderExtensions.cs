@@ -52,6 +52,32 @@ public static class PgAdminBuilderExtensions
         return builder;
     }
 
+    /// <summary>
+    /// Adds the configuration to the container.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="key">The configuration key.</param>
+    /// <param name="value">The configuration value.</param>
+    /// <returns>The input builder.</returns>
+    public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithConfiguration(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, string key, object? value) => builder.WithConfiguration(new Dictionary<string, object?>(StringComparer.Ordinal) { { key, value } });
+
+    /// <summary>
+    /// Adds the configuration to the container.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns>The input builder.</returns>
+    public static IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> WithConfiguration(this IResourceBuilder<core::Aspire.Hosting.Postgres.PgAdminContainerResource> builder, IDictionary<string, object?> configuration)
+    {
+        _ = builder.EnsureContainerFiles();
+        foreach (var kvp in configuration)
+        {
+            builder.WithAnnotation(new PgAdminConfigAnnotation(kvp.Key, kvp.Value));
+        }
+
+        return builder;
+    }
+
     private static IResourceBuilder<T> EnsureContainerFiles<T>(this IResourceBuilder<T> builder)
         where T : ContainerResource
     {
@@ -61,11 +87,10 @@ public static class PgAdminBuilderExtensions
                 "/pgadmin4",
                 (_, _) =>
                 {
-                    IEnumerable<ContainerFileSystemItem> items = [];
-                    if (builder.Resource.TryGetAnnotationsOfType<PgAdminPreferenceAnnotation>(out var annotations))
+                    ICollection<ContainerFileSystemItem> items = [];
+                    if (builder.Resource.TryGetAnnotationsOfType<PgAdminPreferenceAnnotation>(out var preferences))
                     {
-                        items =
-                        [
+                        items.Add(
                             new ContainerFile
                             {
                                 Name = "preferences.json",
@@ -73,12 +98,11 @@ public static class PgAdminBuilderExtensions
                                              {
                                                "preferences":
                                                {
-                                                 {{string.Join("    ," + Environment.NewLine, annotations.Select(a => $"\"{a.Key}\":{GetValue(a.Value)}"))}}
+                                                 {{string.Join("    ," + Environment.NewLine, preferences.Select(a => $"\"{a.Key}\":{GetValue(a.Value)}"))}}
                                                }
                                              }
                                              """,
-                            },
-                        ];
+                            });
 
                         static string GetValue(object? value)
                         {
@@ -96,7 +120,35 @@ public static class PgAdminBuilderExtensions
                         }
                     }
 
-                    return Task.FromResult(items);
+                    if (builder.Resource.TryGetAnnotationsOfType<PgAdminConfigAnnotation>(out var configuration))
+                    {
+                        items.Add(
+                            new ContainerFile
+                            {
+                                Name = "config_local.py",
+                                Contents = string.Join(Environment.NewLine, configuration.Select(a => $"{a.Key} = {GetValue(a.Value)}")),
+                            });
+
+                        static string GetValue(object? value)
+                        {
+                            return GetValueCore(value) ?? "null";
+
+                            static string? GetValueCore(object? value)
+                            {
+                                return value switch
+                                {
+                                    string s => $"'{s}'",
+                                    true => bool.TrueString,
+                                    false => bool.FalseString,
+                                    System.Collections.IEnumerable c => $"[{string.Join(", ", c.Cast<object?>().Select(GetValueCore))}]",
+                                    not null => value.ToString(),
+                                    _ => null,
+                                };
+                            }
+                        }
+                    }
+
+                    return Task.FromResult<IEnumerable<ContainerFileSystemItem>>(items);
                 });
 
             builder.WithAnnotation(new PgAdminAnnotation());
@@ -106,6 +158,8 @@ public static class PgAdminBuilderExtensions
     }
 
     private sealed record PgAdminPreferenceAnnotation(string Key, object? Value) : IResourceAnnotation;
+
+    private sealed record PgAdminConfigAnnotation(string Key, object? Value) : IResourceAnnotation;
 
     private sealed class PgAdminAnnotation : IResourceAnnotation;
 }
