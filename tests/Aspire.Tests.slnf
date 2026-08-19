@@ -1,0 +1,24 @@
+{
+  "solution": {
+    "path": "..\\Aspire.slnx",
+    "projects": [
+      "playground\\Playground.ServiceDefaults\\Playground.ServiceDefaults.csproj",
+      "playground\\localstack\\LocalStack.ApiService\\LocalStack.ApiService.csproj",
+      "playground\\localstack\\LocalStack.AppHost\\LocalStack.AppHost.csproj",
+      "playground\\ministack\\MiniStack.ApiService\\MiniStack.ApiService.csproj",
+      "playground\\ministack\\MiniStack.AppHost\\MiniStack.AppHost.csproj",
+      "src\\Aspire.Hosting.AWS.Configuration\\Aspire.Hosting.AWS.Configuration.csproj",
+      "src\\Aspire.Hosting.AWS.S3\\Aspire.Hosting.AWS.S3.csproj",
+      "src\\Aspire.Hosting.Containers.Extensions\\Aspire.Hosting.Containers.Extensions.csproj",
+      "src\\Aspire.Hosting.LocalStack\\Aspire.Hosting.LocalStack.csproj",
+      "src\\Aspire.Hosting.MinIO\\Aspire.Hosting.MinIO.csproj",
+      "src\\Aspire.Hosting.MiniStack\\Aspire.Hosting.MiniStack.csproj",
+      "src\\Aspire.Hosting.PostGIS\\Aspire.Hosting.PostGIS.csproj",
+      "src\\Aspire.Hosting.PostgreSQL.Extensions\\Aspire.Hosting.PostgreSQL.Extensions.csproj",
+      "tests\\Aspire.Hosting.LocalStack.Tests\\Aspire.Hosting.LocalStack.Tests.csproj",
+      "tests\\Aspire.Hosting.MinIO.Tests\\Aspire.Hosting.MinIO.Tests.csproj",
+      "tests\\Aspire.Hosting.MiniStack.Tests\\Aspire.Hosting.MiniStack.Tests.csproj",
+      "tests\\Aspire.Hosting.PostGIS.Tests\\Aspire.Hosting.PostGIS.Tests.csproj"
+    ]
+  }
+}
