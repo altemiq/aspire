@@ -264,6 +264,22 @@ public static partial class ResourceBuilderExtensions
         }
     }
 
+    /// <summary>
+    /// Gets the specified profile from the <see cref="AWS.IAWSProfileConfig"/>, if it exits.
+    /// </summary>
+    /// <param name="resourceBuilder">The resource builder.</param>
+    /// <param name="profileName">The profile name.</param>
+    /// <returns>The <see cref="AWS.AWSProfile"/> if it exsist in <paramref name="resourceBuilder"/>.</returns>
+    public static AWS.AWSProfile? GetProfile(this IResourceBuilder<AWS.IAWSProfileConfig> resourceBuilder, string? profileName = "default") => resourceBuilder.Resource.GetProfile(profileName);
+
+    /// <summary>
+    /// Gets the specified profile from the <see cref="AWS.IAWSProfileConfig"/>, if it exits.
+    /// </summary>
+    /// <param name="resource">The resource.</param>
+    /// <param name="profileName">The profile name.</param>
+    /// <returns>The <see cref="AWS.AWSProfile"/> if it exsist in <paramref name="resource"/>.</returns>
+    public static AWS.AWSProfile? GetProfile(this AWS.IAWSProfileConfig resource, string? profileName = "default") => resource.Profiles.FirstOrDefault(p => string.Equals(p.Name, profileName, StringComparison.Ordinal));
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Creating AWS configuration at '{FileName}'")]
     private static partial void LogCreatingAwsConfiguration(ILogger logger, string fileName);
 

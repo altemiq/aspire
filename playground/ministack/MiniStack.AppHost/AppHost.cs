@@ -36,14 +36,14 @@ Directory.CreateDirectory(emptyFolder);
 var ministack = builder
     .AddMiniStack("ministack", regionEndPoint: region, services: MiniStackServices.SimpleStorageService | MiniStackServices.SimpleNotificationService | MiniStackServices.SimpleQueueService)
     .WithStateVolume()
-    .WithDataBindMount(Path.Combine(builder.AppHostDirectory, "data"))
+    .WithDataVolume()
     .WithSqsQueue(ProfileName)
     .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll)
     .EnsureBucket(MissingFolderBucketName, ProfileName)
     .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName)
     .WithMirror(Path.Combine(builder.AppHostDirectory, MissingFolderBucketName), MissingFolderBucketName)
     .WithMirror(emptyFolder, EmptyFolderBucketName)
-    .WithStackPort(profile: profiles.Resource.Profiles.Single());
+    .WithStackPort(profile: profiles.GetProfile(ProfileName));
 
 builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
     .WithUrls(callback =>
