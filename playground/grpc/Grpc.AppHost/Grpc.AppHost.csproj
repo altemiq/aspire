@@ -1,10 +1,11 @@
-﻿<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.5.0">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
     <UserSecretsId>cd5248f1-06eb-4ac8-82e6-72597b838631</UserSecretsId>
   </PropertyGroup>
 

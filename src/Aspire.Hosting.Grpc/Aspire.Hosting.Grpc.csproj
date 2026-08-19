@@ -19,7 +19,7 @@
     <PackageReference Include="Tool.Grpc.UI" VersionOverride="1.5.2" />
     
     <!-- This should match the latest major version of Microsoft.Extensions.* from Aspire.Hosting -->
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="10.0.11" />
 
     <!-- polyfills for overload resolution -->
     <PackageReference Include="PolySharp">

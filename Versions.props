@@ -1,8 +1,8 @@
 ﻿<Project>
 
   <PropertyGroup>
-    <VerAspire_Hosting_Minor>13.4</VerAspire_Hosting_Minor>
-    <VerAspire_Hosting>$(VerAspire_Hosting_Minor).6</VerAspire_Hosting>
+    <VerAspire_Hosting_Minor>13.5</VerAspire_Hosting_Minor>
+    <VerAspire_Hosting>$(VerAspire_Hosting_Minor).0</VerAspire_Hosting>
   </PropertyGroup>
 
 </Project>
