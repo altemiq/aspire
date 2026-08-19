@@ -586,6 +586,61 @@ public static partial class MiniStackBuilderExtensions
                 {
                     ctx.EnvironmentVariables[Amazon.Runtime.EnvironmentVariablesAWSCredentials.ENVIRONMENT_VARIABLE_SESSION_TOKEN] = sessionToken;
                 }
+
+                var services = string.Join(',', GetStackPortServices(builder));
+                if (!string.IsNullOrEmpty(services))
+                {
+                    ctx.EnvironmentVariables["STACKPORT_SERVICES"] = services;
+                }
+
+                static IEnumerable<string> GetStackPortServices(IResourceBuilder<T> resourceBuilder)
+                {
+                    return resourceBuilder.Resource.GetServiceNames().SelectMany<string, string>(serviceName => serviceName switch
+                    {
+                        "states" => ["stepfunctions"],
+                        "cognito" => ["cognito-idp", "cognito-identity"],
+                        "emr" => ["elasticmapreduce"],
+                        "efs" => ["elasticfilesystem"],
+                        "alb" => ["elasticloadbalancing"],
+                        "waf" or "waf_v1" => ["wafv2"],
+                        "account"
+                            or "apigateway_v1"
+                            or "appconfig"
+                            or "appsync_events"
+                            or "autoscaling"
+                            or "backup"
+                            or "batch"
+                            or "cloudfront_keyvaluestore"
+                            or "cloudtrail"
+                            or "codebuild"
+                            or "cur"
+                            or "dynamodb_streams"
+                            or "ecs_metadata"
+                            or "eks"
+                            or "imds"
+                            or "inspector2"
+                            or "iot"
+                            or "iot_data"
+                            or "lambda_durable"
+                            or "mediaconnect"
+                            or "mq"
+                            or "mwaa"
+                            or "opensearch"
+                            or "organizations"
+                            or "pipes"
+                            or "rds_data"
+                            or "resource_groups"
+                            or "s3files"
+                            or "s3tables"
+                            or "scheduler"
+                            or "servicediscovery"
+                            or "ses_v2"
+                            or "sts"
+                            or "tagging"
+                            or "transfer" => [],
+                        _ => [serviceName],
+                    });
+                }
             })
             .WithHttpEndpoint(targetPort: 8080)
             .WithHttpHealthCheck(path: "/api/health")

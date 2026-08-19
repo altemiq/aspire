@@ -174,7 +174,6 @@ public sealed class MiniStackServices : IEnumerable<MiniStackService>
     /// <summary>
     /// Users, roles, policies, groups, instance profiles, OIDC.
     /// </summary>
-    [System.ComponentModel.Description("IAM")]
     public static readonly MiniStackService IdentityAccessManagement = new(nameof(IdentityAccessManagement), "iam");
 
     /// <summary>
@@ -200,8 +199,7 @@ public sealed class MiniStackServices : IEnumerable<MiniStackService>
     /// <summary>
     /// RSA &amp; symmetric envelope encryption for internal cryptographic signatures.
     /// </summary>
-    [System.ComponentModel.Description("KMS")]
-    public static readonly MiniStackService KeyManagementService = new(nameof(KeyManagementService), "KMS");
+    public static readonly MiniStackService KeyManagementService = new(nameof(KeyManagementService), "kms");
 
     /// <summary>
     /// Real Python execution, warm workers, SQS event source mapping, Layers.
@@ -321,7 +319,7 @@ public sealed class MiniStackServices : IEnumerable<MiniStackService>
     /// <summary>
     /// v1 + Regional stub for legacy Terraform / CFN — empty List*, valid GetChangeToken, WAFNonexistentItemException.
     /// </summary>
-    public static readonly MiniStackService WebApplicationFirewall = new(nameof(WebApplicationFirewall), "batch");
+    public static readonly MiniStackService WebApplicationFirewall = new(nameof(WebApplicationFirewall), "waf");
 
     /// <summary>
     /// v1 + Regional stub for legacy Terraform / CFN — empty List*, valid GetChangeToken, WAFNonexistentItemException.
