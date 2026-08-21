@@ -10,8 +10,9 @@
   </ItemGroup>
   
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.100.9" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.2" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.101" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.3" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.10" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft">
@@ -20,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="TUnit" Version="1.65.31" />
+    <PackageVersion Include="TUnit" Version="1.65.38" />
   </ItemGroup>
 
 </Project>
