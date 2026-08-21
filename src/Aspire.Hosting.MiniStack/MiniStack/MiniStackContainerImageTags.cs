@@ -39,5 +39,5 @@ internal static class MiniStackContainerImageTags
     /// <summary>
     /// The StackPort tag.
     /// </summary>
-    public const string StackPortTag = "0.3.8";
+    public const string StackPortTag = "0.3.9";
 }
