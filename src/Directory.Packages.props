@@ -1,6 +1,12 @@
 ﻿<Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)../'))" />
 
+  <ItemGroup Label="Aspire">
+    <PackageVersion Include="Aspire.Hosting" Version="$(VerAspire_Hosting)" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="13.7.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(VerAspire_Hosting)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageVersion Include="PolySharp" Version="1.16.0" />
   </ItemGroup>

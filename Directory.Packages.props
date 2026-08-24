@@ -4,15 +4,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
-  <ItemGroup Label="Aspire">
-    <PackageVersion Include="Aspire.Hosting" Version="$(VerAspire_Hosting)" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="13.6.0" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(VerAspire_Hosting)" />
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(VerAspire_Hosting)" />
-  </ItemGroup>
-
   <ItemGroup Label="Analyzers">
-    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.378" />
+    <GlobalPackageReference Include="Altemiq.DotNet.CodingStandard" Version="1.0.380" />
   </ItemGroup>
 
 </Project>
