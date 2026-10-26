@@ -25,7 +25,7 @@ public static class GrpcBuilderExtensions
     /// <param name="endpointName">The end point name.</param>
     /// <returns>A resource builder with the health check annotation added.</returns>
     public static IResourceBuilder<T> WithGrpcHealthCheck<T>(this IResourceBuilder<T> builder, string desiredScheme, string endpointName)
-        where T : IResourceWithEndpoints => WithGrpcHealthCheck(builder, desiredScheme, () => builder.GetEndpoint(endpointName));
+        where T : IResourceWithEndpoints => builder.WithGrpcHealthCheck(desiredScheme, () => builder.GetEndpoint(endpointName));
 
     /// <summary>
     /// Adds a gRPC health check to the resource.
@@ -49,15 +49,7 @@ public static class GrpcBuilderExtensions
 
         _ = builder.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(
             builder.Resource,
-            (_, _) =>
-            {
-                if (endpoint.Exists)
-                {
-                    return Task.CompletedTask;
-                }
-
-                throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'.");
-            });
+            (_, _) => endpoint.Exists ? Task.CompletedTask : throw new DistributedApplicationException($"The endpoint '{endpointName}' does not exist on the resource '{builder.Resource.Name}'."));
 
         Uri? uri = null;
         _ = builder.ApplicationBuilder.Eventing.Subscribe<BeforeResourceStartedEvent>(builder.Resource, (_, _) =>
@@ -197,10 +189,9 @@ public static class GrpcBuilderExtensions
 
         var resource = factory(builder.ApplicationBuilder, resourceName).ExcludeFromManifest();
 
-        _ = resource.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource.Resource, (evt, cancellationToken) =>
+        _ = resource.ApplicationBuilder.Eventing.Subscribe<ResourceEndpointsAllocatedEvent>(resource.Resource, (evt, _) =>
         {
-            var context = evt.Services.GetRequiredService<DistributedApplicationExecutionContext>();
-            SetArguments(context, builder, resource, endpointType);
+            SetArguments(evt.Services.GetRequiredService<DistributedApplicationExecutionContext>(), builder, resource, endpointType);
             return Task.CompletedTask;
         });
 
