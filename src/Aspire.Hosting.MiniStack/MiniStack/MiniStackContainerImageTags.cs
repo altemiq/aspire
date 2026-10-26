@@ -24,7 +24,7 @@ internal static class MiniStackContainerImageTags
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "1.4";
+    public const string Tag = "1.5";
 
     /// <summary>
     /// The StackPort registry.
@@ -39,5 +39,5 @@ internal static class MiniStackContainerImageTags
     /// <summary>
     /// The StackPort tag.
     /// </summary>
-    public const string StackPortTag = "0.3.9";
+    public const string StackPortTag = "0.4.6";
 }

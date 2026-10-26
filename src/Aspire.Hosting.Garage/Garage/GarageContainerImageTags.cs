@@ -24,7 +24,7 @@ internal static class GarageContainerImageTags
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "v2.2.0";
+    public const string Tag = "v2.5.0";
 
     /// <summary>
     /// The WebUI registry.
@@ -39,5 +39,5 @@ internal static class GarageContainerImageTags
     /// <summary>
     /// The WebUI tag.
     /// </summary>
-    public const string WebUITag = "latest";
+    public const string WebUITag = "1.1.0";
 }
