@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <VerAspire_Hosting_Minor>13.6</VerAspire_Hosting_Minor>
-    <VerAspire_Hosting>$(VerAspire_Hosting_Minor).4</VerAspire_Hosting>
+    <VerAspire_Hosting>$(VerAspire_Hosting_Minor).5</VerAspire_Hosting>
   </PropertyGroup>
 
 </Project>
