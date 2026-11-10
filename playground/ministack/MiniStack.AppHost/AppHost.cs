@@ -19,9 +19,7 @@ var region = Amazon.RegionEndpoint.APSoutheast2;
 
 var profiles = builder.AddAWSProfileConfig()
     .AsConfigurationFile()
-    .WithProfile(
-        ProfileName,
-        builder.AddParameter($"{ProfileName}-access-key-id", new StaticParameterDefault("000000000000")));
+    .WithProfile(ProfileName);
 
 var config = builder.AddAWSSDKConfig()
     .WithRegion(region)
@@ -45,7 +43,7 @@ var ministack = builder
     .WithMirror(emptyFolder, EmptyFolderBucketName)
     .WithStackPort(profile: profiles.GetProfile(ProfileName));
 
-builder.AddProject<Projects.MiniStack_ApiService>("ministack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
+builder.AddDotnetProject("ministack-apiservice", "..\\MiniStack.ApiService\\MiniStack.ApiService.csproj", opts => opts.ExcludeKestrelEndpoints = true)
     .WithUrls(callback =>
     {
         callback.Urls.Clear();

@@ -329,16 +329,19 @@ public static partial class ResourceBuilderExtensions
     /// </summary>
     /// <typeparam name="TResource">The resource.</typeparam>
     /// <param name="builder">The builder.</param>
+    /// <returns>The resource builder.</returns>
+    public static IResourceBuilder<ParameterResource> WithQueue<TResource>(this IResourceBuilder<TResource> builder)
+        where TResource : IResource => builder.WithQueue(static (builder, name) => builder.AddParameter(name, secret: false));
+
+    /// <summary>
+    /// Sets the queue name for the resource.
+    /// </summary>
+    /// <typeparam name="TResource">The resource.</typeparam>
+    /// <param name="builder">The builder.</param>
     /// <param name="queueName">The queue name.</param>
     /// <returns>The resource builder.</returns>
     public static IResourceBuilder<ParameterResource> WithQueue<TResource>(this IResourceBuilder<TResource> builder, string queueName)
-        where TResource : IResource
-    {
-        var name = GetQueueResourceName(builder);
-        return builder.ApplicationBuilder.Resources.OfType<ParameterResource>().FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal)) is { } parameter
-            ? builder.ApplicationBuilder.CreateResourceBuilder(parameter)
-            : builder.ApplicationBuilder.AddParameter(name, queueName, secret: false);
-    }
+        where TResource : IResource => builder.WithQueue((b, name) => b.AddParameter(name, queueName, secret: false));
 
     /// <summary>
     /// Sets the queue name for the resource.
@@ -348,12 +351,15 @@ public static partial class ResourceBuilderExtensions
     /// <param name="queueNameGetter">The queue name.</param>
     /// <returns>The resource builder.</returns>
     public static IResourceBuilder<ParameterResource> WithQueue<TResource>(this IResourceBuilder<TResource> builder, Func<string> queueNameGetter)
+        where TResource : IResource => builder.WithQueue((b, name) => b.AddParameter(name, queueNameGetter, secret: false));
+
+    private static IResourceBuilder<ParameterResource> WithQueue<TResource>(this IResourceBuilder<TResource> builder, Func<IDistributedApplicationBuilder, string, IResourceBuilder<ParameterResource>> parameterBuilder)
         where TResource : IResource
     {
         var name = GetQueueResourceName(builder);
         return builder.ApplicationBuilder.Resources.OfType<ParameterResource>().FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal)) is { } parameter
             ? builder.ApplicationBuilder.CreateResourceBuilder(parameter)
-            : builder.ApplicationBuilder.AddParameter(name, queueNameGetter, secret: false);
+            : parameterBuilder(builder.ApplicationBuilder, name);
     }
 
     private static string GetQueueResourceName<TResource>(IResourceBuilder<TResource> builder)

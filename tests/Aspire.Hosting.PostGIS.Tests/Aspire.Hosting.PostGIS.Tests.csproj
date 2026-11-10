@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

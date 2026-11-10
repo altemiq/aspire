@@ -14,8 +14,8 @@ var database = builder
     .WithEnvironment("RUST_BACKTRACE", "full")
     .WithEnvironment("RUST_LOG", "debug")
     .WithDataVolume()
-    .WithTle()
-    .WithRust()
+//    .WithTle()
+//    .WithRust()
     .WithDotnet()
     .WithPgAdmin((container, database) =>
         container
@@ -27,7 +27,7 @@ var database = builder
     .AddDatabase($"{DatabaseServer}-database")
     .WithTleExtension("uuid_v7");
 
-_ = builder.AddProject<Projects.Postgres_ApiService>("apiservice")
+_ = builder.AddDotnetProject("apiservice", "..\\Postgres.ApiService\\Postgres.ApiService.csproj")
     .WithReference(database)
     .WaitFor(database);
 

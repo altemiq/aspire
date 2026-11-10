@@ -209,13 +209,11 @@ public static partial class LocalStackBuilderExtensions
     public static IResourceBuilder<TResource> WithSqsQueue<TResource>(this IResourceBuilder<TResource> builder, string? profile = default)
         where TResource : LocalStackServerResource
     {
-        string? queueName = default;
-
         // add SQS to the host
         _ = builder.ApplicationBuilder.AddAmazonSqs(builder);
 
         // add the queue
-        var parameter = builder.WithQueue(() => queueName!);
+        var parameter = builder.WithQueue();
 
         builder.ApplicationBuilder.Eventing.Subscribe<ResourceReadyEvent>(builder.Resource, async (evt, cancellationToken) =>
         {
@@ -228,33 +226,22 @@ public static partial class LocalStackBuilderExtensions
                         s => s with { State = new(KnownResourceStates.Waiting, KnownResourceStateStyles.Info) })
                     .ConfigureAwait(false);
             }
-#pragma warning disable S3011
-            var propertyInfo = parameter.Resource.GetType().GetProperty("WaitForValueTcs", BindingFlags.Instance | BindingFlags.NonPublic);
-#pragma warning restore S3011
-
-            // get the property
-            var taskCompletionSource = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            propertyInfo?.SetValue(parameter.Resource, taskCompletionSource);
 
             var client = evt.Services.GetRequiredKeyedAwsService<Amazon.SQS.IAmazonSQS>(evt.Resource.Name, profile);
 
             // ensure the queue exists
             var (urn, _) = await GetQueueArnAndUrlAsync(client, parameter.Resource.Name, cancellationToken).ConfigureAwait(false);
 
-            queueName = urn;
+            await parameter.Resource.SetValueAsync(urn, cancellationToken).ConfigureAwait(false);
 
             // set the parameter to success
-            if (taskCompletionSource.TrySetResult(queueName) && notificationService is not null)
+            if (notificationService is not null)
             {
                 // update the parameter here
                 await notificationService
                     .PublishUpdateAsync(
                         parameter.Resource,
-                        s => s with
-                        {
-                            State = new(KnownResourceStates.Finished, KnownResourceStateStyles.Success),
-                            Properties = [new(CustomResourceKnownProperties.Source, queueName)],
-                        })
+                        s => s with { State = new(KnownResourceStates.Running, KnownResourceStateStyles.Success) })
                     .ConfigureAwait(false);
             }
 

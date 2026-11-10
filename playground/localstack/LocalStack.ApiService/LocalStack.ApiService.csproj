@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

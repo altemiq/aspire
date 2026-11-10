@@ -10,25 +10,27 @@
   </ItemGroup>
 
   <ItemGroup Label="Aspire">
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(VerAspire_Hosting)" />
+    <PackageVersion Include="Aspire.Hosting.Dotnet" Version="$(VerAspire_Hosting)" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="$(VerAspire_Hosting)" />
     <PackageVersion Include="Aspire.Npgsql" Version="$(VerAspire_Hosting)" />
     <PackageVersion Include="Aspire.RabbitMQ.Client" Version="$(VerAspire_Hosting)" />
   </ItemGroup>
 
   <ItemGroup Label="AWS">
-    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.102.6" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.6" />
-    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.20" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.102.10" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.11" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.25" />
     <PackageVersion Include="LocalStack.Client.Extensions" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="gRPC">
     <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.84.0" />
-    <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.84.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.84.0" />
-    <PackageVersion Include="Grpc.HealthChecks" Version="2.84.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.84.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.85.0" />
+    <PackageVersion Include="Grpc.AspNetCore.HealthChecks" Version="2.85.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.85.0" />
+    <PackageVersion Include="Grpc.HealthChecks" Version="2.85.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.85.0" />
     <PackageVersion Include="Tomlyn" Version="2.10.1" />
   </ItemGroup>
   
@@ -45,10 +47,10 @@
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.11.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AWS" Version="1.20.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.20.1-beta.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
   </ItemGroup>
 

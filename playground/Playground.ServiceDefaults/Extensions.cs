@@ -25,6 +25,9 @@ using OpenTelemetry.Trace;
 /// </remarks>
 public static class Extensions
 {
+    private const string HealthEndpointPath = "/health";
+    private const string AlivenessEndpointPath = "/alive";
+
     /// <summary>
     /// Adds the service defaults.
     /// </summary>
@@ -46,6 +49,12 @@ public static class Extensions
             // Turn on service discovery by default
             _ = http.AddServiceDiscovery();
         });
+
+        // Uncomment the following to restrict the allowed schemes for service discovery.
+        //// builder.Services.Configure<ServiceDiscoveryOptions>(options =>
+        //// {
+        ////     options.AllowedSchemes = ["https"];
+        //// });
 
         return builder;
     }
@@ -69,15 +78,18 @@ public static class Extensions
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation())
             .WithTracing(tracing => tracing
-                .AddAspNetCoreInstrumentation()
+                .AddSource(builder.Environment.ApplicationName)
+                .AddAspNetCoreInstrumentation(tracing =>
+                    // Exclude health check requests from tracing
+                    tracing.Filter = context =>
+                        !context.Request.Path.StartsWithSegments(HealthEndpointPath, StringComparison.Ordinal)
+                        && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.Ordinal))
 
                 // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                 ////.AddGrpcClientInstrumentation()
                 .AddHttpClientInstrumentation());
 
-        _ = builder.AddOpenTelemetryExporters();
-
-        return builder;
+        return builder.AddOpenTelemetryExporters();
     }
 
     /// <summary>
@@ -103,14 +115,14 @@ public static class Extensions
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
         // Adding health checks endpoints to applications in non-development environments has security implications.
-        // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
+        // See https://aka.ms/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
         {
             // All health checks must pass for app to be considered ready to accept traffic after starting
-            _ = app.MapHealthChecks("/health");
+            _ = app.MapHealthChecks(HealthEndpointPath);
 
             // Only health checks tagged with the "live" tag must pass for app to be considered alive
-            _ = app.MapHealthChecks("/alive", new()
+            _ = app.MapHealthChecks(AlivenessEndpointPath, new()
             {
                 Predicate = r => r.Tags.Contains("live"),
             });

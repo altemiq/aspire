@@ -3,12 +3,12 @@
 
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting" Version="$(VerAspire_Hosting)" />
-    <PackageVersion Include="Aspire.Hosting.AWS" Version="13.7.2" />
+    <PackageVersion Include="Aspire.Hosting.AWS" Version="13.7.3" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="$(VerAspire_Hosting)" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageVersion Include="PolySharp" Version="1.16.0" />
+    <PackageVersion Include="PolySharp" Version="1.17.0" />
   </ItemGroup>
 
 </Project>

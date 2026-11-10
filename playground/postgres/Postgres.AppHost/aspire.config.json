@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "Postgres.AppHost.csproj"
+  }
+}

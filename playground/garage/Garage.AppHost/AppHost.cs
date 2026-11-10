@@ -31,7 +31,7 @@ var garage = builder
     .EnsureBucket("test-data", ProfileName)
     .WithGarageWebUI();
 
-_ = builder.AddProject<Projects.Garage_ApiService>($"{Alias}-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
+_ = builder.AddDotnetProject($"{Alias}-apiservice", "..\\Garage.ApiService\\Garage.ApiService.csproj", opts => opts.ExcludeKestrelEndpoints = true)
     .WithUrls(callback =>
     {
         callback.Urls.Clear();

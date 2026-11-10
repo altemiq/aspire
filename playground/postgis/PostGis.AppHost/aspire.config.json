@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "PostGis.AppHost.csproj"
+  }
+}

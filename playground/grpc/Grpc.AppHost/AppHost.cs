@@ -7,7 +7,7 @@
 const string Name = "grpc-apiservice";
 var builder = DistributedApplication.CreateBuilder(args);
 
-_ = builder.AddProject<Projects.Grpc_ApiService>(Name, Uri.UriSchemeHttp)
+_ = builder.AddDotnetProject(Name, "..\\Grpc.ApiService\\Grpc.ApiService.csproj", configure => configure.LaunchProfileName = Uri.UriSchemeHttp)
     .WithGrpcHealthCheck(Uri.UriSchemeHttp, Uri.UriSchemeHttp)
     .WithGrpcUI(
         (api, grpc) => grpc

@@ -1,8 +1,8 @@
- <Project Sdk="Aspire.AppHost.Sdk/13.6.4">
-  
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>$(NetCurrent);$(NetNext)</TargetFrameworks>
+    <TargetFramework>$(NetCurrent)</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AspireUseCliBundle>true</AspireUseCliBundle>
@@ -10,7 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostGIS\Aspire.Hosting.PostGIS.csproj" IsAspireProjectResource="false" />
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Aspire.Hosting.PostGIS\Aspire.Hosting.PostGIS.csproj" />
   </ItemGroup>
 
 </Project>

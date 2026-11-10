@@ -36,7 +36,7 @@ db1.WithPgAdmin(container =>
 
 var database = db1.AddDatabase("db1-database");
 
-_ = builder.AddProject<Projects.PostGis_ApiService>("apiservice")
+_ = builder.AddDotnetProject("apiservice", "..\\PostGis.ApiService\\PostGis.ApiService.csproj")
     .WithReference(database)
     .WaitFor(database);
 

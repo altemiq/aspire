@@ -31,7 +31,7 @@ var localstack = builder
     .EnsureBucket(BucketName, ProfileName, Amazon.S3.EventType.ObjectCreatedAll)
     .WithMirror(Path.Combine(builder.AppHostDirectory, "..", "..", ".data"), MirrorBucketName);
 
-builder.AddProject<Projects.LocalStack_ApiService>("localstack-apiservice", opts => opts.ExcludeKestrelEndpoints = true)
+builder.AddDotnetProject("localstack-apiservice", "..\\LocalStack.ApiService\\LocalStack.ApiService.csproj", opts => opts.ExcludeKestrelEndpoints = true)
     .WithUrls(callback =>
     {
         callback.Urls.Clear();
