@@ -12,11 +12,6 @@ namespace Aspire.Hosting;
 public enum PostgresVersion
 {
     /// <summary>
-    /// Version 13.
-    /// </summary>
-    V13,
-
-    /// <summary>
     /// Version 14.
     /// </summary>
     V14,

@@ -37,8 +37,7 @@ public static class PostGisBuilderExtensions
     public static IResourceBuilder<T> WithPostGis<T>(this IResourceBuilder<T> builder, PostGisVersion version)
         where T : core::Aspire.Hosting.ApplicationModel.PostgresServerResource
     {
-        var tag = builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImage)
-            && containerImage is { Tag: { } containerImageTag }
+        var tag = builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var containerImage) && containerImage is { Tag: { } containerImageTag }
             ? GetTagCore(containerImageTag, version, System.Globalization.CultureInfo.InvariantCulture)
             : GetTag(PostgresVersion.V18, version);
 
@@ -64,7 +63,6 @@ public static class PostGisBuilderExtensions
             {
                 var postgresVersion = (int)double.Truncate(version) switch
                 {
-                    13 => PostgresVersion.V13,
                     14 => PostgresVersion.V14,
                     15 => PostgresVersion.V15,
                     16 => PostgresVersion.V16,
@@ -191,7 +189,6 @@ public static class PostGisBuilderExtensions
     {
         var postgresVersion = postgres switch
         {
-            PostgresVersion.V13 => "13",
             PostgresVersion.V14 => "14",
             PostgresVersion.V15 => "15",
             PostgresVersion.V16 => "16",
@@ -205,8 +202,8 @@ public static class PostGisBuilderExtensions
             // determine this from the best version that the postgres can handle
             postGis = postgres switch
             {
-                PostgresVersion.V13 or PostgresVersion.V14 or PostgresVersion.V15 or PostgresVersion.V16 => PostGisVersion.V3_5,
-                PostgresVersion.V17 or PostgresVersion.V18 => PostGisVersion.V3_6,
+                PostgresVersion.V14 or PostgresVersion.V15 or PostgresVersion.V16 => PostGisVersion.V3_6,
+                PostgresVersion.V17 or PostgresVersion.V18 => PostGisVersion.V3_7,
                 _ => throw new ArgumentOutOfRangeException(nameof(postgres), postgres, message: null),
             };
         }
@@ -221,6 +218,7 @@ public static class PostGisBuilderExtensions
             PostGisVersion.V3_4 => "3.4",
             PostGisVersion.V3_5 => "3.5",
             PostGisVersion.V3_6 => "3.6",
+            PostGisVersion.V3_7 => "3.7",
             _ => throw new ArgumentOutOfRangeException(nameof(postGis), postGis, message: null),
         };
 

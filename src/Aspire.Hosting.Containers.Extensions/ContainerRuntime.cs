@@ -111,9 +111,7 @@ public static class ContainerRuntime
 
             static string? GetDockerHost()
             {
-                return Environment.GetEnvironmentVariable("DOCKER_HOST") is { } value
-                       && Uri.TryCreate(value, UriKind.Absolute, out var uri)
-                       && uri is { Scheme: "unix" }
+                return Environment.GetEnvironmentVariable("DOCKER_HOST") is { } value && Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri is { Scheme: "unix" }
                     ? uri.LocalPath
                     : default;
             }

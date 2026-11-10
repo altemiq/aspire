@@ -6,8 +6,6 @@
 
 namespace Aspire.Hosting.ApplicationModel;
 
-using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
-
 /// <summary>
 /// A resource that represents a Garage container.
 /// </summary>
@@ -50,10 +48,18 @@ public class GarageServerResource : ContainerResource, IResourceWithServiceDisco
     /// <summary>
     /// Gets the username reference.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1214:Unnecessary interpolated string", Justification = "This is required to turn it into an interpolated string handler")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "This suppression is required.")]
-    internal ReferenceExpression UserNameReference =>
-        this.UserNameParameter is { } userNameParameter ?
-            ReferenceExpression.Create($"{userNameParameter}") :
-            ReferenceExpression.Create($"{DefaultRootUser}");
+    internal ReferenceExpression UserNameReference
+    {
+        get
+        {
+            if (this.UserNameParameter is { } userNameParameter)
+            {
+                return ReferenceExpression.Create($"{userNameParameter}");
+            }
+
+            var builder = new ReferenceExpressionBuilder();
+            builder.AppendLiteral(DefaultRootUser);
+            return builder.Build();
+        }
+    }
 }

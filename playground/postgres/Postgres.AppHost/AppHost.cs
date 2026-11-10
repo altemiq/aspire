@@ -14,8 +14,8 @@ var database = builder
     .WithEnvironment("RUST_BACKTRACE", "full")
     .WithEnvironment("RUST_LOG", "debug")
     .WithDataVolume()
-//    .WithTle()
-//    .WithRust()
+    .WithTle()
+    .WithRust()
     .WithDotnet()
     .WithPgAdmin((container, database) =>
         container

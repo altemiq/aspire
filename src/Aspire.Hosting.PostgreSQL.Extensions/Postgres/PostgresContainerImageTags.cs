@@ -12,17 +12,6 @@ namespace Aspire.Hosting.Postgres;
 internal static class PostgresContainerImageTags
 {
     /// <summary>
-    /// Version 13.
-    /// </summary>
-    public static class V13
-    {
-        /// <summary>
-        /// The tag for v13.
-        /// </summary>
-        public const string Tag = "13.22";
-    }
-
-    /// <summary>
     /// Version 14.
     /// </summary>
     public static class V14
@@ -30,7 +19,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v14.
         /// </summary>
-        public const string Tag = "14.19";
+        public const string Tag = "14.24";
     }
 
     /// <summary>
@@ -41,7 +30,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v15.
         /// </summary>
-        public const string Tag = "15.14";
+        public const string Tag = "15.19";
     }
 
     /// <summary>
@@ -52,7 +41,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v16.
         /// </summary>
-        public const string Tag = "16.10";
+        public const string Tag = "16.15";
     }
 
     /// <summary>
@@ -63,7 +52,7 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v17.
         /// </summary>
-        public const string Tag = "17.6";
+        public const string Tag = "17.11";
     }
 
     /// <summary>
@@ -74,6 +63,6 @@ internal static class PostgresContainerImageTags
         /// <summary>
         /// The tag for v18.
         /// </summary>
-        public const string Tag = "18.0";
+        public const string Tag = "18.6";
     }
 }

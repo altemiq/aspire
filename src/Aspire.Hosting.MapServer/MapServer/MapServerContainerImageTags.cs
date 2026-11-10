@@ -24,5 +24,5 @@ internal static class MapServerContainerImageTags
     /// <summary>
     /// The tag.
     /// </summary>
-    public const string Tag = "8.4";
+    public const string Tag = "8.6";
 }
